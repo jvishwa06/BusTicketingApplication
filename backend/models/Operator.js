@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 const operatorSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },  
   companyName: { type: String, required: true },
-  contactEmail: { type: String, required: true, unique: true },
   contactPhone: { type: String, required: true },
   passwordHash: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
