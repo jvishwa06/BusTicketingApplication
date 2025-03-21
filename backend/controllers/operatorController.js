@@ -3,76 +3,10 @@ const Admin = require('../models/Admin');
 const OTP = require('../models/OTP');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { generateAndSendOtp } = require('../utils/sendOTP');
 const nodemailer = require('nodemailer');
 
-// Send OTP for email verification
-const sendVerificationEmail = async (email, otp) => {
-  const verificationLink = `http://localhost:5000/api/operator/verify-email?otp=${otp}&email=${email}`;
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Email Verification OTP',
-    html: `<p>Use the following OTP to verify your email: <b>${otp}</b></p>`,
-  };
-
-  await transporter.sendMail(mailOptions);
-};
-
-// Send OTP for password reset
-const sendPasswordResetEmail = async (email, otp) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Password Reset OTP',
-    html: `<p>Use the following OTP to reset your password: <b>${otp}</b></p>`,
-  };
-
-  await transporter.sendMail(mailOptions);
-};
-
-// Send admin approval email
-const sendAdminApprovalEmail = async (operatorId, operatorName) => {
-  const admin = await Admin.findOne(); // Get the admin's email from the database
-  const approvalLink = `http://localhost:5000/api/operator/admin-approve?operatorId=${operatorId}&action=accept`;
-  const rejectionLink = `http://localhost:5000/api/operator/admin-approve?operatorId=${operatorId}&action=reject`;
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: admin.email, // Admin email fetched from the DB
-    subject: 'New Operator Registration Approval Required',
-    html: `<p>New operator <strong>${operatorName}</strong> has registered. Click the links below to approve or reject:</p>
-           <p><a href="${approvalLink}">Approve</a></p>
-           <p><a href="${rejectionLink}">Reject</a></p>`,
-  };
-
-  await transporter.sendMail(mailOptions);
-};
-
-// Operator Registration with email verification (OTP)
+// Operator Registration
 exports.registerOperator = async (req, res) => {
   const { email, contactPhone, password, companyName } = req.body;
   try {
@@ -82,8 +16,6 @@ exports.registerOperator = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const verificationOtp = Math.floor(100000 + Math.random() * 900000);  // Generate OTP
-
     const newOperator = new Operator({
       email,
       contactPhone,
@@ -94,19 +26,8 @@ exports.registerOperator = async (req, res) => {
 
     await newOperator.save();
 
-    // Save OTP in the database with expiration time
-    const otpRecord = new OTP({
-      userId: newOperator._id,
-      otp: verificationOtp,
-      expiresAt: Date.now() + 15 * 60 * 1000,  // 15 minutes expiration time
-    });
+    await generateAndSendOtp(newOperator._id, email, 'verification');
 
-    await otpRecord.save();
-
-    // Send OTP to email for verification
-    await sendVerificationEmail(email, verificationOtp);
-
-    // Send admin approval email
     await sendAdminApprovalEmail(newOperator._id, companyName);
 
     res.status(201).json({ message: 'Operator registered successfully! Please check your email to verify your account.' });
@@ -116,7 +37,7 @@ exports.registerOperator = async (req, res) => {
   }
 };
 
-// Verify Email using OTP
+// Verify Email
 exports.verifyEmail = async (req, res) => {
   const { otp, email } = req.query;
   try {
@@ -130,11 +51,9 @@ exports.verifyEmail = async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    // Mark operator as verified
     operator.isEmailVerified = true;
     await operator.save();
 
-    // Delete OTP record after verification
     await OTP.deleteOne({ userId: operator._id });
 
     res.json({ message: 'Email verified successfully!' });
@@ -142,6 +61,32 @@ exports.verifyEmail = async (req, res) => {
     console.error('Verification Error:', err);
     res.status(500).json({ message: 'Error during email verification', error: err.message });
   }
+};
+
+// Send admin approval email
+const sendAdminApprovalEmail = async (operatorId, operatorName) => {
+  const admin = await Admin.findOne();
+  const approvalLink = `http://localhost:5000/api/operator/admin-approve?operatorId=${operatorId}&action=accept`;
+  const rejectionLink = `http://localhost:5000/api/operator/admin-approve?operatorId=${operatorId}&action=reject`;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: admin.email, 
+    subject: 'New Operator Registration Approval Required',
+    html: `<p>New operator <strong>${operatorName}</strong> has registered. Click the links below to approve or reject:</p>
+           <p><a href="${approvalLink}">Approve</a></p>
+           <p><a href="${rejectionLink}">Reject</a></p>`,
+  };
+
+  await transporter.sendMail(mailOptions);
 };
 
 // Admin Approval or Rejection
@@ -193,7 +138,7 @@ exports.loginOperator = async (req, res) => {
   }
 };
 
-// Forgot Password (Generate OTP for password reset)
+// Forgot Password 
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
@@ -204,18 +149,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Please verify your email before resetting your password' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000);  // Generate OTP for password reset
-
-    const otpRecord = new OTP({
-      userId: operator._id,
-      otp: otp,
-      expiresAt: Date.now() + 15 * 60 * 1000,  // 15 minutes expiration time
-    });
-
-    await otpRecord.save();
-
-    // Send OTP for password reset
-    await sendPasswordResetEmail(email, otp);
+    await generateAndSendOtp(operator._id, email, 'reset'); 
 
     res.json({ message: 'Password reset OTP sent to email' });
   } catch (err) {
@@ -224,7 +158,7 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// Reset Password (Verify OTP and reset password)
+// Reset Password
 exports.resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
   try {
@@ -240,7 +174,6 @@ exports.resetPassword = async (req, res) => {
     operator.passwordHash = hashedPassword;
     await operator.save();
 
-    // Delete OTP record after password reset
     await OTP.deleteOne({ userId: operator._id });
 
     res.json({ message: 'Password reset successful' });

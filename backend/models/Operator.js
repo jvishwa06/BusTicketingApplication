@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 
 const operatorSchema = new mongoose.Schema({
   companyName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
   contactPhone: { type: String, required: true },
-  verificationToken: { type: String }, 
+  email: { type: String, required: true, unique: true },
   isEmailVerified: { type: Boolean, default: false }, 
+  passwordHash: { type: String, required: true },
+  verificationToken: { type: String }, 
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

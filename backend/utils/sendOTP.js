@@ -1,6 +1,12 @@
+const OTP = require('../models/OTP');
 const nodemailer = require('nodemailer');
 
-exports.sendOTP = async (email, otp) => {
+const sendOtpEmail = async (email, otp, type) => {
+  const subject = type === 'verification' ? 'Email Verification OTP' : 'Password Reset OTP';
+  const message = type === 'verification' 
+    ? `<p>Use the following OTP to verify your email: <b>${otp}</b></p>`
+    : `<p>Use the following OTP to reset your password: <b>${otp}</b></p>`;
+  
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -12,14 +18,24 @@ exports.sendOTP = async (email, otp) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Your OTP for Password Reset',
-    text: `Your OTP is: ${otp}`,
+    subject: subject,
+    html: message,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log('OTP sent to email');
-  } catch (error) {
-    console.error('Error sending OTP:', error);
-  }
+  await transporter.sendMail(mailOptions);
 };
+
+const generateAndSendOtp = async (userId, email, type) => {
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  const otpRecord = new OTP({
+    userId: userId,
+    otp: otp,
+    expiresAt: Date.now() + 15 * 60 * 1000, 
+  });
+
+  await otpRecord.save();
+
+  await sendOtpEmail(email, otp, type);
+};
+
+module.exports = { generateAndSendOtp };

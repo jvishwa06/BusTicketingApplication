@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const adminSchema = new mongoose.Schema({
+  name: { type: String, required: true },
   email: { type: String, required: true, unique: true },  
   passwordHash: { type: String, required: true },
-  name: { type: String, required: true },  // Add name field for admin
   verified: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

@@ -2,30 +2,9 @@ const Admin = require('../models/Admin');
 const OTP = require('../models/OTP');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const { generateAndSendOtp } = require('../utils/sendOTP');
 
-// Send verification email with OTP
-const sendVerificationEmail = async (email, otp) => {
-  const verificationLink = `http://localhost:5000/api/admin/verify-email?otp=${otp}&email=${email}`;
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Email Verification OTP',
-    html: `<p>Use the following OTP to verify your email: <b>${otp}</b></p>`,
-  };
-
-  await transporter.sendMail(mailOptions);
-};
-
-// Admin Registration with email verification
+// Admin Registration
 exports.registerAdmin = async (req, res) => {
   const { email, password, name } = req.body;
   try {
@@ -34,29 +13,18 @@ exports.registerAdmin = async (req, res) => {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
-    const verificationOtp = Math.floor(100000 + Math.random() * 900000);  // Generate OTP
-
+    const passwordHash = await bcrypt.hash(password, 12); 
     const newAdmin = new Admin({
       email,
       passwordHash,
-      name,    // Include name field in the schema
+      name,
       verified: false,
     });
 
     await newAdmin.save();
 
-    // Save OTP in database with expiration time
-    const otpRecord = new OTP({
-      userId: newAdmin._id,
-      otp: verificationOtp,
-      expiresAt: Date.now() + 15 * 60 * 1000,  // 15 minutes expiration time
-    });
+    await generateAndSendOtp(newAdmin._id, email, 'verification');
 
-    await otpRecord.save();
-
-    // Send OTP to email for verification
-    await sendVerificationEmail(email, verificationOtp);
 
     res.status(201).json({ message: 'Admin registered successfully! Please check your email to verify your account.' });
   } catch (err) {
@@ -79,11 +47,9 @@ exports.verifyEmail = async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    // Mark admin as verified
     admin.verified = true;
     await admin.save();
 
-    // Delete OTP record after verification
     await OTP.deleteOne({ userId: admin._id });
 
     res.json({ message: 'Email verified successfully!' });
@@ -115,45 +81,18 @@ exports.loginAdmin = async (req, res) => {
   }
 };
 
-// Forgot Password - Send reset link with OTP
+// Forgot Password 
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
     const admin = await Admin.findOne({ email });
     if (!admin) return res.status(400).json({ message: 'Admin not found' });
 
-    // Check if the admin is verified before resetting password
     if (!admin.verified) {
       return res.status(400).json({ message: 'Please verify your email before resetting your password' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000);  // Generate OTP for password reset
-
-    const otpRecord = new OTP({
-      userId: admin._id,
-      otp: otp,
-      expiresAt: Date.now() + 15 * 60 * 1000,  // 15 minutes expiration time
-    });
-
-    await otpRecord.save();
-
-    // Send OTP to email for reset password
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Password Reset OTP',
-      html: `<p>Use the following OTP to reset your password: <b>${otp}</b></p>`,
-    };
-
-    await transporter.sendMail(mailOptions);
+    await generateAndSendOtp(admin._id, email, 'reset');
 
     res.json({ message: 'Password reset OTP sent to email' });
   } catch (err) {
@@ -162,7 +101,7 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// Reset Password - Only if authenticated (with OTP)
+// Reset Password
 exports.resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
   try {
@@ -178,7 +117,6 @@ exports.resetPassword = async (req, res) => {
     admin.passwordHash = hashedPassword;
     await admin.save();
 
-    // Delete OTP record after password reset
     await OTP.deleteOne({ userId: admin._id });
 
     res.json({ message: 'Password reset successful' });
