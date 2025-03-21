@@ -3,11 +3,10 @@ const OTP = require('../models/OTP');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
-const { v4: uuidv4 } = require('uuid');
 
-// Send verification email
-const sendVerificationEmail = async (email, token) => {
-  const verificationLink = `http://localhost:5000/api/admin/verify-email?token=${token}`;
+// Send verification email with OTP
+const sendVerificationEmail = async (email, otp) => {
+  const verificationLink = `http://localhost:5000/api/admin/verify-email?otp=${otp}&email=${email}`;
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -19,8 +18,8 @@ const sendVerificationEmail = async (email, token) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Please verify your email address',
-    html: `<p>Click the following link to verify your email address: <a href="${verificationLink}">${verificationLink}</a></p>`,
+    subject: 'Email Verification OTP',
+    html: `<p>Use the following OTP to verify your email: <b>${otp}</b></p>`,
   };
 
   await transporter.sendMail(mailOptions);
@@ -28,7 +27,7 @@ const sendVerificationEmail = async (email, token) => {
 
 // Admin Registration with email verification
 exports.registerAdmin = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, name } = req.body;
   try {
     const existingAdmin = await Admin.findOne({ email });
     if (existingAdmin) {
@@ -36,16 +35,28 @@ exports.registerAdmin = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const verificationToken = uuidv4(); 
+    const verificationOtp = Math.floor(100000 + Math.random() * 900000);  // Generate OTP
 
     const newAdmin = new Admin({
       email,
       passwordHash,
-      verificationToken,
+      name,    // Include name field in the schema
+      verified: false,
     });
 
     await newAdmin.save();
-    await sendVerificationEmail(email, verificationToken);
+
+    // Save OTP in database with expiration time
+    const otpRecord = new OTP({
+      userId: newAdmin._id,
+      otp: verificationOtp,
+      expiresAt: Date.now() + 15 * 60 * 1000,  // 15 minutes expiration time
+    });
+
+    await otpRecord.save();
+
+    // Send OTP to email for verification
+    await sendVerificationEmail(email, verificationOtp);
 
     res.status(201).json({ message: 'Admin registered successfully! Please check your email to verify your account.' });
   } catch (err) {
@@ -54,18 +65,26 @@ exports.registerAdmin = async (req, res) => {
   }
 };
 
-// Verify Email
+// Verify Email using OTP
 exports.verifyEmail = async (req, res) => {
-  const { token } = req.query;
+  const { otp, email } = req.query;
   try {
-    const admin = await Admin.findOne({ verificationToken: token });
+    const admin = await Admin.findOne({ email });
     if (!admin) {
-      return res.status(400).json({ message: 'Invalid or expired verification token' });
+      return res.status(400).json({ message: 'Admin not found' });
     }
 
+    const otpRecord = await OTP.findOne({ userId: admin._id, otp });
+    if (!otpRecord || otpRecord.expiresAt < Date.now()) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Mark admin as verified
     admin.verified = true;
-    admin.verificationToken = undefined; 
     await admin.save();
+
+    // Delete OTP record after verification
+    await OTP.deleteOne({ userId: admin._id });
 
     res.json({ message: 'Email verified successfully!' });
   } catch (err) {
@@ -81,10 +100,14 @@ exports.loginAdmin = async (req, res) => {
     const admin = await Admin.findOne({ email });
     if (!admin) return res.status(400).json({ message: 'Admin not found' });
 
+    if (!admin.verified) {
+      return res.status(400).json({ message: 'Please verify your email first' });
+    }
+
     const isMatch = await bcrypt.compare(password, admin.passwordHash);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ adminId: admin._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ userId: admin._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ token });
   } catch (err) {
     console.error('Login Error:', err);
@@ -92,29 +115,54 @@ exports.loginAdmin = async (req, res) => {
   }
 };
 
-// Forgot Password
+// Forgot Password - Send reset link with OTP
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
     const admin = await Admin.findOne({ email });
     if (!admin) return res.status(400).json({ message: 'Admin not found' });
 
-    const otp = Math.floor(100000 + Math.random() * 900000);
+    // Check if the admin is verified before resetting password
+    if (!admin.verified) {
+      return res.status(400).json({ message: 'Please verify your email before resetting your password' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);  // Generate OTP for password reset
+
     const otpRecord = new OTP({
       userId: admin._id,
       otp: otp,
-      expiresAt: Date.now() + 15 * 60 * 1000,
+      expiresAt: Date.now() + 15 * 60 * 1000,  // 15 minutes expiration time
     });
 
     await otpRecord.save();
-    res.json({ message: 'OTP sent to email' });
+
+    // Send OTP to email for reset password
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Password Reset OTP',
+      html: `<p>Use the following OTP to reset your password: <b>${otp}</b></p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ message: 'Password reset OTP sent to email' });
   } catch (err) {
     console.error('Forgot Password Error:', err);
     res.status(500).json({ message: 'Error during forgot password', error: err.message });
   }
 };
 
-// Reset Password
+// Reset Password - Only if authenticated (with OTP)
 exports.resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
   try {
@@ -122,13 +170,17 @@ exports.resetPassword = async (req, res) => {
     if (!admin) return res.status(400).json({ message: 'Admin not found' });
 
     const otpRecord = await OTP.findOne({ userId: admin._id, otp });
-    if (!otpRecord || otpRecord.expiresAt < Date.now()) return res.status(400).json({ message: 'Invalid or expired OTP' });
+    if (!otpRecord || otpRecord.expiresAt < Date.now()) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
 
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     admin.passwordHash = hashedPassword;
     await admin.save();
 
+    // Delete OTP record after password reset
     await OTP.deleteOne({ userId: admin._id });
+
     res.json({ message: 'Password reset successful' });
   } catch (err) {
     console.error('Reset Password Error:', err);

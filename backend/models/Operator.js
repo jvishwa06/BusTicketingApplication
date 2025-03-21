@@ -1,12 +1,17 @@
 const mongoose = require('mongoose');
 
 const operatorSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },  
   companyName: { type: String, required: true },
-  contactPhone: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
+  contactPhone: { type: String, required: true },
+  verificationToken: { type: String }, 
+  isEmailVerified: { type: Boolean, default: false }, 
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  otp: { type: String },
+  otpExpiresAt: { type: Date },
 });
 
 operatorSchema.pre('save', function(next) {

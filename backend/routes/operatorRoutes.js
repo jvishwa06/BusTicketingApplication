@@ -7,5 +7,6 @@ router.post('/login', operatorController.loginOperator);
 router.post('/forgot-password', operatorController.forgotPassword);  
 router.post('/reset-password', operatorController.resetPassword);  
 router.get('/verify-email', operatorController.verifyEmail);    
+router.get('/admin-approve', operatorController.adminApprove);
 
 module.exports = router;
