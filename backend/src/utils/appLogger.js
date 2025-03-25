@@ -22,15 +22,15 @@ const fileFormat = format.combine(
 );
 
 const appLogger = createLogger({
-  level: 'info', 
-  defaultMeta: { service: 'auth-service' }, 
+  level: 'info',
+  defaultMeta: { service: 'auth-service' },
   format: fileFormat,
   transports: [
     new transports.File({
       filename: path.join(logDirectory, 'application.log'),
       maxsize: 5242880,
       maxFiles: 5,
-      tailable: true, 
+      tailable: true,
     }),
     new transports.Console({
       format: consoleFormat,
@@ -39,9 +39,16 @@ const appLogger = createLogger({
   ],
 });
 
-appLogger.info({
-  message: 'Logger initialized successfully',
-  env: process.env.NODE_ENV || 'development',
-});
+// Silence logger in test environment before any logging
+if (process.env.NODE_ENV === 'test') {
+  appLogger.silent = true;
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  appLogger.info({
+    message: 'Logger initialized successfully',
+    env: process.env.NODE_ENV || 'development',
+  });
+}
 
 module.exports = appLogger;

@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const bookingController = require('../controllers/bookingController');
+const TripController = require('../controllers/tripController');
 const { authenticateOperator } = require('../middleware/authMiddleware');
 
 router.use(authenticateOperator);
 
-router.get('/trip/:tripId', bookingController.getTripBookings);
-router.get('/:id', bookingController.getBookingDetails);
-router.patch('/:id/status', bookingController.updateBookingStatus);
-router.get('/analytics/overview', bookingController.getBookingAnalytics);
+router.post('/', TripController.createTrip);
+router.get('/', TripController.getOperatorTrips);
+router.get('/:id', TripController.getTrip);
+router.put('/:id', TripController.updateTrip);
+router.delete('/:id', TripController.cancelTrip);
+router.get('/:id/analytics', TripController.getTripAnalytics);
+router.get('/:id/seats', TripController.getSeatAvailability);
 
-module.exports = router; 
+module.exports = router;

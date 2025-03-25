@@ -20,4 +20,8 @@ accessLogStream.on('error', (err) => {
 
 const requestLogger = morgan('combined', { stream: accessLogStream });
 
+if (process.env.NODE_ENV === 'test') {
+  requestLogger.silent = true; // Silence logger in test environment
+}
+
 module.exports = requestLogger;

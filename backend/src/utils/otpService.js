@@ -30,7 +30,7 @@ const generateAndSendOtp = async (userId, email, type) => {
   const otpRecord = new OTP({
     userId,
     otp,
-    expiresAt: Date.now() + 15 * 60 * 1000,
+    expiresAt: Date.now() + 30 * 1000,
   });
 
   await otpRecord.save();

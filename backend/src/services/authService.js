@@ -10,7 +10,6 @@ const { generateAndSendOtp } = require('../utils/otpService');
 const { sendAdminApprovalEmail } = require('../utils/approvalService');
 
 class AuthService {
-  
   // User Registration
   static async registerUser(email, password, name) {
     try {
@@ -27,18 +26,17 @@ class AuthService {
         name,
         verified: false,
       });
-
-      await UserRepo.save(user);
-      await generateAndSendOtp(user._id, email, 'verification');
       
+      const savedUser = await UserRepo.save(user);
+      await generateAndSendOtp(savedUser._id, email, 'verification');
       appLogger.info({
         message: 'User successfully registered',
         email,
-        userId: user._id,
+        userId: savedUser._id,
         action: 'register_user',
       });
+      return savedUser;
       
-      return user;
     } catch (error) {
       appLogger.error({
         message: 'User registration failed',
@@ -189,20 +187,18 @@ class AuthService {
         isEmailVerified: false,
         status: 'pending',
       });
-
-      await OperatorRepo.save(operator);
-      await generateAndSendOtp(operator._id, email, 'verification');
-      await sendAdminApprovalEmail(operator._id, companyName);
       
+      const savedOperator = await OperatorRepo.save(operator);
+      await generateAndSendOtp(savedOperator._id, email, 'verification');
+      await sendAdminApprovalEmail(savedOperator._id, companyName);
       appLogger.info({
         message: 'Operator successfully registered',
         email,
-        operatorId: operator._id,
+        operatorId: savedOperator._id,
         companyName,
         action: 'register_operator',
       });
-      
-      return operator;
+      return savedOperator;      
     } catch (error) {
       appLogger.error({
         message: 'Operator registration failed',
