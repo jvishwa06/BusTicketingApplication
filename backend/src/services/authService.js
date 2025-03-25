@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../models/user');
 const Admin = require('../models/admin');
 const Operator = require('../models/operator');
 const OTP = require('../models/otp');
@@ -60,6 +60,11 @@ class AuthService {
       if (!user.verified) {
         appLogger.warn({ message: 'Login attempt with unverified email', email });
         throw new Error('Invalid credentials or email not verified');
+      }
+
+            // Check if the user is blocked
+      if (user.blocked) {
+        throw new Error('Your account is blocked');
       }
 
       const isMatch = await bcrypt.compare(password, user.passwordHash);
@@ -233,6 +238,11 @@ class AuthService {
           status: operator.status 
         });
         throw new Error('Your account has not been approved by the admin yet.');
+      }
+
+            // Check if the operator is blocked
+      if (operator.blocked) {
+        throw new Error('Your account is blocked');
       }
 
       const isMatch = await bcrypt.compare(password, operator.passwordHash);

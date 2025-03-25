@@ -39,7 +39,6 @@ const appLogger = createLogger({
   ],
 });
 
-// Silence logger in test environment before any logging
 if (process.env.NODE_ENV === 'test') {
   appLogger.silent = true;
 }

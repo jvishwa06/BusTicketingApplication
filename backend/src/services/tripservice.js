@@ -1,4 +1,4 @@
-const TripRepository = require('../repositories/TripRepository');
+const TripRepository = require('../repositories/tripRepository');
 const BookingRepository = require('../repositories/bookingRepository');
 const appLogger = require('../utils/appLogger');
 
@@ -78,4 +78,4 @@ class TripService {
   }
 }
 
-module.exports = new TripService();
+module.exports = new TripService(); 

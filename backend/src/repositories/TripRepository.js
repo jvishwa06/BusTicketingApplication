@@ -1,4 +1,4 @@
-const Trip = require('../models/Trip');
+const Trip = require('../models/trip');
 const appLogger = require('../utils/appLogger');
 
 class TripRepository {
@@ -9,6 +9,23 @@ class TripRepository {
     } catch (error) {
       appLogger.error({ message: 'Failed to create trip', error: error.message });
       throw error;
+    }
+  }
+
+  async findAll() {
+    try {
+      return await Trip.find();  // Fetch all trips
+    } catch (error) {
+      throw new Error('Error while fetching trips');
+    }
+  }
+
+
+  async findById(tripId) {
+    try {
+      return await Trip.findById(tripId);  // Find trip by ID
+    } catch (error) {
+      throw new Error('Error while fetching trip');
     }
   }
 

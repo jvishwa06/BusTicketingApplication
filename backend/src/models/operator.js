@@ -7,6 +7,7 @@ const operatorSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   isEmailVerified: { type: Boolean, default: false },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },  
+  blocked: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model('Operator', operatorSchema);

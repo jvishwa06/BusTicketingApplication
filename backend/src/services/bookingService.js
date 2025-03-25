@@ -1,5 +1,5 @@
 const BookingRepository = require('../repositories/bookingRepository');
-const TripRepository = require('../repositories/TripRepository');
+const TripRepository = require('../repositories/tripRepository');
 const appLogger = require('../utils/appLogger');
 
 class BookingService {
