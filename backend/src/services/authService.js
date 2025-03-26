@@ -29,22 +29,11 @@ class AuthService {
       
       const savedUser = await UserRepo.save(user);
       await generateAndSendOtp(savedUser._id, email, 'verification');
-      appLogger.info({
-        message: 'User successfully registered',
-        email,
-        userId: savedUser._id,
-        action: 'register_user',
-      });
+      appLogger.info({message: 'User successfully registered',email,userId: savedUser._id,action: 'register_user',});
       return savedUser;
       
     } catch (error) {
-      appLogger.error({
-        message: 'User registration failed',
-        email,
-        error: error.message,
-        stack: error.stack,
-        action: 'register_user',
-      });
+      appLogger.error({message: 'User registration failed',email,error: error.message,stack: error.stack,action: 'register_user',});
       throw error;
     }
   }
@@ -62,7 +51,6 @@ class AuthService {
         throw new Error('Invalid credentials or email not verified');
       }
 
-            // Check if the user is blocked
       if (user.blocked) {
         throw new Error('Your account is blocked');
       }
@@ -74,22 +62,11 @@ class AuthService {
       }
 
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      appLogger.info({
-        message: 'User login successful',
-        email,
-        userId: user._id,
-        action: 'login_user',
-      });
+      appLogger.info({message: 'User login successful',email,userId: user._id,action: 'login_user',});
       
       return token;
     } catch (error) {
-      appLogger.error({
-        message: 'User login failed',
-        email,
-        error: error.message,
-        stack: error.stack,
-        action: 'login_user',
-      });
+      appLogger.error({message: 'User login failed',email,error: error.message,stack: error.stack,action: 'login_user',});
       throw error;
     }
   }
@@ -104,32 +81,16 @@ class AuthService {
       }
 
       const passwordHash = await bcrypt.hash(password, 12);
-      const admin = new Admin({
-        email,
-        passwordHash,
-        name,
-        verified: false,
-      });
+      const admin = new Admin({email,passwordHash,name,verified: false,});
 
       await AdminRepo.save(admin);
       await generateAndSendOtp(admin._id, email, 'verification');
       
-      appLogger.info({
-        message: 'Admin successfully registered',
-        email,
-        adminId: admin._id,
-        action: 'register_admin',
-      });
+      appLogger.info({message: 'Admin successfully registered',email,adminId: admin._id,action: 'register_admin',});
       
       return admin;
     } catch (error) {
-      appLogger.error({
-        message: 'Admin registration failed',
-        email,
-        error: error.message,
-        stack: error.stack,
-        action: 'register_admin',
-      });
+      appLogger.error({message: 'Admin registration failed',email,error: error.message,stack: error.stack,action: 'register_admin',});
       throw error;
     }
   }
@@ -139,11 +100,7 @@ class AuthService {
     try {
       const admin = await AdminRepo.findByEmail(email);
       if (!admin || !admin.verified) {
-        appLogger.warn({ 
-          message: 'Admin login attempt failed', 
-          email, 
-          reason: !admin ? 'admin not found' : 'email not verified' 
-        });
+        appLogger.warn({ message: 'Admin login attempt failed', email, reason: !admin ? 'admin not found' : 'email not verified' });
         throw new Error('Invalid credentials or email not verified');
       }
 
@@ -154,22 +111,11 @@ class AuthService {
       }
 
       const token = jwt.sign({ adminId: admin._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      appLogger.info({
-        message: 'Admin login successful',
-        email,
-        adminId: admin._id,
-        action: 'login_admin',
-      });
+      appLogger.info({message: 'Admin login successful',email,adminId: admin._id,action: 'login_admin',});
       
       return token;
     } catch (error) {
-      appLogger.error({
-        message: 'Admin login failed',
-        email,
-        error: error.message,
-        stack: error.stack,
-        action: 'login_admin',
-      });
+      appLogger.error({message: 'Admin login failed',email,error: error.message,stack: error.stack,action: 'login_admin',});
       throw error;
     }
   }
@@ -196,23 +142,10 @@ class AuthService {
       const savedOperator = await OperatorRepo.save(operator);
       await generateAndSendOtp(savedOperator._id, email, 'verification');
       await sendAdminApprovalEmail(savedOperator._id, companyName);
-      appLogger.info({
-        message: 'Operator successfully registered',
-        email,
-        operatorId: savedOperator._id,
-        companyName,
-        action: 'register_operator',
-      });
+      appLogger.info({message: 'Operator successfully registered',email,operatorId: savedOperator._id,companyName,action: 'register_operator',});
       return savedOperator;      
     } catch (error) {
-      appLogger.error({
-        message: 'Operator registration failed',
-        email,
-        companyName,
-        error: error.message,
-        stack: error.stack,
-        action: 'register_operator',
-      });
+      appLogger.error({message: 'Operator registration failed',email,companyName,error: error.message,stack: error.stack,action: 'register_operator',});
       throw error;
     }
   }
@@ -232,15 +165,10 @@ class AuthService {
       }
 
       if (operator.status !== 'approved') {
-        appLogger.warn({ 
-          message: 'Operator login failed: account not approved', 
-          email, 
-          status: operator.status 
-        });
+        appLogger.warn({ message: 'Operator login failed: account not approved', email, status: operator.status });
         throw new Error('Your account has not been approved by the admin yet.');
       }
 
-            // Check if the operator is blocked
       if (operator.blocked) {
         throw new Error('Your account is blocked');
       }
@@ -252,22 +180,11 @@ class AuthService {
       }
 
       const token = jwt.sign({ operatorId: operator._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      appLogger.info({
-        message: 'Operator login successful',
-        email,
-        operatorId: operator._id,
-        action: 'login_operator',
-      });
+      appLogger.info({message: 'Operator login successful',email,operatorId: operator._id,action: 'login_operator',});
       
       return token;
     } catch (error) {
-      appLogger.error({
-        message: 'Operator login failed',
-        email,
-        error: error.message,
-        stack: error.stack,
-        action: 'login_operator',
-      });
+      appLogger.error({message: 'Operator login failed',email,error: error.message,stack: error.stack,action: 'login_operator',});
       throw error;
     }
   }
@@ -284,12 +201,7 @@ class AuthService {
       operator.status = 'approved';
       await OperatorRepo.save(operator);
       
-      appLogger.info({
-        message: 'Operator approved successfully',
-        operatorId,
-        email: operator.email,
-        action: 'approve_operator',
-      });
+      appLogger.info({message: 'Operator approved successfully',operatorId,email: operator.email,action: 'approve_operator',});
       
       return operator;
     } catch (error) {
@@ -316,22 +228,11 @@ class AuthService {
       operator.status = 'rejected';
       await OperatorRepo.save(operator);
       
-      appLogger.info({
-        message: 'Operator rejected successfully',
-        operatorId,
-        email: operator.email,
-        action: 'reject_operator',
-      });
+      appLogger.info({message: 'Operator rejected successfully',operatorId,email: operator.email,action: 'reject_operator',});
       
       return operator;
     } catch (error) {
-      appLogger.error({
-        message: 'Operator rejection failed',
-        operatorId,
-        error: error.message,
-        stack: error.stack,
-        action: 'reject_operator',
-      });
+      appLogger.error({message: 'Operator rejection failed',operatorId,error: error.message,stack: error.stack,action: 'reject_operator',});
       throw error;
     }
   }
@@ -345,32 +246,15 @@ class AuthService {
       else if (type === 'operator') entity = await OperatorRepo.findByEmail(email);
 
       if (!entity) {
-        appLogger.warn({ 
-          message: `${type} password reset attempt failed: not found`, 
-          email, 
-          type 
-        });
+        appLogger.warn({ message: `${type} password reset attempt failed: not found`, email, type });
         throw new Error(`${type.charAt(0).toUpperCase() + type.slice(1)} not found`);
       }
 
       await generateAndSendOtp(entity._id, email, 'reset');
       
-      appLogger.info({
-        message: `${type} password reset OTP sent`,
-        email,
-        entityId: entity._id,
-        type,
-        action: 'forgot_password',
-      });
+      appLogger.info({message: `${type} password reset OTP sent`,email,entityId: entity._id,type,action: 'forgot_password',});
     } catch (error) {
-      appLogger.error({
-        message: `${type} password reset failed`,
-        email,
-        type,
-        error: error.message,
-        stack: error.stack,
-        action: 'forgot_password',
-      });
+      appLogger.error({message: `${type} password reset failed`,email,type,error: error.message,stack: error.stack,action: 'forgot_password',});
       throw error;
     }
   }
@@ -384,21 +268,13 @@ class AuthService {
       else if (type === 'operator') entity = await OperatorRepo.findByEmail(email);
 
       if (!entity) {
-        appLogger.warn({ 
-          message: `${type} password reset failed: not found`, 
-          email, 
-          type 
-        });
+        appLogger.warn({ message: `${type} password reset failed: not found`, email, type });
         throw new Error(`${type.charAt(0).toUpperCase() + type.slice(1)} not found`);
       }
 
       const otpRecord = await OTP.findOne({ userId: entity._id, otp });
       if (!otpRecord || otpRecord.expiresAt < Date.now()) {
-        appLogger.warn({ 
-          message: `${type} password reset failed: invalid/expired OTP`, 
-          email, 
-          type 
-        });
+        appLogger.warn({ message: `${type} password reset failed: invalid/expired OTP`, email, type });
         throw new Error('Invalid or expired OTP');
       }
 
@@ -407,22 +283,9 @@ class AuthService {
       await entity.save();
       await OTP.deleteOne({ userId: entity._id });
       
-      appLogger.info({
-        message: `${type} password reset successful`,
-        email,
-        entityId: entity._id,
-        type,
-        action: 'reset_password',
-      });
+      appLogger.info({message: `${type} password reset successful`,email,entityId: entity._id,type,action: 'reset_password',});
     } catch (error) {
-      appLogger.error({
-        message: `${type} password reset failed`,
-        email,
-        type,
-        error: error.message,
-        stack: error.stack,
-        action: 'reset_password',
-      });
+      appLogger.error({message: `${type} password reset failed`,email,type,error: error.message,stack: error.stack,action: 'reset_password',});
       throw error;
     }
   }
@@ -436,21 +299,13 @@ class AuthService {
       else if (type === 'operator') entity = await OperatorRepo.findByEmail(email);
 
       if (!entity) {
-        appLogger.warn({ 
-          message: `${type} email verification failed: not found`, 
-          email, 
-          type 
-        });
+        appLogger.warn({ message: `${type} email verification failed: not found`, email, type });
         throw new Error(`${type} not found`);
       }
 
       const otpRecord = await OTP.findOne({ userId: entity._id, otp });
       if (!otpRecord || otpRecord.expiresAt < Date.now()) {
-        appLogger.warn({ 
-          message: `${type} email verification failed: invalid/expired OTP`, 
-          email, 
-          type 
-        });
+        appLogger.warn({ message: `${type} email verification failed: invalid/expired OTP`, email, type });
         throw new Error('Invalid or expired OTP');
       }
 
@@ -460,24 +315,11 @@ class AuthService {
       await entity.save();
       await OTP.deleteOne({ userId: entity._id });
       
-      appLogger.info({
-        message: `${type} email verified successfully`,
-        email,
-        entityId: entity._id,
-        type,
-        action: 'verify_email',
-      });
+      appLogger.info({message: `${type} email verified successfully`,email,entityId: entity._id,type,action: 'verify_email',});
       
       return { message: `${type} email verified successfully` };
     } catch (error) {
-      appLogger.error({
-        message: `${type} email verification failed`,
-        email,
-        type,
-        error: error.message,
-        stack: error.stack,
-        action: 'verify_email',
-      });
+      appLogger.error({message: `${type} email verification failed`,email,type,error: error.message,stack: error.stack,action: 'verify_email',});
       throw error;
     }
   }

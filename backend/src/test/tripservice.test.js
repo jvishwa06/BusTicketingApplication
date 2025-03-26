@@ -1,31 +1,7 @@
-jest.mock('winston', () => {
-  const mockLogger = {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    silent: false,
-  };
-  return {
-    createLogger: jest.fn(() => mockLogger),
-    format: {
-      combine: jest.fn(),
-      colorize: jest.fn(),
-      timestamp: jest.fn(),
-      printf: jest.fn(),
-      errors: jest.fn(),
-      json: jest.fn(),
-    },
-    transports: {
-      File: jest.fn(),
-      Console: jest.fn(),
-    },
-  };
-});
-
 const TripService = require('../services/tripService.js');
-const TripRepository = require('../repositories/TripRepository');
-const BookingRepository = require('../repositories/bookingRepository');
-const appLogger = require('../utils/appLogger');
+const TripRepository = require('../repositories/tripRepository.js');
+const BookingRepository = require('../repositories/bookingRepository.js');
+const appLogger = require('../utils/appLogger.js');
 
 jest.mock('../repositories/tripRepository');
 jest.mock('../repositories/bookingRepository');
@@ -154,7 +130,7 @@ describe('TripService', () => {
         confirmedBookings: 1,
         cancelledBookings: 1,
         totalRevenue: 150,
-        averageRating: 2, // (4 + 0) / 2
+        averageRating: 2,
       });
       expect(appLogger.info).toHaveBeenCalledWith({ message: 'Generated trip analytics', tripId, totalBookings: 2 });
     });

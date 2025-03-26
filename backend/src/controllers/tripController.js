@@ -1,4 +1,4 @@
-const TripService = require('../services/tripservice.js');
+const TripService = require('../services/tripService.js');
 const appLogger = require('../utils/appLogger');
 
 class TripController {

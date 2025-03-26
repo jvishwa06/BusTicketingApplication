@@ -1,30 +1,6 @@
-jest.mock('winston', () => {
-  const mockLogger = {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    silent: false,
-  };
-  return {
-    createLogger: jest.fn(() => mockLogger),
-    format: {
-      combine: jest.fn(),
-      colorize: jest.fn(),
-      timestamp: jest.fn(),
-      printf: jest.fn(),
-      errors: jest.fn(),
-      json: jest.fn(),
-    },
-    transports: {
-      File: jest.fn(),
-      Console: jest.fn(),
-    },
-  };
-});
-
 const BookingService = require('../services/bookingService');
 const BookingRepository = require('../repositories/bookingRepository');
-const TripRepository = require('../repositories/TripRepository');
+const TripRepository = require('../repositories/tripRepository');
 const appLogger = require('../utils/appLogger');
 
 jest.mock('../repositories/bookingRepository');

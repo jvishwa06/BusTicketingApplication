@@ -44,10 +44,7 @@ if (process.env.NODE_ENV === 'test') {
 }
 
 if (process.env.NODE_ENV !== 'test') {
-  appLogger.info({
-    message: 'Logger initialized successfully',
-    env: process.env.NODE_ENV || 'development',
-  });
+  appLogger.info({message: 'Logger initialized successfully',env: process.env.NODE_ENV || 'development',});
 }
 
 module.exports = appLogger;

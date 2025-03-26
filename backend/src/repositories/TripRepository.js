@@ -14,7 +14,7 @@ class TripRepository {
 
   async findAll() {
     try {
-      return await Trip.find();  // Fetch all trips
+      return await Trip.find();  
     } catch (error) {
       throw new Error('Error while fetching trips');
     }
@@ -23,7 +23,7 @@ class TripRepository {
 
   async findById(tripId) {
     try {
-      return await Trip.findById(tripId);  // Find trip by ID
+      return await Trip.findById(tripId);  
     } catch (error) {
       throw new Error('Error while fetching trip');
     }

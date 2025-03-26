@@ -1,27 +1,3 @@
-jest.mock('winston', () => {
-  const mockLogger = {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    silent: false,
-  };
-  return {
-    createLogger: jest.fn(() => mockLogger),
-    format: {
-      combine: jest.fn(),
-      colorize: jest.fn(),
-      timestamp: jest.fn(),
-      printf: jest.fn(),
-      errors: jest.fn(),
-      json: jest.fn(),
-    },
-    transports: {
-      File: jest.fn(),
-      Console: jest.fn(),
-    },
-  };
-});
-
 const AuthService = require('../services/authService');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
