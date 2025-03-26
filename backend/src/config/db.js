@@ -8,7 +8,6 @@ const connectDB = async () => {
     applogger.info(`MongoDB connected successfully: ${conn.connection.host}`);
   } catch (err) {
     applogger.error(`Error connecting to MongoDB: ${err.message}`);
-    applogger.error('Stack trace:', err.stack);
     process.exit(1);
   }
 };
