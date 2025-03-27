@@ -7,6 +7,8 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const connectDB = require('./config/db'); 
 const requestLogger = require('./utils/requestLogger'); 
+const userRoutes = require('./routes/userRoutes'); 
+const opRoutes = require('./routes/operatorRoutes'); 
 
 dotenv.config();
 connectDB();
@@ -21,5 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes); 
+app.use('/api/operators', opRoutes); 
 
 module.exports = app;

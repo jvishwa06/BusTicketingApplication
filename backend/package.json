@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "server": "nodemon ./src/server.js"
   },
   "keywords": [],
   "author": "",

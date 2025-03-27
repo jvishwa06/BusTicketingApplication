@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const TripController = require('../controllers/tripController');
-const { authenticateOperator } = require('../middleware/authMiddleware');
+const { authenticateOperatorandUser } = require('../middleware/authMiddleware');
 
-router.use(authenticateOperator);
+router.use(authenticateOperatorandUser);
 
 router.post('/', TripController.createTrip);
 router.get('/', TripController.getOperatorTrips);

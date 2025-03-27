@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const applogger = require('../utils/appLogger');
 const { UserRepo, OperatorRepo } = require('../repositories/authRepository');
 
-const authenticateOperator = async (req, res, next) => {
+const authenticateOperatorandUser = async (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
   if (!token) {
@@ -12,7 +12,8 @@ const authenticateOperator = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (req.path.startsWith('/api/users')) {
+
+    if (req.originalUrl.startsWith('/api/users')) {
       const user = await UserRepo.findById(decoded.userId);
       if (!user) {
         applogger.warn({ message: 'User not found', userId: decoded.userId, ip: req.ip });
@@ -25,7 +26,8 @@ const authenticateOperator = async (req, res, next) => {
       }
 
       req.user = user;
-    } else if (req.path.startsWith('/api/operators')) {
+
+    } else if (req.originalUrl.startsWith('/api/operators')) {
       const operator = await OperatorRepo.findById(decoded.operatorId);
       if (!operator) {
         applogger.warn({ message: 'Operator not found', operatorId: decoded.operatorId, ip: req.ip });
@@ -44,9 +46,14 @@ const authenticateOperator = async (req, res, next) => {
 
     next();
   } catch (error) {
-    applogger.error({ message: 'Authentication error', error: error.message, stack: error.stack, ip: req.ip });
+    applogger.error({
+      message: 'Authentication error',
+      error: error.message,
+      stack: error.stack,
+      ip: req.ip
+    });
     res.status(401).json({ error: 'Invalid token' });
   }
 };
 
-module.exports = { authenticateOperator };
+module.exports = { authenticateOperatorandUser };

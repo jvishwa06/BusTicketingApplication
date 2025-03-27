@@ -1,8 +1,11 @@
 const mongoose = require('mongoose');
 const applogger = require('../utils/appLogger');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const connectDB = async () => {
   try {
+    console.log(process.env.MONGODB_URI);
     const conn = await mongoose.connect(process.env.MONGODB_URI);
     
     applogger.info(`MongoDB connected successfully: ${conn.connection.host}`);

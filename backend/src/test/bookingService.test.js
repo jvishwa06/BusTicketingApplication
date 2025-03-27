@@ -11,7 +11,6 @@ jest.mock('../utils/appLogger', () => ({
   error: jest.fn(),
 }));
 
-// Suppress console logs
 beforeAll(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
