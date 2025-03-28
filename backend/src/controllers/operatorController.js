@@ -1,4 +1,5 @@
 import OperatorService from '../services/operatorService.js';
+import appLogger from '../utils/appLogger.js';
 
 const getUserProfile = async (req, res) => {
   try {

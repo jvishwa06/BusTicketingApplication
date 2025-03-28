@@ -1,11 +1,12 @@
 import Operator from '../models/operator.js';
+class OperatorRepository {
+  async findById(operatorid) {
+    return await Operator.findById(operatorid);
+  }
 
-const findById = async (operatorid) => {
-  return await Operator.findById(operatorid);
-};
+  async findByEmail(email) {
+    return await Operator.findOne({ email });
+  }
+}
 
-const findByEmail = async (email) => {
-  return await Operator.findOne({ email });
-};
-
-export default { findById, findByEmail };
+export default new OperatorRepository();

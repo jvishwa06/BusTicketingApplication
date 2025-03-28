@@ -1,5 +1,6 @@
 import AdminService from '../services/adminService.js';
 import TripRepository from '../repositories/tripRepository.js';
+import appLogger from '../utils/appLogger.js';
 class AdminController {
   constructor() {
     this.adminService = AdminService;

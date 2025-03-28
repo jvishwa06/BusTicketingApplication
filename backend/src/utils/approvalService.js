@@ -1,4 +1,3 @@
-import e from 'express';
 import nodemailer from 'nodemailer';
 
 const sendAdminApprovalEmail = async (operatorId, operatorName) => {
