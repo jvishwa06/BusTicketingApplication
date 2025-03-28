@@ -1,5 +1,5 @@
-const { UserRepo, AdminRepo, OperatorRepo } = require('../repositories/authRepository');
-const tripRepository = require('../repositories/tripRepository');
+import { UserRepo, AdminRepo, OperatorRepo } from '../repositories/authRepository.js';
+import TripRepository from '../repositories/tripRepository.js';
 
 class AdminService {
   async getAllUsers() {
@@ -39,18 +39,18 @@ class AdminService {
   }
 
   async getTripById(tripId) {
-    const trip = await tripRepository.findByIdAndOperator(tripId);
+    const trip = await TripRepository.findByIdAndOperator(tripId);
     if (!trip) throw new Error('Trip not found');
     return trip;
   }
 
   async cancelTrip(tripId) {
-    const trip = await tripRepository.findByIdAndOperator(tripId);
+    const trip = await TripRepository.findByIdAndOperator(tripId);
     if (!trip) throw new Error('Trip not found');
     
-    await tripRepository.update(tripId, { status: 'cancelled' });
+    await TripRepository.update(tripId, { status: 'cancelled' });
     return 'Trip cancelled successfully';
   }
 }
 
-module.exports = new AdminService();
+export default new AdminService();

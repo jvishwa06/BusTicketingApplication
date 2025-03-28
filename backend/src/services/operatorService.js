@@ -1,4 +1,4 @@
-const operatorRepository = require('../repositories/operatorRepository');
+import operatorRepository from '../repositories/operatorRepository.js';
 
 const getUserProfile = async (operatorId) => {
   const user = await operatorRepository.findById(operatorId);
@@ -21,4 +21,4 @@ const updateUserProfile = async (operatorId, updateData) => {
   return user;
 };
 
-module.exports = { getUserProfile, updateUserProfile };
+export default { getUserProfile, updateUserProfile };

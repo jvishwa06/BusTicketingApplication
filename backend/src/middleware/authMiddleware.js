@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
-const applogger = require('../utils/appLogger');
-const { UserRepo, OperatorRepo } = require('../repositories/authRepository');
+import jwt from 'jsonwebtoken';
+import applogger from '../utils/appLogger.js';
+import { UserRepo, OperatorRepo } from '../repositories/authRepository.js';
 
 const authenticateOperatorandUser = async (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -56,4 +56,4 @@ const authenticateOperatorandUser = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticateOperatorandUser };
+export { authenticateOperatorandUser };

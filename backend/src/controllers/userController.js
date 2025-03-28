@@ -1,4 +1,4 @@
-const UserService = require('../services/userService');
+import UserService from '../services/userService.js';
 
 const getUserProfile = async (req, res) => {
   try {
@@ -19,4 +19,4 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { getUserProfile, updateUserProfile };
+export { getUserProfile, updateUserProfile };

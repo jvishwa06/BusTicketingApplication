@@ -1,6 +1,6 @@
-const AdminService = require('../services/adminService');
-const { UserRepo, AdminRepo, OperatorRepo } = require('../repositories/authRepository');
-const tripRepository = require('../repositories/tripRepository');
+import AdminService from '../services/adminService.js';
+import { UserRepo, AdminRepo, OperatorRepo } from '../repositories/authRepository.js';
+import tripRepository from '../repositories/tripRepository.js';
 
 jest.mock('../repositories/authRepository', () => ({
   UserRepo: {

@@ -1,6 +1,5 @@
-const Trip = require('../models/trip');
-const appLogger = require('../utils/appLogger');
-
+import Trip from '../models/trip.js';
+import appLogger from '../utils/appLogger.js';
 class TripRepository {
   async create(tripData) {
     try {
@@ -79,4 +78,4 @@ class TripRepository {
   }
 }
 
-module.exports = new TripRepository();
+export default new TripRepository();

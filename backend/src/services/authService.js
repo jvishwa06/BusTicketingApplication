@@ -1,13 +1,13 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/user');
-const Admin = require('../models/admin');
-const Operator = require('../models/operator');
-const OTP = require('../models/otp');
-const appLogger = require('../utils/appLogger');
-const { UserRepo, AdminRepo, OperatorRepo } = require('../repositories/authRepository');
-const { generateAndSendOtp } = require('../utils/otpService');
-const { sendAdminApprovalEmail } = require('../utils/approvalService');
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import User from '../models/user.js';
+import Admin from '../models/admin.js';
+import Operator from '../models/operator.js';
+import OTP from '../models/otp.js';
+import appLogger from '../utils/appLogger.js';
+import { UserRepo, AdminRepo, OperatorRepo } from '../repositories/authRepository.js';
+import { generateAndSendOtp } from '../utils/otpService.js';
+import { sendAdminApprovalEmail } from '../utils/approvalService.js';
 
 class AuthService {
   // User Registration
@@ -325,4 +325,4 @@ class AuthService {
   }
 }
 
-module.exports = AuthService;
+export default AuthService;

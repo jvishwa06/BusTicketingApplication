@@ -1,6 +1,6 @@
-const TripRepository = require('../repositories/tripRepository');
-const BookingRepository = require('../repositories/bookingRepository');
-const appLogger = require('../utils/appLogger');
+import TripRepository from '../repositories/tripRepository.js';
+import BookingRepository from '../repositories/bookingRepository.js';
+import appLogger from '../utils/appLogger.js';
 
 class TripService {
   async createTrip(tripData, operatorId) {
@@ -78,4 +78,4 @@ class TripService {
   }
 }
 
-module.exports = new TripService(); 
+export default new TripService(); 

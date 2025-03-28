@@ -1,7 +1,6 @@
-const User = require('../models/user');
-const Admin = require('../models/admin');
-const Operator = require('../models/operator');
-
+import User from '../models/user.js';
+import Admin from '../models/admin.js';
+import Operator from '../models/operator.js';
 class Repository {
   constructor(model) {
     this.model = model;
@@ -32,4 +31,4 @@ const UserRepo = new Repository(User);
 const AdminRepo = new Repository(Admin);
 const OperatorRepo = new Repository(Operator);
 
-module.exports = { UserRepo, AdminRepo, OperatorRepo };
+export { UserRepo, AdminRepo, OperatorRepo };

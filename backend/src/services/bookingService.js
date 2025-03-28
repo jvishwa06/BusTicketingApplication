@@ -1,7 +1,6 @@
-const BookingRepository = require('../repositories/bookingRepository');
-const TripRepository = require('../repositories/tripRepository');
-const appLogger = require('../utils/appLogger');
-
+import BookingRepository from '../repositories/bookingRepository.js';
+import TripRepository from '../repositories/tripRepository.js';
+import appLogger from '../utils/appLogger.js';
 class BookingService {
   async getTripBookings(tripId, operatorId) {
     const trip = await TripRepository.findByIdAndOperator(tripId, operatorId);
@@ -63,4 +62,4 @@ class BookingService {
   }
 }
 
-module.exports = new BookingService();
+export default new BookingService();

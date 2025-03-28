@@ -1,6 +1,5 @@
-const AdminService = require('../services/adminService');
-const TripRepository = require('../repositories/tripRepository');
-
+import AdminService from '../services/adminService.js';
+import TripRepository from '../repositories/tripRepository.js';
 class AdminController {
   constructor() {
     this.adminService = AdminService;
@@ -88,4 +87,4 @@ class AdminController {
   }
 }
 
-module.exports = new AdminController();
+export default new AdminController();

@@ -1,4 +1,4 @@
-const User = require('../models/user');
+import User from '../models/user.js';
 
 const findById = async (userId) => {
   return await User.findById(userId);
@@ -8,4 +8,4 @@ const findByEmail = async (email) => {
   return await User.findOne({ email });
 };
 
-module.exports = { findById, findByEmail };
+export default { findById, findByEmail };

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const operatorSchema = new mongoose.Schema({
   companyName: { type: String, required: true },
@@ -10,4 +10,6 @@ const operatorSchema = new mongoose.Schema({
   blocked: { type: Boolean, default: false },
 });
 
-module.exports = mongoose.model('Operator', operatorSchema);
+const Operator = mongoose.model('Operator', operatorSchema);
+
+export default Operator;

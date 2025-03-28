@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import adminController from '../controllers/adminController.js';
+
 const router = express.Router();
-const adminController = require('../controllers/adminController');
 
 router.get('/users', adminController.viewAllUsers);
 router.put('/users/:userId/block', adminController.blockUnblockUser);
@@ -12,4 +13,4 @@ router.get('/trips', adminController.viewAllTrips);
 router.get('/trips/:tripId/view', adminController.viewTrip);
 router.put('/trips/:tripId/cancel', adminController.cancelTrip);
 
-module.exports = router;
+export default router;

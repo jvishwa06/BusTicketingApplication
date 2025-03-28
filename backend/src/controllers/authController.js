@@ -1,5 +1,5 @@
-const AuthService = require('../services/authService');
-const appLogger = require('../utils/appLogger');
+import AuthService from '../services/authService.js';
+import appLogger from '../utils/appLogger.js';
 
 class AuthController {
   // User Registration
@@ -181,4 +181,4 @@ class AuthController {
   }
 }
 
-module.exports = AuthController;
+export default AuthController;

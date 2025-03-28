@@ -1,13 +1,11 @@
-const AuthService = require('../services/authService');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const UserRepo = require('../repositories/authRepository').UserRepo;
-const AdminRepo = require('../repositories/authRepository').AdminRepo;
-const OperatorRepo = require('../repositories/authRepository').OperatorRepo;
-const OTP = require('../models/otp');
-const appLogger = require('../utils/appLogger');
-const { generateAndSendOtp } = require('../utils/otpService');
-const { sendAdminApprovalEmail } = require('../utils/approvalService');
+import AuthService from '../services/authService.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { UserRepo, AdminRepo, OperatorRepo } from '../repositories/authRepository.js';
+import OTP from '../models/otp.js';
+import appLogger from '../utils/appLogger.js';
+import { generateAndSendOtp } from '../utils/otpService.js';
+import { sendAdminApprovalEmail } from '../utils/approvalService.js';
 
 jest.mock('bcryptjs');
 jest.mock('jsonwebtoken');

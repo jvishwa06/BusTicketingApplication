@@ -1,5 +1,5 @@
-const TripService = require('../services/tripService.js');
-const appLogger = require('../utils/appLogger');
+import TripService from '../services/tripService.js';
+import appLogger from '../utils/appLogger.js';
 
 class TripController {
   static async createTrip(req, res) {
@@ -73,4 +73,4 @@ class TripController {
   }
 }
 
-module.exports = TripController;
+export default TripController;

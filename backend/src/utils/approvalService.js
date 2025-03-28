@@ -1,4 +1,5 @@
-const nodemailer = require('nodemailer');
+import e from 'express';
+import nodemailer from 'nodemailer';
 
 const sendAdminApprovalEmail = async (operatorId, operatorName) => {
   try {
@@ -35,4 +36,4 @@ const sendAdminApprovalEmail = async (operatorId, operatorName) => {
   }
 };
 
-module.exports = { sendAdminApprovalEmail };
+export { sendAdminApprovalEmail };

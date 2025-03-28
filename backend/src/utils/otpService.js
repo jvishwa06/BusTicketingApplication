@@ -1,5 +1,5 @@
-const OTP = require('../models/otp');
-const nodemailer = require('nodemailer');
+import OTP from '../models/otp.js';
+import nodemailer from 'nodemailer';
 
 const sendOtpEmail = async (email, otp, type) => {
   const subject = type === 'verification' ? 'Email Verification OTP' : 'Password Reset OTP';
@@ -37,4 +37,4 @@ const generateAndSendOtp = async (userId, email, type) => {
   await sendOtpEmail(email, otp, type);
 };
 
-module.exports = { generateAndSendOtp };
+export { generateAndSendOtp };

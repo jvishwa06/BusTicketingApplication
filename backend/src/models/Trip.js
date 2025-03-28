@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const tripSchema = new mongoose.Schema({
   operator: { type: mongoose.Schema.Types.ObjectId, ref: 'Operator', required: true },
@@ -39,4 +39,5 @@ tripSchema.pre('save', function (next) {
   next();
 });
 
-module.exports = mongoose.model('Trip', tripSchema);
+const Trip = mongoose.model('Trip', tripSchema);
+export default Trip;

@@ -1,6 +1,5 @@
-const Booking = require('../models/booking');
-const applogger = require('../utils/appLogger');
-
+import Booking from '../models/booking.js';
+import applogger from '../utils/appLogger.js';
 class BookingRepository {
   async findByTripId(tripId) {
     try {
@@ -48,4 +47,4 @@ class BookingRepository {
   }
 }
 
-module.exports = new BookingRepository();
+export default new BookingRepository();

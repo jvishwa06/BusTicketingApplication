@@ -1,4 +1,4 @@
-const UserRepo = require('../repositories/userRepository');
+import UserRepo from '../repositories/userRepository.js';
 
 const getUserProfile = async (userId) => {
   const user = await UserRepo.findById(userId);
@@ -21,4 +21,4 @@ const updateUserProfile = async (userId, updateData) => {
   return user;
 };
 
-module.exports = { getUserProfile, updateUserProfile };
+export default { getUserProfile, updateUserProfile };

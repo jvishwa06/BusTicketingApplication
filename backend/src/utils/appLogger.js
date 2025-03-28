@@ -1,7 +1,16 @@
-const { createLogger, format, transports } = require('winston');
-const path = require('path');
+import { createLogger, format, transports } from 'winston';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const logDirectory = path.join(__dirname, '../../logs');
+
+if (!fs.existsSync(logDirectory)) {
+  fs.mkdirSync(logDirectory, { recursive: true });
+}
 
 const consoleFormat = format.combine(
   format.colorize(),
@@ -44,7 +53,7 @@ if (process.env.NODE_ENV === 'test') {
 }
 
 if (process.env.NODE_ENV !== 'test') {
-  appLogger.info({message: 'Logger initialized successfully',env: process.env.NODE_ENV || 'development',});
+  appLogger.info({message: 'Logger initialized successfully', env: process.env.NODE_ENV || 'development',});
 }
 
-module.exports = appLogger;
+export default appLogger;

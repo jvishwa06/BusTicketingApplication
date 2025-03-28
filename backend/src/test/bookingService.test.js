@@ -1,7 +1,7 @@
-const BookingService = require('../services/bookingService');
-const BookingRepository = require('../repositories/bookingRepository');
-const TripRepository = require('../repositories/tripRepository');
-const appLogger = require('../utils/appLogger');
+import BookingService from '../services/bookingService.js';
+import BookingRepository from '../repositories/bookingRepository.js';
+import TripRepository from '../repositories/tripRepository.js';
+import appLogger from '../utils/appLogger.js';
 
 jest.mock('../repositories/bookingRepository');
 jest.mock('../repositories/tripRepository');

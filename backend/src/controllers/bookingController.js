@@ -1,5 +1,5 @@
-const BookingService = require('../services/bookingService');
-const appLogger = require('../utils/appLogger');
+import BookingService from '../services/bookingService.js';
+import appLogger from '../utils/appLogger.js';
 
 class BookingController {
   static async getTripBookings(req, res) {
@@ -44,4 +44,4 @@ class BookingController {
   }
 }
 
-module.exports = BookingController;
+export default BookingController;
