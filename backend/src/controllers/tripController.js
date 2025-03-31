@@ -1,76 +1,63 @@
 import TripService from '../services/tripService.js';
-import appLogger from '../utils/appLogger.js';
+import { logger } from '../utils/logger.js';
 
 class TripController {
-  static async createTrip(req, res) {
-    try {
-      const trip = await TripService.createTrip(req.body, req.operator._id);
-      res.status(201).json(trip);
-    } catch (error) {
-      appLogger.error({ message: 'Error creating trip', operatorId: req.operator._id, error: error.message });
-      res.status(400).json({ message: error.message });
+    static async createTrip(req, res, next) {
+        try {
+            logger.info("Received request to create a new trip");
+            const trip = await TripService.createTrip(req.body);
+            res.status(201).json({ 
+                success: true, 
+                message: "Trip created successfully", 
+                data: trip 
+            });
+        } catch (error) {
+            logger.error(`Trip creation failed: ${error.message}`);
+            next(error); // Pass the error to the error handling middleware
+        }
     }
-  }
 
-  static async getOperatorTrips(req, res) {
-    try {
-      const trips = await TripService.getOperatorTrips(req.operator._id);
-      res.json(trips);
-    } catch (error) {
-      appLogger.error({ message: 'Error fetching operator trips', operatorId: req.operator._id, error: error.message });
-      res.status(500).json({ message: error.message });
+    static async getAllTrips(req, res, next) {
+        try {
+            logger.info("Received request to fetch all trips");
+            const trips = await TripService.getAllTrips(req.query);
+            res.status(200).json({ 
+                success: true, 
+                message: "Trips fetched successfully", 
+                data: trips 
+            });
+        } catch (error) {
+            logger.error(`Failed to fetch trips: ${error.message}`);
+            next(error); // Pass the error to the error handling middleware
+        }
     }
-  }
 
-  static async getTrip(req, res) {
-    try {
-      const trip = await TripService.getTrip(req.params.id, req.operator._id);
-      res.json(trip);
-    } catch (error) {
-      appLogger.error({ message: 'Error fetching trip', tripId: req.params.id, error: error.message });
-      res.status(error.message === 'Trip not found' ? 404 : 500).json({ message: error.message });
-    }
-  }
+    static async getFilteredTrips(req, res, next) {
+        try {
+            const { source, destination, date } = req.query;
+            logger.info(`Fetching trips with filters: source=${source}, destination=${destination}, date=${date}`);
 
-  static async updateTrip(req, res) {
-    try {
-      const trip = await TripService.updateTrip(req.params.id, req.operator._id, req.body);
-      res.json(trip);
-    } catch (error) {
-      appLogger.error({ message: 'Error updating trip', tripId: req.params.id, error: error.message });
-      res.status(error.message === 'Trip not found' ? 404 : 400).json({ message: error.message });
-    }
-  }
+            const trips = await TripService.getTripsByFilters({ source, destination, date });
 
-  static async cancelTrip(req, res) {
-    try {
-      const trip = await TripService.cancelTrip(req.params.id, req.operator._id);
-      res.json(trip);
-    } catch (error) {
-      appLogger.error({ message: 'Error cancelling trip', tripId: req.params.id, error: error.message });
-      res.status(error.message === 'Trip not found' ? 404 : 500).json({ message: error.message });
-    }
-  }
+            if (trips.length === 0) {
+                logger.warn("No trips found for the given filters");
+                return res.status(404).json({ 
+                    success: false, 
+                    message: "No trips found for the given filters.", 
+                    data: [] // Empty array to indicate no trips found
+                });
+            }
 
-  static async getTripAnalytics(req, res) {
-    try {
-      const analytics = await TripService.getTripAnalytics(req.params.id, req.operator._id);
-      res.json(analytics);
-    } catch (error) {
-      appLogger.error({ message: 'Error fetching trip analytics', tripId: req.params.id, error: error.message });
-      res.status(error.message === 'Trip not found' ? 404 : 500).json({ message: error.message });
+            res.status(200).json({ 
+                success: true, 
+                message: "Trips fetched successfully", 
+                data: trips 
+            });
+        } catch (error) {
+            logger.error(`Failed to fetch filtered trips: ${error.message}`);
+            next(error); // Pass the error to the error handling middleware
+        }
     }
-  }
-
-  static async getSeatAvailability(req, res) {
-    try {
-      const availability = await TripService.getSeatAvailability(req.params.id, req.operator._id);
-      res.json(availability);
-    } catch (error) {
-      appLogger.error({ message: 'Error fetching seat availability', tripId: req.params.id, error: error.message });
-      res.status(error.message === 'Trip not found' ? 404 : 500).json({ message: error.message });
-    }
-  }
 }
 
 export default TripController;

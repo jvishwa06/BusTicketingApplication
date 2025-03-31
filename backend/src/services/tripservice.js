@@ -1,81 +1,93 @@
 import TripRepository from '../repositories/tripRepository.js';
-import BookingRepository from '../repositories/bookingRepository.js';
-import appLogger from '../utils/appLogger.js';
+import BusRepository from '../repositories/busRepository.js';
+import { logger } from '../utils/logger.js';
 
 class TripService {
-  async createTrip(tripData, operatorId) {
-    const trip = await TripRepository.create({
-      ...tripData,
-      operator: operatorId,
-      availableSeats: tripData.busDetails.totalSeats,
-    });
-    appLogger.info({ message: 'Trip created', tripId: trip._id, operatorId });
-    return trip;
-  }
+    async getTripsByFilters(filters) {
+        try {
+            let { source, destination, date } = filters;
 
-  async getOperatorTrips(operatorId) {
-    const trips = await TripRepository.findByOperator(operatorId);
-    appLogger.info({ message: 'Fetched operator trips', operatorId, count: trips.length });
-    return trips;
-  }
+            if (!source || !destination || !date) {
+                logger.warn("Trip search failed: Missing required parameters");
+                throw new Error("Source, destination, and date are required to search for trips.");
+            }
+            source = source.trim();
+            destination = destination.trim();
 
-  async getTrip(tripId, operatorId) {
-    const trip = await TripRepository.findByIdAndOperator(tripId, operatorId);
-    if (!trip) throw new Error('Trip not found');
-    appLogger.info({ message: 'Fetched trip', tripId });
-    return trip;
-  }
+            const searchDate = new Date(date);
+            searchDate.setHours(0, 0, 0, 0);
 
-  async updateTrip(tripId, operatorId, updates) {
-    const trip = await TripRepository.update(tripId, operatorId, updates);
-    if (!trip) throw new Error('Trip not found');
-    appLogger.info({ message: 'Updated trip', tripId });
-    return trip;
-  }
+            const nextDay = new Date(searchDate);
+            nextDay.setDate(searchDate.getDate() + 1);
+            
+            logger.info(`Searching trips from ${source} to ${destination} on ${date}`);
+            return await TripRepository.findTripsByFilters(source, destination, searchDate, nextDay);
+        } catch (error) {
+            logger.error(`Error fetching trips by filters: ${error.message}`);
+            throw error;
+        }
+    }
 
-  async cancelTrip(tripId, operatorId) {
-    const trip = await TripRepository.findByIdAndOperator(tripId, operatorId);
-    if (!trip) throw new Error('Trip not found');
+    async createTrip(tripData) {
+        try {
+            if (!tripData.busId) {
+                logger.warn("Trip creation failed: Missing bus ID");
+                throw new Error('Bus ID is required to create a trip');
+            }
 
-    trip.status = 'cancelled';
-    await TripRepository.update(tripId, operatorId, { status: 'cancelled' });
-    await BookingRepository.updateManyByTripId(tripId, { status: 'cancelled', paymentStatus: 'refunded' });
+            const bus = await BusRepository.getBusById(tripData.busId);
+            if (!bus) {
+                logger.warn(`Trip creation failed: Bus not found with ID ${tripData.busId}`);
+                throw new Error(`Bus with ID ${tripData.busId} not found`);
+            }
 
-    appLogger.info({ message: 'Trip cancelled', tripId });
-    return trip;
-  }
+            logger.info(`Creating trip for bus ${tripData.busId}`);
+            return await TripRepository.createTrip({ ...tripData, operatorId: bus.operatorId });
+        } catch (error) {
+            logger.error(`Error creating trip: ${error.message}`);
+            throw error;
+        }
+    }
 
-  async getTripAnalytics(tripId, operatorId) {
-    const trip = await TripRepository.findByIdAndOperator(tripId, operatorId);
-    if (!trip) throw new Error('Trip not found');
+    async getAllTrips() {
+        try {
+            logger.info("Fetching all trips");
+            return await TripRepository.getAllTrips();
+        } catch (error) {
+            logger.error(`Error fetching all trips: ${error.message}`);
+            throw error;
+        }
+    }
 
-    const bookings = await BookingRepository.findByTripId(tripId);
-    const analytics = {
-      totalBookings: bookings.length,
-      confirmedBookings: bookings.filter(b => b.status === 'confirmed').length,
-      cancelledBookings: bookings.filter(b => b.status === 'cancelled').length,
-      totalRevenue: bookings.reduce((sum, b) => sum + b.amount, 0),
-      averageRating: bookings.reduce((sum, b) => sum + (b.feedback?.rating || 0), 0) / bookings.length || 0,
-    };
+    async getTripById(tripId) {
+        try {
+            logger.info(`Fetching trip with ID: ${tripId}`);
+            return await TripRepository.getTripById(tripId);
+        } catch (error) {
+            logger.error(`Error fetching trip by ID ${tripId}: ${error.message}`);
+            throw error;
+        }
+    }
 
-    appLogger.info({ message: 'Generated trip analytics', tripId, totalBookings: analytics.totalBookings });
-    return analytics;
-  }
+    async updateTrip(tripId, updateData) {
+        try {
+            logger.info(`Updating trip with ID: ${tripId}`);
+            return await TripRepository.updateTrip(tripId, updateData);
+        } catch (error) {
+            logger.error(`Error updating trip with ID ${tripId}: ${error.message}`);
+            throw error;
+        }
+    }
 
-  async getSeatAvailability(tripId, operatorId) {
-    const trip = await TripRepository.findByIdAndOperator(tripId, operatorId);
-    if (!trip) throw new Error('Trip not found');
-
-    const bookings = await BookingRepository.findConfirmedByTripId(tripId);
-    const bookedSeats = bookings.map(b => b.seatNumber);
-    const availableSeats = Array.from(
-      { length: trip.busDetails.totalSeats },
-      (_, i) => i + 1
-    ).filter(seat => !bookedSeats.includes(seat));
-
-    appLogger.info({ message: 'Fetched seat availability', tripId, availableSeats: availableSeats.length });
-    return { totalSeats: trip.busDetails.totalSeats, availableSeats, bookedSeats };
-  }
+    async deleteTrip(tripId) {
+        try {
+            logger.info(`Deleting trip with ID: ${tripId}`);
+            return await TripRepository.deleteTrip(tripId);
+        } catch (error) {
+            logger.error(`Error deleting trip with ID ${tripId}: ${error.message}`);
+            throw error;
+        }
+    }
 }
 
-export default new TripService(); 
+export default new TripService();

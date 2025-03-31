@@ -1,158 +1,103 @@
 import TripService from '../services/tripService.js';
 import TripRepository from '../repositories/tripRepository.js';
-import BookingRepository from '../repositories/bookingRepository.js';
-import appLogger from '../utils/appLogger.js';
+import BusRepository from '../repositories/busRepository.js';
+import { logger } from '../utils/logger.js';
+import { jest } from '@jest/globals';
 
-jest.mock('../repositories/tripRepository');
-jest.mock('../repositories/bookingRepository');
-jest.mock('../utils/appLogger', () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-}));
+jest.mock('../repositories/tripRepository.js');
+jest.mock('../repositories/busRepository.js');
+jest.mock('../utils/logger.js');
 
 describe('TripService', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('createTrip', () => {
-    it('should create a trip successfully', async () => {
-      const tripData = { busDetails: { totalSeats: 50 } };
-      const operatorId = 'op1';
-      const trip = { _id: 'trip1', ...tripData, operator: operatorId, availableSeats: 50 };
-
-      TripRepository.create.mockResolvedValue(trip);
-
-      const result = await TripService.createTrip(tripData, operatorId);
-
-      expect(TripRepository.create).toHaveBeenCalledWith({
-        ...tripData,
-        operator: operatorId,
-        availableSeats: 50,
-      });
-      expect(appLogger.info).toHaveBeenCalledWith({ message: 'Trip created', tripId: 'trip1', operatorId });
-      expect(result).toEqual(trip);
-    });
-  });
-
-  describe('getOperatorTrips', () => {
-    it('should fetch trips for an operator', async () => {
-      const operatorId = 'op1';
-      const trips = [{ _id: 'trip1' }, { _id: 'trip2' }];
-      TripRepository.findByOperator.mockResolvedValue(trips);
-
-      const result = await TripService.getOperatorTrips(operatorId);
-
-      expect(TripRepository.findByOperator).toHaveBeenCalledWith(operatorId);
-      expect(appLogger.info).toHaveBeenCalledWith({ message: 'Fetched operator trips', operatorId, count: 2 });
-      expect(result).toEqual(trips);
-    });
-  });
-
-  describe('getTrip', () => {
-    it('should fetch a trip by ID and operator', async () => {
-      const tripId = 'trip1';
-      const operatorId = 'op1';
-      const trip = { _id: tripId };
-      TripRepository.findByIdAndOperator.mockResolvedValue(trip);
-
-      const result = await TripService.getTrip(tripId, operatorId);
-
-      expect(TripRepository.findByIdAndOperator).toHaveBeenCalledWith(tripId, operatorId);
-      expect(appLogger.info).toHaveBeenCalledWith({ message: 'Fetched trip', tripId });
-      expect(result).toEqual(trip);
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('should throw an error if trip not found', async () => {
-      TripRepository.findByIdAndOperator.mockResolvedValue(null);
-
-      await expect(TripService.getTrip('trip1', 'op1')).rejects.toThrow('Trip not found');
-    });
-  });
-
-  describe('updateTrip', () => {
-    it('should update a trip successfully', async () => {
-      const tripId = 'trip1';
-      const operatorId = 'op1';
-      const updates = { status: 'active' };
-      const trip = { _id: tripId, ...updates };
-      TripRepository.update.mockResolvedValue(trip);
-
-      const result = await TripService.updateTrip(tripId, operatorId, updates);
-
-      expect(TripRepository.update).toHaveBeenCalledWith(tripId, operatorId, updates);
-      expect(appLogger.info).toHaveBeenCalledWith({ message: 'Updated trip', tripId });
-      expect(result).toEqual(trip);
+    describe('getTripsByFilters', () => {
+        it('should return trips based on filters', async () => {
+            const mockFilters = { source: 'City A', destination: 'City B', date: '2025-04-01' };
+            const mockTrips = [{ id: 'trip1', source: 'City A', destination: 'City B' }];
+            
+            TripRepository.findTripsByFilters.mockResolvedValue(mockTrips);
+            
+            const result = await TripService.getTripsByFilters(mockFilters);
+            
+            expect(TripRepository.findTripsByFilters).toHaveBeenCalled();
+            expect(logger.info).toHaveBeenCalled();
+            expect(result).toEqual(mockTrips);
+        });
     });
 
-    it('should throw an error if trip not found', async () => {
-      TripRepository.update.mockResolvedValue(null);
+    describe('createTrip', () => {
+        it('should create a trip successfully', async () => {
+            const mockTripData = { busId: 'bus123', source: 'City A', destination: 'City B' };
+            const mockBus = { id: 'bus123', operatorId: 'operator1' };
+            const mockTrip = { id: 'trip1', ...mockTripData, operatorId: mockBus.operatorId };
 
-      await expect(TripService.updateTrip('trip1', 'op1', {})).rejects.toThrow('Trip not found');
+            BusRepository.getBusById.mockResolvedValue(mockBus);
+            TripRepository.createTrip.mockResolvedValue(mockTrip);
+
+            const result = await TripService.createTrip(mockTripData);
+
+            expect(BusRepository.getBusById).toHaveBeenCalledWith(mockTripData.busId);
+            expect(TripRepository.createTrip).toHaveBeenCalledWith({ ...mockTripData, operatorId: mockBus.operatorId });
+            expect(logger.info).toHaveBeenCalled();
+            expect(result).toEqual(mockTrip);
+        });
     });
-  });
 
-  describe('cancelTrip', () => {
-    it('should cancel a trip and update bookings', async () => {
-      const tripId = 'trip1';
-      const operatorId = 'op1';
-      const trip = { _id: tripId, status: 'active' };
-      TripRepository.findByIdAndOperator.mockResolvedValue(trip);
-      TripRepository.update.mockResolvedValue({ ...trip, status: 'cancelled' });
-      BookingRepository.updateManyByTripId.mockResolvedValue();
+    describe('getAllTrips', () => {
+        it('should fetch all trips successfully', async () => {
+            const mockTrips = [{ id: 'trip1' }, { id: 'trip2' }];
+            TripRepository.getAllTrips.mockResolvedValue(mockTrips);
 
-      const result = await TripService.cancelTrip(tripId, operatorId);
+            const result = await TripService.getAllTrips();
 
-      expect(TripRepository.update).toHaveBeenCalledWith(tripId, operatorId, { status: 'cancelled' });
-      expect(BookingRepository.updateManyByTripId).toHaveBeenCalledWith(tripId, { status: 'cancelled', paymentStatus: 'refunded' });
-      expect(appLogger.info).toHaveBeenCalledWith({ message: 'Trip cancelled', tripId });
-      expect(result.status).toBe('cancelled');
+            expect(TripRepository.getAllTrips).toHaveBeenCalled();
+            expect(logger.info).toHaveBeenCalled();
+            expect(result).toEqual(mockTrips);
+        });
     });
-  });
 
-  describe('getTripAnalytics', () => {
-    it('should generate trip analytics', async () => {
-      const tripId = 'trip1';
-      const operatorId = 'op1';
-      const trip = { _id: tripId };
-      const bookings = [
-        { status: 'confirmed', amount: 100, feedback: { rating: 4 } },
-        { status: 'cancelled', amount: 50 },
-      ];
-      TripRepository.findByIdAndOperator.mockResolvedValue(trip);
-      BookingRepository.findByTripId.mockResolvedValue(bookings);
+    describe('getTripById', () => {
+        it('should return a trip by ID', async () => {
+            const mockTrip = { id: 'trip1', source: 'City A', destination: 'City B' };
+            TripRepository.getTripById.mockResolvedValue(mockTrip);
 
-      const result = await TripService.getTripAnalytics(tripId, operatorId);
+            const result = await TripService.getTripById('trip1');
 
-      expect(result).toEqual({
-        totalBookings: 2,
-        confirmedBookings: 1,
-        cancelledBookings: 1,
-        totalRevenue: 150,
-        averageRating: 2,
-      });
-      expect(appLogger.info).toHaveBeenCalledWith({ message: 'Generated trip analytics', tripId, totalBookings: 2 });
+            expect(TripRepository.getTripById).toHaveBeenCalledWith('trip1');
+            expect(logger.info).toHaveBeenCalled();
+            expect(result).toEqual(mockTrip);
+        });
     });
-  });
 
-  describe('getSeatAvailability', () => {
-    it('should calculate seat availability', async () => {
-      const tripId = 'trip1';
-      const operatorId = 'op1';
-      const trip = { _id: tripId, busDetails: { totalSeats: 5 } };
-      const bookings = [{ seatNumber: 1 }, { seatNumber: 3 }];
-      TripRepository.findByIdAndOperator.mockResolvedValue(trip);
-      BookingRepository.findConfirmedByTripId.mockResolvedValue(bookings);
+    describe('updateTrip', () => {
+        it('should update a trip successfully', async () => {
+            const mockTripId = 'trip1';
+            const mockUpdateData = { price: 100 };
+            const mockUpdatedTrip = { id: mockTripId, ...mockUpdateData };
+            TripRepository.updateTrip.mockResolvedValue(mockUpdatedTrip);
 
-      const result = await TripService.getSeatAvailability(tripId, operatorId);
+            const result = await TripService.updateTrip(mockTripId, mockUpdateData);
 
-      expect(result).toEqual({
-        totalSeats: 5,
-        availableSeats: [2, 4, 5],
-        bookedSeats: [1, 3],
-      });
-      expect(appLogger.info).toHaveBeenCalledWith({ message: 'Fetched seat availability', tripId, availableSeats: 3 });
+            expect(TripRepository.updateTrip).toHaveBeenCalledWith(mockTripId, mockUpdateData);
+            expect(logger.info).toHaveBeenCalled();
+            expect(result).toEqual(mockUpdatedTrip);
+        });
     });
-  });
+
+    describe('deleteTrip', () => {
+        it('should delete a trip successfully', async () => {
+            const mockTripId = 'trip1';
+            const mockDeletedTrip = { id: mockTripId };
+            TripRepository.deleteTrip.mockResolvedValue(mockDeletedTrip);
+
+            const result = await TripService.deleteTrip(mockTripId);
+
+            expect(TripRepository.deleteTrip).toHaveBeenCalledWith(mockTripId);
+            expect(logger.info).toHaveBeenCalled();
+            expect(result).toEqual(mockDeletedTrip);
+        });
+    });
 });

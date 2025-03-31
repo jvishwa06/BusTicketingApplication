@@ -1,56 +1,38 @@
-import { UserRepo, AdminRepo, OperatorRepo } from '../repositories/authRepository.js';
-import TripRepository from '../repositories/tripRepository.js';
+import AdminRepository from '../repositories/adminRepository.js';
+import { logger } from '../utils/logger.js';
 
 class AdminService {
-  async getAllUsers() {
-    try {
-      return await UserRepo.model.find();  
-    } catch (error) {
-      throw new Error('Error while fetching users');
+    async blockUser(userId) {
+        try {
+            logger.info(`Attempting to block user with ID: ${userId}`);
+            const result = await AdminRepository.updateUserStatus(userId, true);
+            if (!result) {
+                logger.warn(`User with ID ${userId} not found`);
+                throw new Error(`User with ID ${userId} not found`);
+            }
+            logger.info(`User with ID ${userId} blocked successfully`);
+            return { message: 'User blocked successfully', user: result };
+        } catch (error) {
+            logger.error(`Error blocking user with ID ${userId}: ${error.message}`);
+            throw new Error(error.message || 'Error blocking user');
+        }
     }
-  }
 
-  async toggleUserBlockStatus(userId) {
-    const user = await UserRepo.findById(userId);
-    if (!user) throw new Error('User not found');
-    
-    user.blocked = !user.blocked;
-    await user.save();
-    
-    return user.blocked ? 'User blocked' : 'User unblocked';
-  }
-
-  async getAllOperators() {
-    try {
-      return await OperatorRepo.model.find();  
-    } catch (error) {
-      throw new Error('Error while fetching operators');
+    async unblockUser(userId) {
+        try {
+            logger.info(`Attempting to unblock user with ID: ${userId}`);
+            const result = await AdminRepository.updateUserStatus(userId, false);
+            if (!result) {
+                logger.warn(`User with ID ${userId} not found`);
+                throw new Error(`User with ID ${userId} not found`);
+            }
+            logger.info(`User with ID ${userId} unblocked successfully`);
+            return { message: 'User unblocked successfully', user: result };
+        } catch (error) {
+            logger.error(`Error unblocking user with ID ${userId}: ${error.message}`);
+            throw new Error(error.message || 'Error unblocking user');
+        }
     }
-  }
-
-  async toggleOperatorBlockStatus(operatorId) {
-    const operator = await OperatorRepo.findById(operatorId);
-    if (!operator) throw new Error('Operator not found');
-    
-    operator.blocked = !operator.blocked;
-    await operator.save();
-    
-    return operator.blocked ? 'Operator blocked' : 'Operator unblocked';
-  }
-
-  async getTripById(tripId) {
-    const trip = await TripRepository.findByIdAndOperator(tripId);
-    if (!trip) throw new Error('Trip not found');
-    return trip;
-  }
-
-  async cancelTrip(tripId) {
-    const trip = await TripRepository.findByIdAndOperator(tripId);
-    if (!trip) throw new Error('Trip not found');
-    
-    await TripRepository.update(tripId, { status: 'cancelled' });
-    return 'Trip cancelled successfully';
-  }
 }
 
 export default new AdminService();

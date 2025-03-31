@@ -1,19 +1,15 @@
 import mongoose from 'mongoose';
 
-const bookingSchema = new mongoose.Schema({
-  trip: { type: mongoose.Schema.Types.ObjectId, ref: 'Trip', required: true },
-  operator: {type: mongoose.Schema.Types.ObjectId,ref: 'Operator',required: true},
-  passenger: {name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true }},
-  seatNumber: { type: Number, required: true },
-  status: {type: String,enum: ['pending', 'confirmed', 'cancelled'],default: 'pending'},
-  paymentStatus: {type: String,enum: ['pending', 'completed', 'refunded'],default: 'pending'},
-  amount: {type: Number,required: true},
-  bookingDate: {type: Date,default: Date.now},
-  feedback: {rating: { type: Number, min: 1, max: 5 },comment: String}
-});
+const BookingSchema = new mongoose.Schema(
+  {
+    tripId: { type: mongoose.Schema.Types.ObjectId, ref: 'Trip', required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    seats: { type: [Number], required: true },
+    totalPrice: { type: Number, required: true },
+    paymentStatus: {type: String,enum: ['success', 'failed', 'pending'],default: 'pending'},
+    paymentDetails: {type: mongoose.Schema.Types.ObjectId,ref: 'Payment', default: null},
+  },
+  { timestamps: true }
+);
 
-const Booking = mongoose.model('Booking', bookingSchema); 
-
-export default Booking;
+export default mongoose.model('Booking', BookingSchema);

@@ -1,25 +1,90 @@
-import UserRepo from '../repositories/userRepository.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import userRepository from '../repositories/userRepository.js';
+import { logger } from '../utils/logger.js';
+
 class UserService {
-  async getUserProfile(userId) {
-    const user = await UserRepo.findById(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
-    return user;
-  }
-
-  async updateUserProfile(userId, updateData) {
-    const user = await UserRepo.findById(userId);
-    if (!user) {
-      throw new Error('User not found');
+    constructor() {
+        this.validRoles = ['user', 'admin', 'operator'];
     }
 
-    user.name = updateData.name || user.name;
-    user.email = updateData.email || user.email;
+    async register(userData) {
+        try {
+            if (!this.validRoles.includes(userData.role)) {
+                logger.warn(`Invalid role specified: ${userData.role}`);
+                throw new Error('Invalid role specified');
+            }
 
-    await user.save();
-    return user;
-  }
+            const existingUser = await userRepository.getUserByEmail(userData.email);
+            if (existingUser) {
+                logger.warn(`User with email ${userData.email} already exists`);
+                throw new Error('User already exists');
+            }
+
+            const hashedPassword = await bcrypt.hash(userData.password, 10);
+            userData.password = hashedPassword;
+
+            const user = await userRepository.createUser(userData);
+            logger.info(`User registered successfully: ${user.email}`);
+
+            return user;
+        } catch (error) {
+            logger.error(`Error registering user: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async login({ email, password }) {
+        try {
+            const user = await userRepository.getUserByEmail(email);
+            if (!user || !(await bcrypt.compare(password, user.password))) {
+                logger.warn(`Failed login attempt for email: ${email}`);
+                throw new Error('Invalid credentials');
+            }
+
+            const token = jwt.sign(
+                { id: user._id, role: user.role },
+                process.env.JWT_SECRET,
+                { expiresIn: '1d' }
+            );
+
+            logger.info(`User logged in successfully: ${user.email}`);
+            return { token, user };
+        } catch (error) {
+            logger.error(`Error logging in user with email ${email}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async getProfile(userId) {
+        try {
+            const user = await userRepository.getUserById(userId);
+            if (!user) {
+                logger.warn(`Profile not found for user ID: ${userId}`);
+                throw new Error('User not found');
+            }
+            logger.info(`User profile retrieved: ${user.email}`);
+            return user;
+        } catch (error) {
+            logger.error(`Error fetching profile for user ID ${userId}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async updateProfile(userId, updateData) {
+        try {
+            const user = await userRepository.updateUserProfile(userId, updateData);
+            if (!user) {
+                logger.warn(`Profile update failed, user not found: ${userId}`);
+                throw new Error('User not found');
+            }
+            logger.info(`User profile updated: ${user.email}`);
+            return user;
+        } catch (error) {
+            logger.error(`Error updating profile for user ID ${userId}: ${error.message}`);
+            throw error;
+        }
+    }
 }
 
 export default new UserService();

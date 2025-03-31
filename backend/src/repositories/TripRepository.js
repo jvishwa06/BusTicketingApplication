@@ -1,81 +1,45 @@
-import Trip from '../models/trip.js';
-import appLogger from '../utils/appLogger.js';
+import Trip from '../models/Trip.js';
+import { logger } from '../utils/logger.js';
+
 class TripRepository {
-  async create(tripData) {
-    try {
-      const trip = new Trip(tripData);
-      return await trip.save();
-    } catch (error) {
-      appLogger.error({ message: 'Failed to create trip', error: error.message });
-      throw error;
+    async findTripsByFilters(source, destination, searchDate, nextDay) {
+        logger.info(`Querying trips from DB with source: ${source}, destination: ${destination}, date range: ${searchDate} - ${nextDay}`);
+        return await Trip.find({
+            source: { $regex: new RegExp(`^${source}$`, "i") },
+            destination: { $regex: new RegExp(`^${destination}$`, "i") },
+            departureTime: { $gte: searchDate, $lt: nextDay }
+        }).populate('busId');
     }
-  }
-
-  async findAll() {
-    try {
-      return await Trip.find();  
-    } catch (error) {
-      throw new Error('Error while fetching trips');
+    
+    async createTrip(tripData) {
+        logger.info(`Saving new trip to DB for bus ID: ${tripData.busId}`);
+        return await Trip.create(tripData);
     }
-  }
 
-
-  async findById(tripId) {
-    try {
-      return await Trip.findById(tripId);  
-    } catch (error) {
-      throw new Error('Error while fetching trip');
+    async getAllTrips(query = {}) {
+        logger.info("Fetching all trips from DB");
+        return await Trip.find(query);
     }
-  }
 
-  async findByOperator(operatorId) {
-    try {
-      return await Trip.find({ operator: operatorId });
-    } catch (error) {
-      appLogger.error({ message: 'Failed to fetch trips by operator', operatorId, error: error.message });
-      throw error;
+    async getTripById(tripId) {
+        logger.info(`Fetching trip from DB with ID: ${tripId}`);
+        return await Trip.findById(tripId).populate('busId').exec();
     }
-  }
 
-  async findByIdAndOperator(tripId, operatorId) {
-    try {
-      return await Trip.findOne({ _id: tripId, operator: operatorId });
-    } catch (error) {
-      appLogger.error({ message: 'Failed to fetch trip by ID', tripId, operatorId, error: error.message });
-      throw error;
+    async getTripsByOperator(operatorId) {
+        logger.info(`Fetching trips from DB for operator ID: ${operatorId}`);
+        return await Trip.find({ operatorId });
     }
-  }
 
-  async findTripIdsByOperator(operatorId) {
-    try {
-      return await Trip.find({ operator: operatorId }).select('_id');
-    } catch (error) {
-      appLogger.error({ message: 'Failed to fetch trip IDs by operator', operatorId, error: error.message });
-      throw error;
+    async updateTrip(tripId, updateData) {
+        logger.info(`Updating trip in DB with ID: ${tripId}`);
+        return await Trip.findByIdAndUpdate(tripId, updateData, { new: true });
     }
-  }
 
-  async update(tripId, operatorId, updates) {
-    try {
-      return await Trip.findOneAndUpdate(
-        { _id: tripId, operator: operatorId },
-        updates,
-        { new: true, runValidators: true }
-      );
-    } catch (error) {
-      appLogger.error({ message: 'Failed to update trip', tripId, operatorId, error: error.message });
-      throw error;
+    async deleteTrip(tripId) {
+        logger.info(`Deleting trip from DB with ID: ${tripId}`);
+        return await Trip.findByIdAndDelete(tripId);
     }
-  }
-
-  async updateSeats(tripId, availableSeats) {
-    try {
-      return await Trip.findByIdAndUpdate(tripId, { availableSeats }, { new: true });
-    } catch (error) {
-      appLogger.error({ message: 'Failed to update trip seats', tripId, error: error.message });
-      throw error;
-    }
-  }
 }
 
 export default new TripRepository();

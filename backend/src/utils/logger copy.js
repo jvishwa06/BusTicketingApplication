@@ -8,19 +8,19 @@ if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir);
 }
 
-// Log format
+// Define log format
 const logFormat = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level.toUpperCase()}]: ${message}`)
 );
 
-// Winston logger instance
+// Create Winston logger instance
 const Logger = winston.createLogger({
     level: 'info',
     format: logFormat,
     transports: [
-        new winston.transports.File({ filename: path.join(logDir, 'app.log') }), // Application logs
-        new winston.transports.File({ filename: path.join(logDir, 'error.log'), level: 'error' }), // Error logs
+        new winston.transports.File({ filename: path.join(logDir, 'error.log'), level: 'error' }),
+        new winston.transports.File({ filename: path.join(logDir, 'app.log') }),
     ],
 });
 
