@@ -19,12 +19,12 @@ app.use(requestLogger);
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/api/users', userRoutes);
-app.use('/api/buses', busRoutes);
-app.use('/api/trips', tripRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/users', userRoutes);
+app.use('/buses', busRoutes);
+app.use('/trips', tripRoutes);
+app.use('/bookings', bookingRoutes);
+app.use('/payments', paymentRoutes);
+app.use('/admin', adminRoutes);
 
 app.use(errorMiddleware);
 

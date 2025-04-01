@@ -109,6 +109,17 @@ class BookingService {
         }
     }
 
+    async getOperatorBookings(operatorId) {
+        try {
+            const bookings = await BookingRepository.getBookingsByOperatorId(operatorId);
+            logger.info(`Fetched bookings for operator ${operatorId}`);
+            return bookings;
+        } catch (error) {
+            logger.error(`Error fetching bookings for operator ${operatorId}: ${error.message}`);
+            throw error;
+        }
+    }
+    
     async deleteBooking(bookingId) {
         try {
             const deletedBooking = await BookingRepository.deleteBooking(bookingId);

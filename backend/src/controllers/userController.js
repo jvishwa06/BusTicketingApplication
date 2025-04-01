@@ -9,17 +9,11 @@ class UserController {
             res.status(201).json({
                 success: true,
                 message: 'User registered successfully',
-                data: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone,
-                    role: user.role
-                }
+                data: {}
             });
         } catch (error) {
             logger.error(`Registration failed: ${error.message}`);
-            next(error); // Pass the error to the error handling middleware
+            next(error); 
         }
     }
 
@@ -38,13 +32,7 @@ class UserController {
             res.status(200).json({
                 success: true,
                 message: 'Login successful',
-                data: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone,
-                    role: user.role
-                }
+                data: {token: token}
             });
         } catch (error) {
             logger.error(`Login failed for ${req.body.email}: ${error.message}`);

@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 const tripSchema = new mongoose.Schema(
     {
         busId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bus', required: true },
+        operatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, 
+
         source: { type: String, required: true, trim: true },
         destination: { type: String, required: true, trim: true },
         departureTime: { type: Date, required: true },

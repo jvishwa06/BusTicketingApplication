@@ -90,6 +90,21 @@ class BookingRepository {
             throw error;
         }
     }
+
+    async getBookingsByOperatorId(operatorId) {
+        const bookings = await Booking.find()
+            .populate({
+                path: "tripId",
+                populate: {
+                    path: "busId",
+                    match: { operatorId }, 
+                },
+            });
+    
+        return bookings.filter(booking => booking.tripId && booking.tripId.busId);
+    }
+    
+    
 }
 
 export default new BookingRepository();
