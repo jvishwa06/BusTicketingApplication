@@ -39,6 +39,27 @@ class BusController {
             });
         }
     }
+
+    static async updateBus(req, res) {
+        try {
+            const { busId } = req.params;
+            const updatedBus = await BusService.updateBus(busId, req.body);
+            res.status(200).json({ success: true, message: 'Bus updated successfully', data: updatedBus });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    static async deleteBus(req, res) {
+        try {
+            const { busId } = req.params;
+            await BusService.deleteBus(busId);
+            res.status(200).json({ success: true, message: 'Bus deleted successfully' });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
 }
 
 export default BusController;

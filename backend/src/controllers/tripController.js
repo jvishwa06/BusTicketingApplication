@@ -13,7 +13,7 @@ class TripController {
             });
         } catch (error) {
             logger.error(`Trip creation failed: ${error.message}`);
-            next(error); // Pass the error to the error handling middleware
+            next(error); 
         }
     }
 
@@ -28,7 +28,7 @@ class TripController {
             });
         } catch (error) {
             logger.error(`Failed to fetch trips: ${error.message}`);
-            next(error); // Pass the error to the error handling middleware
+            next(error); 
         }
     }
 
@@ -44,7 +44,7 @@ class TripController {
                 return res.status(404).json({ 
                     success: false, 
                     message: "No trips found for the given filters.", 
-                    data: [] // Empty array to indicate no trips found
+                    data: [] 
                 });
             }
 
@@ -55,7 +55,31 @@ class TripController {
             });
         } catch (error) {
             logger.error(`Failed to fetch filtered trips: ${error.message}`);
-            next(error); // Pass the error to the error handling middleware
+            next(error); 
+        }
+    }
+
+    static async updateTrip(req, res) {
+        try {
+            const updatedTrip = await TripService.updateTrip(req.params.tripId, req.body);
+            if (!updatedTrip) {
+                return res.status(404).json({ success: false, message: "Trip not found" });
+            }
+            res.status(200).json({ success: true, message: "Trip updated successfully", data: updatedTrip });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    static async deleteTrip(req, res) {
+        try {
+            const deletedTrip = await TripService.deleteTrip(req.params.tripId);
+            if (!deletedTrip) {
+                return res.status(404).json({ success: false, message: "Trip not found" });
+            }
+            res.status(200).json({ success: true, message: "Trip deleted successfully" });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 }

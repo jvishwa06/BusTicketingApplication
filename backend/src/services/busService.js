@@ -23,6 +23,36 @@ class BusService {
             throw error;
         }
     }
+
+    async updateBus(busId, busData) {
+        try {
+            const updatedBus = await BusRepository.updateBus(busId, busData);
+            if (!updatedBus) {
+                logger.warn(`Bus with ID ${busId} not found`);
+                throw new Error('Bus not found');
+            }
+            logger.info(`Bus with ID ${busId} updated successfully`);
+            return updatedBus;
+        } catch (error) {
+            logger.error(`Error updating bus with ID ${busId}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async deleteBus(busId) {
+        try {
+            const deletedBus = await BusRepository.deleteBus(busId);
+            if (!deletedBus) {
+                logger.warn(`Bus with ID ${busId} not found`);
+                throw new Error('Bus not found');
+            }
+            logger.info(`Bus with ID ${busId} deleted successfully`);
+            return deletedBus;
+        } catch (error) {
+            logger.error(`Error deleting bus with ID ${busId}: ${error.message}`);
+            throw error;
+        }
+    }
 }
 
 export default new BusService();
