@@ -2,7 +2,6 @@ import TripService from '../services/tripService.js';
 import TripRepository from '../repositories/tripRepository.js';
 import BusRepository from '../repositories/busRepository.js';
 import { logger } from '../utils/logger.js';
-import { jest } from '@jest/globals';
 
 jest.mock('../repositories/tripRepository.js');
 jest.mock('../repositories/busRepository.js');

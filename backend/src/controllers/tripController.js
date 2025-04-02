@@ -65,8 +65,10 @@ class TripController {
             if (!updatedTrip) {
                 return res.status(404).json({ success: false, message: "Trip not found" });
             }
+            logger.info("Trip updated successfully");
             res.status(200).json({ success: true, message: "Trip updated successfully", data: updatedTrip });
         } catch (error) {
+            logger.error(`Failed to update trip: ${error.message}`);
             res.status(500).json({ success: false, message: error.message });
         }
     }
@@ -77,8 +79,10 @@ class TripController {
             if (!deletedTrip) {
                 return res.status(404).json({ success: false, message: "Trip not found" });
             }
+            logger.info("Trip deleted successfully");
             res.status(200).json({ success: true, message: "Trip deleted successfully" });
         } catch (error) {
+            logger.error(`Failed to delete trip: ${error.message}`);
             res.status(500).json({ success: false, message: error.message });
         }
     }

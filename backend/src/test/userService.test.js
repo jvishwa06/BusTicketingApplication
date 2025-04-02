@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import UserService from '../services/userService.js';

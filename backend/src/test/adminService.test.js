@@ -1,7 +1,6 @@
 import AdminService from '../services/adminService.js';
 import AdminRepository from '../repositories/adminRepository.js';
 import { logger } from '../utils/logger.js';
-import { jest } from '@jest/globals';
 
 jest.mock('../repositories/adminRepository.js');
 jest.mock('../utils/logger.js');

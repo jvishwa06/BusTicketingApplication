@@ -1,8 +1,6 @@
 import BookingService from '../services/bookingService.js';
 import BookingRepository from '../repositories/bookingRepository.js';
 import TripRepository from '../repositories/tripRepository.js';
-import { logger } from '../utils/logger.js';
-import { jest } from '@jest/globals';
 
 jest.mock('../repositories/bookingRepository.js');
 jest.mock('../repositories/tripRepository.js');

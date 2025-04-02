@@ -1,7 +1,6 @@
 import BusService from '../services/busService.js';
 import BusRepository from '../repositories/busRepository.js';
 import { logger } from '../utils/logger.js';
-import { jest } from '@jest/globals';
 
 jest.mock('../repositories/busRepository.js');
 jest.mock('../utils/logger.js');
@@ -37,6 +36,57 @@ describe('BusService', () => {
             expect(BusRepository.getAllBuses).toHaveBeenCalled();
             expect(logger.info).toHaveBeenCalled();
             expect(result).toEqual(mockBuses);
+        });
+    });
+
+    describe('updateBus', () => {
+        it('should update a bus successfully', async () => {
+            const mockBusId = 'bus1';
+            const mockUpdateData = { name: 'Updated Bus', totalSeats: 55 };
+            const mockUpdatedBus = { id: mockBusId, ...mockUpdateData };
+
+            BusRepository.updateBus.mockResolvedValue(mockUpdatedBus);
+
+            const result = await BusService.updateBus(mockBusId, mockUpdateData);
+
+            expect(BusRepository.updateBus).toHaveBeenCalledWith(mockBusId, mockUpdateData);
+            expect(logger.info).toHaveBeenCalled();
+            expect(result).toEqual(mockUpdatedBus);
+        });
+
+        it('should throw an error if bus is not found', async () => {
+            const mockBusId = 'invalidBusId';
+            BusRepository.updateBus.mockResolvedValue(null);
+
+            await expect(BusService.updateBus(mockBusId, {})).rejects.toThrow('Bus not found');
+
+            expect(BusRepository.updateBus).toHaveBeenCalledWith(mockBusId, {});
+            expect(logger.warn).toHaveBeenCalled();
+        });
+    });
+
+    describe('deleteBus', () => {
+        it('should delete a bus successfully', async () => {
+            const mockBusId = 'bus1';
+            const mockDeletedBus = { id: mockBusId };
+
+            BusRepository.deleteBus.mockResolvedValue(mockDeletedBus);
+
+            const result = await BusService.deleteBus(mockBusId);
+
+            expect(BusRepository.deleteBus).toHaveBeenCalledWith(mockBusId);
+            expect(logger.info).toHaveBeenCalled();
+            expect(result).toEqual(mockDeletedBus);
+        });
+
+        it('should throw an error if bus is not found', async () => {
+            const mockBusId = 'invalidBusId';
+            BusRepository.deleteBus.mockResolvedValue(null);
+
+            await expect(BusService.deleteBus(mockBusId)).rejects.toThrow('Bus not found');
+
+            expect(BusRepository.deleteBus).toHaveBeenCalledWith(mockBusId);
+            expect(logger.warn).toHaveBeenCalled();
         });
     });
 });

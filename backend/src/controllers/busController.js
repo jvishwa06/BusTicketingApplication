@@ -44,8 +44,10 @@ class BusController {
         try {
             const { busId } = req.params;
             const updatedBus = await BusService.updateBus(busId, req.body);
+            logger.info("bus updated successfully");
             res.status(200).json({ success: true, message: 'Bus updated successfully', data: updatedBus });
         } catch (error) {
+            logger.error(`Error updating buses: ${error.message}`);
             res.status(500).json({ success: false, message: error.message });
         }
     }
@@ -54,8 +56,10 @@ class BusController {
         try {
             const { busId } = req.params;
             await BusService.deleteBus(busId);
+            logger.info("bus deleted successfully");
             res.status(200).json({ success: true, message: 'Bus deleted successfully' });
         } catch (error) {
+            logger.error(`Error deleting buses: ${error.message}`);
             res.status(500).json({ success: false, message: error.message });
         }
     }
