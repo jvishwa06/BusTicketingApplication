@@ -1,4 +1,4 @@
-backend/node_modules/
-backend/logs/
+server/node_modules/
+server/logs/
 documents/
-backend/.env
+server/.env
