@@ -10,6 +10,7 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import errorMiddleware from './middlewares/errorMiddleware.js';
 import { requestLogger } from './utils/logger.js';
+import cors from 'cors';
 
 dotenv.config();
 connectDB();
@@ -19,6 +20,10 @@ app.use(requestLogger);
 app.use(express.json());
 app.use(cookieParser());
 
+app.use(cors({ 
+    origin: 'http://localhost:5173', // or whatever your frontend URL is
+    credentials: true // This is important for cookies/authentication
+  }));
 app.use('/users', userRoutes);
 app.use('/buses', busRoutes);
 app.use('/trips', tripRoutes);
