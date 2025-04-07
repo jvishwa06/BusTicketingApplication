@@ -21,9 +21,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({ 
-    origin: 'http://localhost:5173', // or whatever your frontend URL is
-    credentials: true // This is important for cookies/authentication
-  }));
+    origin: 'http://localhost:5173',
+    credentials: true 
+}));
 app.use('/users', userRoutes);
 app.use('/buses', busRoutes);
 app.use('/trips', tripRoutes);

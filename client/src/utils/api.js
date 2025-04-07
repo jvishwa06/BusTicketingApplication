@@ -1,16 +1,38 @@
-import api from "../utils/api";  
-import { useEffect, useState } from "react";
+import axios from 'axios';
 
-const UserProfile = () => {
-  const [user, setUser] = useState(null);
+const api = axios.create({
+  baseURL: 'http://localhost:5001', 
+  withCredentials: true, 
+});
 
-  useEffect(() => {
-    api.get("/users/profile")  
-      .then(response => setUser(response.data))
-      .catch(error => console.error("Error fetching profile:", error));
-  }, []);
+// add a request interceptor to add the token to requests
+api.interceptors.request.use(
+  (config) => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      if (user?.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-  return user ? <div>Welcome, {user.name}!</div> : <div>Loading...</div>;
-};
+// add a response interceptor to handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // clear local storage and redirect to login on auth errors
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
-export default UserProfile;
+export default api;

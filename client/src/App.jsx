@@ -1,58 +1,52 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Register from './components/auth/Register';
 import Login from './components/auth/Login';
-import UserDashboard from './pages/user/Dashboard';
-import AdminDashboard from './pages/admin/Dashboard';
+import Profile from './components/auth/Profile';
+import SearchBus from './pages/user/SearchBus';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="loading-container">Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (allowedRoles && (!user.role || !allowedRoles.includes(user.role))) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
+};
+
+const App = () => {
   const { user, loading } = useAuth();
   
   if (loading) {
     return <div className="loading-container">Loading...</div>;
   }
   
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-  
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" />;
-  }
-  
-  return children;
-};
-
-const App = () => {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          
-          <Route 
-            path="/user/dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['user']}>
-                <UserDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          <Route 
-            path="/admin/dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } 
-          />
-        </Routes>
-      </Router>
-    </AuthProvider>
+    <Routes>
+      <Route path="/" element={user ? <Navigate to="/search-bus" /> : <Navigate to="/login" />} />
+      <Route path="/register" element={user ? <Navigate to="/search-bus" /> : <Register />} />
+      <Route path="/login" element={user ? <Navigate to="/search-bus" /> : <Login />} />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      } />
+      <Route path="/search-bus" element={
+        <ProtectedRoute>
+          <SearchBus />
+        </ProtectedRoute>
+      } />
+    </Routes>
   );
 };
 

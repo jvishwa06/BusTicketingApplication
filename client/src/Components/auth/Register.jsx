@@ -78,8 +78,8 @@ const Register = () => {
               </button>
               <button
                 type="button"
-                className={`role-button ${selectedRole === 'admin' ? 'active' : ''}`}
-                onClick={() => handleRoleChange('admin')}
+                className={`role-button ${selectedRole === 'operator' ? 'active' : ''}`}
+                onClick={() => handleRoleChange('operator')}
               >
                 Operator
               </button>
@@ -153,7 +153,7 @@ const Register = () => {
                 />
               </div>
               
-              {selectedRole === 'admin' && (
+              {selectedRole === 'operator' && (
                 <>
                   <div className="form-group">
                     <label htmlFor="companyName" className="form-label">Company Name</label>
