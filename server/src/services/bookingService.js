@@ -50,8 +50,10 @@ class BookingService {
             }
 
             const totalPrice = seats.length * trip.price;
-            trip.availableSeats -= seats.length;
-            await trip.save();
+            
+            await TripRepository.updateTrip(tripId, { 
+                availableSeats: trip.availableSeats - seats.length 
+            });
 
             return await BookingRepository.createBooking({ userId, tripId, seats, totalPrice });
         } catch (error) {

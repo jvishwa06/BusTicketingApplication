@@ -15,8 +15,17 @@ class BookingRepository {
 
     async getBookingsByUserId(userId) {
         try {
-            const bookings = await Booking.find({ userId }).populate('tripId');
-            logger.info(`Fetched bookings for user ${userId}`);
+            const bookings = await Booking.find({ userId })
+                .populate({
+                    path: 'tripId',
+                    populate: {
+                        path: 'busId',
+                        select: 'name type operator regNumber totalSeats amenities rating'
+                    }
+                })
+                .populate('userId', 'name email phone')
+                .sort({ createdAt: -1 });
+            logger.info(`Fetched bookings with complete details for user ${userId}`);
             return bookings;
         } catch (error) {
             logger.error(`Error fetching bookings for user ${userId}: ${error.message}`);

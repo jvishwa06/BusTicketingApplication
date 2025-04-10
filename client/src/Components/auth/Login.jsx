@@ -54,58 +54,64 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2 className="auth-title">Login to Your Account</h2>
-        
-        {error && <div className="alert alert-error">{error}</div>}
-        {message && <div className="alert alert-success">{message}</div>}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">Email Address</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="form-input"
-              required
-            />
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <h2>Welcome Back</h2>
+            <p className="auth-subtitle">Login to access your BusBooking account</p>
           </div>
           
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="form-input"
-              required
-            />
-          </div>
+          {error && <div className="alert alert-error">{error}</div>}
+          {message && <div className="alert alert-success">{message}</div>}
           
-          <div className="form-group">
-            <button
-              type="submit"
-              className="btn btn-primary btn-full"
-              disabled={loading}
-            >
-              {loading ? 'Logging in...' : 'Login'}
-            </button>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-fields">
+              <div className="form-field">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+              
+              <div className="form-field">
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+              
+              <div className="forgot-password">
+                <Link to="/forgot-password" className="auth-link">Forgot password?</Link>
+              </div>
+              
+              <div className="form-action">
+                <button
+                  type="submit"
+                  className="auth-button"
+                  disabled={loading}
+                >
+                  {loading ? 'Logging in...' : 'Login'}
+                </button>
+              </div>
+            </div>
+          </form>
+          
+          <div className="auth-footer">
+            <p>Don't have an account? <Link to="/register" className="auth-link">Create Account</Link></p>
           </div>
-        </form>
-        
-        <div className="text-center">
-          <p>
-            Don't have an account?{' '}
-            <Link to="/register" className="link">
-              Register here
-            </Link>
-          </p>
         </div>
       </div>
     </div>

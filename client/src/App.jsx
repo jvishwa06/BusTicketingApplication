@@ -5,6 +5,7 @@ import Register from './components/auth/Register';
 import Login from './components/auth/Login';
 import Profile from './components/auth/Profile';
 import SearchBus from './pages/user/SearchBus';
+import MyBookings from './pages/user/MyBookings';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -44,6 +45,11 @@ const App = () => {
       <Route path="/search-bus" element={
         <ProtectedRoute>
           <SearchBus />
+        </ProtectedRoute>
+      } />
+      <Route path="/my-bookings" element={
+        <ProtectedRoute>
+          <MyBookings />
         </ProtectedRoute>
       } />
     </Routes>

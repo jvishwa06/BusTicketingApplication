@@ -55,153 +55,159 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2 className="auth-title">Create an Account</h2>
-        
-        {error && (
-          <div className="alert alert-error">
-            {error}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <div className="form-label">Select Role</div>
-            <div className="role-selection">
-              <button
-                type="button"
-                className={`role-button ${selectedRole === 'user' ? 'active' : ''}`}
-                onClick={() => handleRoleChange('user')}
-              >
-                User
-              </button>
-              <button
-                type="button"
-                className={`role-button ${selectedRole === 'operator' ? 'active' : ''}`}
-                onClick={() => handleRoleChange('operator')}
-              >
-                Operator
-              </button>
-            </div>
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <h2>Create your Account</h2>
+            <p className="auth-subtitle">Join BusBooking to book tickets for your journey</p>
           </div>
           
-          {selectedRole && (
-            <>
-              <div className="form-group">
-                <label htmlFor="name" className="form-label">Full Name</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="form-input"
-                  required
-                />
+          {error && (
+            <div className="alert alert-error">
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="role-selection-container">
+              <label className="form-label">I am a</label>
+              <div className="role-selection">
+                <button
+                  type="button"
+                  className={`role-button ${selectedRole === 'user' ? 'active' : ''}`}
+                  onClick={() => handleRoleChange('user')}
+                >
+                  <span className="role-icon">👤</span>
+                  <span>Passenger</span>
+                </button>
+                <button
+                  type="button"
+                  className={`role-button ${selectedRole === 'operator' ? 'active' : ''}`}
+                  onClick={() => handleRoleChange('operator')}
+                >
+                  <span className="role-icon">🚍</span>
+                  <span>Bus Operator</span>
+                </button>
               </div>
-              
-              <div className="form-group">
-                <label htmlFor="phone" className="form-label">Phone Number</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="form-input"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="email" className="form-label">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="form-input"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="password" className="form-label">Password</label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="form-input"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="form-input"
-                  required
-                />
-              </div>
-              
-              {selectedRole === 'operator' && (
-                <>
-                  <div className="form-group">
-                    <label htmlFor="companyName" className="form-label">Company Name</label>
+            </div>
+            
+            {selectedRole && (
+              <div className="form-fields">
+                <div className="form-field">
+                  <label htmlFor="name">Full Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-field">
+                    <label htmlFor="email">Email</label>
                     <input
-                      type="text"
-                      id="companyName"
-                      name="companyName"
-                      value={formData.companyName}
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
                       onChange={handleChange}
-                      className="form-input"
+                      placeholder="Enter your email"
                       required
                     />
                   </div>
                   
-                  <div className="form-group">
-                    <label htmlFor="companyAddress" className="form-label">Company Address</label>
-                    <textarea
-                      id="companyAddress"
-                      name="companyAddress"
-                      value={formData.companyAddress}
+                  <div className="form-field">
+                    <label htmlFor="phone">Phone</label>
+                    <input
+                      type="text"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
                       onChange={handleChange}
-                      className="form-input"
+                      placeholder="Enter phone number"
                       required
-                    ></textarea>
+                    />
                   </div>
-                </>
-              )}
-              
-              <div className="form-group">
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-full"
-                  disabled={loading}
-                >
-                  {loading ? 'Registering...' : 'Register'}
-                </button>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-field">
+                    <label htmlFor="password">Password</label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Create a password"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-field">
+                    <label htmlFor="confirmPassword">Confirm Password</label>
+                    <input
+                      type="password"
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Confirm your password"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                {selectedRole === 'operator' && (
+                  <>
+                    <div className="form-field">
+                      <label htmlFor="companyName">Company Name</label>
+                      <input
+                        type="text"
+                        id="companyName"
+                        name="companyName"
+                        value={formData.companyName}
+                        onChange={handleChange}
+                        placeholder="Enter your company name"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="form-field">
+                      <label htmlFor="companyAddress">Company Address</label>
+                      <textarea
+                        id="companyAddress"
+                        name="companyAddress"
+                        value={formData.companyAddress}
+                        onChange={handleChange}
+                        placeholder="Enter your company address"
+                        required
+                      ></textarea>
+                    </div>
+                  </>
+                )}
+                
+                <div className="form-action">
+                  <button
+                    type="submit"
+                    className="auth-button"
+                    disabled={loading}
+                  >
+                    {loading ? 'Creating Account...' : 'Create Account'}
+                  </button>
+                </div>
               </div>
-            </>
-          )}
-        </form>
-        
-        <div className="text-center">
-          <p>
-            Already have an account?{' '}
-            <Link to="/login" className="link">
-              Login here
-            </Link>
-          </p>
+            )}
+          </form>
+          
+          <div className="auth-footer">
+            <p>Already have an account? <Link to="/login" className="auth-link">Login</Link></p>
+          </div>
         </div>
       </div>
     </div>

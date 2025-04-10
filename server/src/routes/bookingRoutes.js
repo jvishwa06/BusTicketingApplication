@@ -10,6 +10,6 @@ router.get('/operator', authMiddleware.authenticate, authMiddleware.authorizeRol
 router.get('/', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin'), BookingController.getAllBookings);
 router.get('/:id', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin'), BookingController.getBookingById);
 router.put('/:id', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin'), BookingController.updateBooking);
-router.delete('/:id', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin'), BookingController.deleteBooking);
+router.delete('/:id', authMiddleware.authenticate, BookingController.deleteBooking);
 
 export default router;
