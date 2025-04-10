@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import api from '../../utils/api.js';
 import BookingModal from '../../components/booking/BookingModal.jsx';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import '../../components/styles/EnhancedDatePicker.css';
 
 const SearchBus = () => {
   const [formData, setFormData] = useState({
     source: '',
     destination: '',
-    date: ''
+    date: null
   });
   const [results, setResults] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
@@ -110,6 +113,10 @@ const SearchBus = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+  
+  const handleDateChange = (date) => {
+    setFormData({ ...formData, date });
+  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -196,7 +203,7 @@ const SearchBus = () => {
       <header className="app-header">
         <div className="header-container">
           <div className="logo">
-            <h1>BusBooking</h1>
+            <h1>HYPERBUS</h1>
           </div>
           <nav className="main-nav">
             <ul>
@@ -260,13 +267,17 @@ const SearchBus = () => {
                 
                 <div className="search-field">
                   <label htmlFor="date">TRAVEL DATE</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     id="date"
                     name="date"
-                    value={formData.date}
-                    onChange={handleChange}
+                    selected={formData.date}
+                    onChange={handleDateChange}
+                    dateFormat="MMMM d, yyyy"
+                    minDate={new Date()}
+                    placeholderText="Select travel date"
+                    showPopperArrow={true}
                     required
+                    autoComplete="off"
                   />
                 </div>
                 
@@ -274,6 +285,7 @@ const SearchBus = () => {
                   type="submit"
                   className="search-button"
                   disabled={loading}
+                  style={{ height: '40px', padding: '0 24px', lineHeight: '10px', fontSize: '15px' }}
                 >
                   {loading ? 'Searching...' : 'Search Buses'}
                 </button>
@@ -427,15 +439,15 @@ const SearchBus = () => {
                               <span className="line"></span>
                               <span className="dot end"></span>
                             </div>
-                          </div>
-                          <div className="duration-text">
-                            {calculateDuration(trip.departureTime, trip.arrivalTime)}
-                          </div>
-                          {getDayDifference(trip.departureTime, trip.arrivalTime) > 0 && (
-                            <div className="overnight-tag">
-                              +{getDayDifference(trip.departureTime, trip.arrivalTime)} day
+                            <div className="duration-text">
+                              {calculateDuration(trip.departureTime, trip.arrivalTime)}
                             </div>
-                          )}
+                            {getDayDifference(trip.departureTime, trip.arrivalTime) > 0 && (
+                              <div className="overnight-tag">
+                                +{getDayDifference(trip.departureTime, trip.arrivalTime)} day
+                              </div>
+                            )}
+                          </div>
                         </div>
                         
                         <div className="arrival-details">

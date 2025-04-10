@@ -59,7 +59,7 @@ const Login = () => {
         <div className="auth-card">
           <div className="auth-header">
             <h2>Welcome Back</h2>
-            <p className="auth-subtitle">Login to access your BusBooking account</p>
+            <p className="auth-subtitle">Login to access your HYPERBUS account</p>
           </div>
           
           {error && <div className="alert alert-error">{error}</div>}

@@ -1,5 +1,5 @@
 import React from 'react';
-import './BookingModal.css';
+import '../../index.css';
 
 const BookingDetailsModal = ({ booking, onClose }) => {
   if (!booking) return null;
@@ -24,7 +24,6 @@ const BookingDetailsModal = ({ booking, onClose }) => {
     return `${hours}h ${minutes}m`;
   };
   
-  // Format payment status for display
   const getPaymentStatusDisplay = (status) => {
     switch(status) {
       case 'success': return 'Confirmed';

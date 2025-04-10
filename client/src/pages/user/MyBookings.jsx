@@ -89,7 +89,7 @@ const MyBookings = () => {
       <header className="app-header">
         <div className="header-container">
           <div className="logo">
-            <h1>BusBooking</h1>
+            <h1>HYPERBUS</h1>
           </div>
           <nav className="main-nav">
             <ul>

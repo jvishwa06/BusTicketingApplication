@@ -79,7 +79,9 @@ class UserController {
                     name: user.name,
                     email: user.email,
                     phone: user.phone,
-                    role: user.role
+                    role: user.role,
+                    companyName: user.companyName,
+                    companyAddress: user.companyAddress
                 }
             });
         } catch (error) {
@@ -104,7 +106,9 @@ class UserController {
                     name: updatedUser.name,
                     email: updatedUser.email,
                     phone: updatedUser.phone,
-                    role: updatedUser.role
+                    role: updatedUser.role,
+                    companyName: updatedUser.companyName,
+                    companyAddress: updatedUser.companyAddress
                 }
             });
         } catch (error) {

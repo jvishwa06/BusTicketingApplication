@@ -60,7 +60,7 @@ const Register = () => {
         <div className="auth-card">
           <div className="auth-header">
             <h2>Create your Account</h2>
-            <p className="auth-subtitle">Join BusBooking to book tickets for your journey</p>
+            <p className="auth-subtitle">Join HYPERBUS to book tickets for your journey</p>
           </div>
           
           {error && (

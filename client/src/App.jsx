@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Register from './components/auth/Register';
 import Login from './components/auth/Login';
-import Profile from './components/auth/Profile';
+import Profile from './pages/user/Profile';
 import SearchBus from './pages/user/SearchBus';
 import MyBookings from './pages/user/MyBookings';
 

@@ -14,6 +14,8 @@ const Profile = () => {
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
+    companyName: '',
+    companyAddress: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -38,6 +40,8 @@ const Profile = () => {
           currentPassword: '',
           newPassword: '',
           confirmPassword: '',
+          companyName: userData.companyName || '',
+          companyAddress: userData.companyAddress || '',
         });
       }
     } catch (error) {
@@ -74,6 +78,12 @@ const Profile = () => {
         name: formData.name,
         phone: formData.phone
       };
+      
+      // Include company information for operators
+      if (user?.role === 'operator') {
+        updateData.companyName = formData.companyName;
+        updateData.companyAddress = formData.companyAddress;
+      }
       
       if (formData.newPassword && formData.currentPassword) {
         updateData.currentPassword = formData.currentPassword;
@@ -128,7 +138,7 @@ const Profile = () => {
       <header className="app-header">
         <div className="header-container">
           <div className="logo">
-            <h1>BusBooking</h1>
+            <h1>HYPERBUS</h1>
           </div>
           <nav className="main-nav">
             <ul>
@@ -276,6 +286,36 @@ const Profile = () => {
                     </div>
                   </div>
                   
+                  {user?.role === 'operator' && (
+                    <div className="form-section">
+                      <h4>Company Information</h4>
+                      <p className="section-subtitle">Company details (read-only)</p>
+                      
+                      <div className="form-field disabled">
+                        <label htmlFor="companyName">Company Name</label>
+                        <input
+                          type="text"
+                          id="companyName"
+                          name="companyName"
+                          value={formData.companyName || 'Not provided'}
+                          disabled
+                        />
+                      </div>
+                      
+                      <div className="form-field disabled">
+                        <label htmlFor="companyAddress">Company Address</label>
+                        <input
+                          type="text"
+                          id="companyAddress"
+                          name="companyAddress"
+                          value={formData.companyAddress || 'Not provided'}
+                          disabled
+                        />
+                      </div>
+                      <small>Contact support to update company information</small>
+                    </div>
+                  )}
+                  
                   <div className="form-section">
                     <h4>Change Password</h4>
                     <p className="section-subtitle">Leave blank if you don't want to change your password</p>
@@ -320,10 +360,19 @@ const Profile = () => {
                   </div>
                   
                   <div className="form-actions">
-                    <button type="button" onClick={toggleEdit} className="cancel-button">
+                    <button 
+                      type="button" 
+                      onClick={toggleEdit} 
+                      className="cancel-button" 
+                      style={{ height: '42px', padding: '0 24px', lineHeight: '42px' }}
+                    >
                       Cancel
                     </button>
-                    <button type="submit" className="save-button">
+                    <button 
+                      type="submit" 
+                      className="save-button"
+                      style={{ height: '42px', padding: '0 24px', lineHeight: '42px' }}
+                    >
                       Save Changes
                     </button>
                   </div>

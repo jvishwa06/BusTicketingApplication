@@ -73,6 +73,38 @@ class UserService {
 
     async updateProfile(userId, updateData) {
         try {
+            // Check if password update is requested
+            if (updateData.currentPassword && updateData.newPassword) {
+                // For password verification, we need to get the user with password included
+                const currentUser = await userRepository.getUserByEmail(
+                    (await userRepository.getUserById(userId)).email
+                );
+                
+                if (!currentUser) {
+                    logger.warn(`User not found: ${userId}`);
+                    throw new Error('User not found');
+                }
+                
+                // Check if password exists in user record
+                if (!currentUser.password) {
+                    logger.warn(`Password field missing for user ID: ${userId}`);
+                    throw new Error('Password reset required. Please use forgot password feature.');
+                }
+                
+                const isPasswordValid = await bcrypt.compare(updateData.currentPassword, currentUser.password);
+                if (!isPasswordValid) {
+                    logger.warn(`Invalid current password for user ID: ${userId}`);
+                    throw new Error('Current password is incorrect');
+                }
+                
+                // Hash the new password
+                updateData.password = await bcrypt.hash(updateData.newPassword, 10);
+                
+                // Remove the password fields that shouldn't be stored
+                delete updateData.currentPassword;
+                delete updateData.newPassword;
+            }
+            
             const user = await userRepository.updateUserProfile(userId, updateData);
             if (!user) {
                 logger.warn(`Profile update failed, user not found: ${userId}`);
