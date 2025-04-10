@@ -15,7 +15,6 @@ describe('PaymentService', () => {
             const mockUserId = 'user123';
             const mockPayments = [{ id: 'payment1', amount: 100 }, { id: 'payment2', amount: 200 }];
             
-            // Ensure the mocked function exists
             paymentRepository.getPaymentsByUserId.mockResolvedValue(mockPayments);
 
             const result = await PaymentService.getUserPayments(mockUserId);

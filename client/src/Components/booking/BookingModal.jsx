@@ -8,31 +8,26 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [bookingsData, setBookingsData] = useState({ 
-    bookedSeats: [],  // Seats with confirmed payment
-    pendingSeats: []  // Seats with pending payment
+    bookedSeats: [],  
+    pendingSeats: []  
   });
   
   const totalSeats = trip.busId.totalSeats;
   const availableSeats = trip.availableSeats;
   const price = trip.price;
   
-  // Fetch bookings to identify booked and pending payment seats
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        // Since we don't have a specific endpoint for trip bookings, we'll use the user bookings endpoint
-        // and then filter the results for this trip
         const response = await api.get('/bookings/user');
         
         if (response.data.success && response.data.data && response.data.data.length > 0) {
           const allBookings = response.data.data;
           
-          // Filter bookings for this specific trip
           const tripBookings = allBookings.filter(booking => 
             booking.tripId && booking.tripId._id === trip._id
           );
           
-          // Separate seats by payment status
           const bookedSeats = [];
           const pendingSeats = [];
           
@@ -48,7 +43,6 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
           setBookingsData({ bookedSeats, pendingSeats });
           console.log('Booking data for trip:', { bookedSeats, pendingSeats });
         } else {
-          // If there are no bookings, we need to check with the trip's data
           console.log('No user bookings found, checking trip data');
           
           // Make another API call to get all bookings for this trip
@@ -77,10 +71,8 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
     fetchBookings();
   }, [trip._id]);
   
-  // Generate array of all seat numbers
   const allSeats = Array.from({ length: totalSeats }, (_, i) => i + 1);
   
-  // Handle seat selection
   const toggleSeatSelection = (seatNumber) => {
     if (selectedSeats.includes(seatNumber)) {
       setSelectedSeats(selectedSeats.filter(seat => seat !== seatNumber));
@@ -101,7 +93,6 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
       
       console.log('Creating booking with trip:', trip);
       
-      // Use the trip data we already have - no need to fetch it again
       const response = await api.post('/bookings/user', {
         tripId: trip._id,
         seats: selectedSeats
@@ -111,7 +102,6 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
         setSuccess(true);
         onBookingSuccess(response.data.data);
         
-        // Close the modal after showing success message
         setTimeout(() => {
           onClose();
         }, 2000);
@@ -144,12 +134,10 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
             <h4>Select Seats</h4>
             <div className="seat-grid">
               {allSeats.map(seat => {
-                // Check if seat is booked or has pending payment
                 const isBooked = bookingsData.bookedSeats.includes(seat);
                 const isPending = bookingsData.pendingSeats.includes(seat);
                 const isAvailable = !isBooked && !isPending;
                 
-                // Determine the appropriate CSS class for the seat
                 let seatClass = 'available';
                 if (isBooked) seatClass = 'unavailable';
                 if (isPending) seatClass = 'pending-payment';
@@ -159,12 +147,10 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
                     key={seat}
                     className={`seat ${seatClass} ${selectedSeats.includes(seat) ? 'selected' : ''}`}
                     onClick={() => {
-                      // Only allow selection if the seat is available
                       if (isAvailable) {
                         toggleSeatSelection(seat);
                       }
                     }}
-                    // Disable button for booked or pending seats
                     disabled={!isAvailable}
                   >
                     {seat}
