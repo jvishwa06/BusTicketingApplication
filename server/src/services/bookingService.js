@@ -1,6 +1,7 @@
 import BookingRepository from '../repositories/bookingRepository.js';
 import TripRepository from '../repositories/tripRepository.js';
 import { logger } from '../utils/logger.js';
+
 class BookingService {
     async createBooking(userId, bookingData) {
         try {

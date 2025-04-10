@@ -2,19 +2,16 @@ import winston from 'winston';
 import path from 'path';
 import fs from 'fs';
 
-// Ensure log directory exists
 const logDir = path.join(process.cwd(), 'logs');
 if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir);
 }
 
-// Log format
 const logFormat = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level.toUpperCase()}]: ${message}`)
 );
 
-// Winston logger instance
 const Logger = winston.createLogger({
     level: 'info',
     format: logFormat,
