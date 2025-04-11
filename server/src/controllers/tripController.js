@@ -1,4 +1,5 @@
 import TripService from '../services/tripService.js';
+import BookingService from '../services/bookingService.js';
 import { logger } from '../utils/logger.js';
 
 class TripController {
@@ -84,6 +85,65 @@ class TripController {
         } catch (error) {
             logger.error(`Failed to delete trip: ${error.message}`);
             res.status(500).json({ success: false, message: error.message });
+        }
+    }
+    
+    static async getTripById(req, res, next) {
+        try {
+            const { tripId } = req.params;
+            logger.info(`Fetching trip with ID: ${tripId}`);
+            
+            const trip = await TripService.getTripById(tripId);
+            
+            if (!trip) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Trip not found"
+                });
+            }
+            
+            const bookings = await BookingService.getBookingsByTripId(tripId);
+            
+            const bookedSeats = [];
+            const pendingSeats = [];
+            
+            bookings.forEach(booking => {
+                if (booking.paymentStatus === 'success') {
+                    bookedSeats.push(...booking.seats);
+                } else if (booking.paymentStatus === 'pending') {
+                    pendingSeats.push(...booking.seats);
+                }
+            });
+            
+            const tripWithBookings = trip.toObject();
+            tripWithBookings.bookedSeats = bookedSeats;
+            tripWithBookings.pendingSeats = pendingSeats;
+            
+            const totalSeats = trip.busId ? trip.busId.totalSeats : 0;
+            
+            const bookedCount = bookedSeats.length;
+            const pendingCount = pendingSeats.length;
+            const availableSeats = totalSeats - (bookedCount + pendingCount);
+            
+            tripWithBookings.availableSeats = availableSeats;
+            
+            tripWithBookings.availableSeats = Math.max(0, parseInt(availableSeats));
+            
+            logger.info(`Trip ${tripId} seat calculation:
+                Total seats: ${totalSeats}
+                Booked seats: ${bookedCount} (${bookedSeats.join(',')})
+                Pending seats: ${pendingCount} (${pendingSeats.join(',')})
+                available seats: ${tripWithBookings.availableSeats}
+            `);
+            
+            res.status(200).json({
+                success: true,
+                message: "Trip fetched successfully",
+                data: tripWithBookings
+            });
+        } catch (error) {
+            logger.error(`Failed to fetch trip: ${error.message}`);
+            next(error);
         }
     }
 }

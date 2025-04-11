@@ -10,7 +10,8 @@ const tripSchema = new mongoose.Schema(
         departureTime: { type: Date, required: true },
         arrivalTime: { type: Date, required: true },
         price: { type: Number, required: true, min: [0, 'Price cannot be negative'] },
-        availableSeats: { type: Number, required: true, min: [0, 'Available seats cannot be negative'] }
+        availableSeats: { type: Number, required: true, min: [0, 'Available seats cannot be negative'] },
+        distance: { type: Number } 
     }, 
     { timestamps: true }
 );

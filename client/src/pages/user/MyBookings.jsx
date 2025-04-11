@@ -66,6 +66,10 @@ const MyBookings = () => {
     navigate('/profile');
   };
   
+  const goToMyBookings = () => {
+    navigate('/my-bookings');
+  };
+  
   const handleLogout = async () => {
     const success = await logout();
     if (success) navigate('/login', { replace: true });
@@ -81,6 +85,46 @@ const MyBookings = () => {
   
   const formatShortDate = (dateString) => {
     return new Date(dateString).toLocaleDateString();
+  };
+  
+  const getBusTypeDisplay = (type) => {
+    if (!type) return 'Unknown';
+    
+    // Format the bus type in a more readable way
+    const formattedType = type.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+    
+    // Add bus type icon
+    switch(type.toLowerCase()) {
+      case 'ac':
+        return '❄️ AC';
+      case 'non-ac':
+        return '🚌 Non-AC';
+      case 'sleeper':
+        return '🛏️ Sleeper';
+      case 'seater':
+        return '💺 Seater';
+      case 'ac sleeper':
+      case 'sleeper ac':
+        return '❄️🛏️ AC Sleeper';
+      case 'ac seater':
+      case 'seater ac':
+        return '❄️💺 AC Seater';
+      default:
+        return formattedType;
+    }
+  };
+  
+  const calculateDuration = (start, end) => {
+    const startTime = new Date(start);
+    const endTime = new Date(end);
+    const durationMs = endTime - startTime;
+    
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours}h ${minutes}m`;
   };
 
   return (
@@ -153,28 +197,33 @@ const MyBookings = () => {
                   <div className="booking-main">
                     <div className="booking-trip-details">
                       <div className="bus-info">
-                        <h3 className="bus-name">{booking.tripId.busId.name}</h3>
-                        <span className="bus-type">{booking.tripId.busId.type}</span>
+                        <h3 className="bus-name">{booking.tripId?.busId?.name || 'Bus information unavailable'}</h3>
+                        <span className="bus-type">{getBusTypeDisplay(booking.tripId?.busId?.type)}</span>
                       </div>
                       
                       <div className="journey-details">
                         <div className="journey-points">
                           <div className="departure-info">
-                            <div className="time">{formatTime(booking.tripId.departureTime)}</div>
-                            <div className="date">{formatShortDate(booking.tripId.departureTime)}</div>
-                            <div className="place">{booking.tripId.source}</div>
+                            <div className="time">{booking.tripId ? formatTime(booking.tripId.departureTime) : 'N/A'}</div>
+                            <div className="date">{booking.tripId ? formatShortDate(booking.tripId.departureTime) : 'N/A'}</div>
+                            <div className="place">{booking.tripId?.source || 'Unknown'}</div>
                           </div>
                           
                           <div className="journey-line">
                             <div className="dot start"></div>
                             <div className="line"></div>
                             <div className="dot end"></div>
+                            {booking.tripId && booking.tripId.departureTime && booking.tripId.arrivalTime && (
+                              <div className="duration-text">
+                                {calculateDuration(booking.tripId.departureTime, booking.tripId.arrivalTime)}
+                              </div>
+                            )}
                           </div>
                           
                           <div className="arrival-info">
-                            <div className="time">{formatTime(booking.tripId.arrivalTime)}</div>
-                            <div className="date">{formatShortDate(booking.tripId.arrivalTime)}</div>
-                            <div className="place">{booking.tripId.destination}</div>
+                            <div className="time">{booking.tripId ? formatTime(booking.tripId.arrivalTime) : 'N/A'}</div>
+                            <div className="date">{booking.tripId ? formatShortDate(booking.tripId.arrivalTime) : 'N/A'}</div>
+                            <div className="place">{booking.tripId?.destination || 'Unknown'}</div>
                           </div>
                         </div>
                       </div>
@@ -205,14 +254,12 @@ const MyBookings = () => {
                         >
                           View Details
                         </button>
-                        {booking.paymentStatus !== 'success' && (
-                          <button 
-                            className="cancel-button" 
-                            onClick={() => handleDeleteBooking(booking._id)}
-                          >
-                            Cancel Booking
-                          </button>
-                        )}
+                        <button 
+                          className="cancel-button" 
+                          onClick={() => handleDeleteBooking(booking._id)}
+                        >
+                          {booking.paymentStatus === 'success' ? 'Cancel Reservation' : 'Cancel Booking'}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -232,11 +279,6 @@ const MyBookings = () => {
       )}
     </div>
   );
-};
-
-const goToMyBookings = () => {
-  // This is a dummy function to avoid errors when using the "active" class on the button
-  // The actual navigation is not needed since we're already on the MyBookings page
 };
 
 export default MyBookings;

@@ -122,6 +122,16 @@ class BookingService {
             throw error;
         }
     }
+
+    async getBookingsByTripId(tripId) {
+        try {
+            logger.info(`Fetching bookings for trip ${tripId}`);
+            return await BookingRepository.getBookingsByTripId(tripId);
+        } catch (error) {
+            logger.error(`Error fetching bookings for trip ${tripId}: ${error.message}`);
+            throw error;
+        }
+    }
     
     async deleteBooking(bookingId) {
         try {

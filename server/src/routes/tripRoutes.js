@@ -7,6 +7,7 @@ const router = express.Router();
 router.post('/', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin', 'operator'), TripController.createTrip);
 router.get('/', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin', 'operator'),TripController.getAllTrips);
 router.get('/search', authMiddleware.authenticate, TripController.getFilteredTrips);
+router.get('/:tripId', authMiddleware.authenticate, TripController.getTripById);
 router.put('/:tripId', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin', 'operator'), TripController.updateTrip);
 router.delete('/:tripId', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin', 'operator'), TripController.deleteTrip);
 

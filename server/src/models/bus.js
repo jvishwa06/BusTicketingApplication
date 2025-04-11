@@ -7,7 +7,7 @@ const BusSchema = new mongoose.Schema(
     registrationNumber: {type: String,required: true,unique: true,uppercase: true},
     type: { type: String, enum: ['AC', 'Non-AC', 'Sleeper', 'Seater'], required: true },
     totalSeats: { type: Number, required: true, min: [1, 'Total seats must be at least 1'] },
-    amenities: {type: [String], enum: ['WiFi', 'Charging Point', 'Blanket', 'Water Bottle', 'Toilet']},
+    amenities: {type: [String], enum: ['WiFi', 'Charging Point', 'Blanket', 'Water Bottle']},
   },
   { timestamps: true }
 );

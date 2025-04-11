@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import api from '../../utils/api.js';
@@ -28,19 +28,85 @@ const SearchBus = () => {
     evening: false,
     night: false
   });
+  const [availabilityMap, setAvailabilityMap] = useState({});
+  const [lastUpdated, setLastUpdated] = useState(new Date());
 
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  // Effect to apply sort and filter whenever results, sortOption, or filterOptions change
+  const fetchSeatAvailability = useCallback(async () => {
+    if (results.length === 0) return;
+    
+    const availabilityData = {};
+    
+    for (const trip of results) {
+      try {
+        const response = await api.get(`/trips/${trip._id}`);
+        if (response.data.success && response.data.data) {
+          const tripData = response.data.data;
+          
+          const calculatedAvailableSeats = tripData.availableSeats;
+          
+          const totalSeats = tripData.busId?.totalSeats || trip.busId?.totalSeats || 0;
+          const bookedSeats = tripData.bookedSeats?.length || 0;
+          const pendingSeats = tripData.pendingSeats?.length || 0;
+          const manuallyCalculated = totalSeats - (bookedSeats + pendingSeats);
+          
+          availabilityData[trip._id] = calculatedAvailableSeats !== undefined ? 
+            calculatedAvailableSeats : manuallyCalculated;
+          
+          console.log(`Trip ${trip._id} seat calculation:
+            Total seats: ${totalSeats}
+            Booked seats: ${bookedSeats}
+            Pending seats: ${pendingSeats}
+            Formula: ${totalSeats} - (${bookedSeats} + ${pendingSeats}) = ${manuallyCalculated}
+            Backend calculated: ${calculatedAvailableSeats}
+            Using: ${availabilityData[trip._id]} seats available
+          `);
+        } else {
+          const totalSeats = trip.busId?.totalSeats || 0;
+          availabilityData[trip._id] = totalSeats;
+          console.log(`Using basic fallback for trip ${trip._id}: ${availabilityData[trip._id]} seats`);
+        }
+      } catch (err) {
+        console.error(`Error fetching availability for trip ${trip._id}:`, err);
+        availabilityData[trip._id] = trip.availableSeats;
+        console.log(`Error fallback for trip ${trip._id}: ${availabilityData[trip._id]} seats`);
+      }
+    }
+    
+    setAvailabilityMap(availabilityData);
+    setLastUpdated(new Date());
+  }, [results]);
+
   useEffect(() => {
     applyFiltersAndSort();
-  }, [results, sortOption, filterOptions]);
+  }, [results, sortOption, filterOptions, availabilityMap]);
+
+  useEffect(() => {
+    fetchSeatAvailability();
+  }, [results, fetchSeatAvailability]);
+  
+  useEffect(() => {
+    if (results.length === 0) return;
+    
+    const intervalId = setInterval(() => {
+      console.log("Auto-refreshing seat availability...");
+      fetchSeatAvailability();
+    }, 30000); 
+    
+    return () => clearInterval(intervalId); 
+  }, [results, fetchSeatAvailability]);
+  
+  useEffect(() => {
+    if (selectedTrip === null) {
+      fetchSeatAvailability();
+    }
+  }, [selectedTrip, fetchSeatAvailability]);
 
   const applyFiltersAndSort = () => {
     let filtered = [...results];
     
-    // Apply bus type filters
     if (filterOptions.ac || filterOptions.sleeper || filterOptions.seater) {
       filtered = filtered.filter(trip => {
         const busType = trip.busId?.type?.toLowerCase() || '';
@@ -51,7 +117,6 @@ const SearchBus = () => {
       });
     }
     
-    // Apply time of day filters
     if (filterOptions.morning || filterOptions.afternoon || filterOptions.evening || filterOptions.night) {
       filtered = filtered.filter(trip => {
         const departureHour = new Date(trip.departureTime).getHours();
@@ -63,7 +128,6 @@ const SearchBus = () => {
       });
     }
     
-    // Sort results
     filtered.sort((a, b) => {
       switch (sortOption) {
         case 'price':
@@ -76,7 +140,9 @@ const SearchBus = () => {
         case 'arrivalTime':
           return new Date(a.arrivalTime) - new Date(b.arrivalTime);
         case 'seats':
-          return b.availableSeats - a.availableSeats;
+          const aAvailable = availabilityMap[a._id] !== undefined ? availabilityMap[a._id] : a.availableSeats;
+          const bAvailable = availabilityMap[b._id] !== undefined ? availabilityMap[b._id] : b.availableSeats;
+          return bAvailable - aAvailable;
         default:
           return 0;
       }
@@ -160,16 +226,12 @@ const SearchBus = () => {
     switch(amenity.toLowerCase()) {
       case 'wifi':
         return '📶';
-      case 'charging':
+      case 'charging point':
         return '🔌';
-      case 'water':
+      case 'water bottle':
         return '💧';
       case 'blanket':
         return '🛏️';
-      case 'movie':
-        return '🎬';
-      case 'refreshment':
-        return '🥤';
       default:
         return '✓';
     }
@@ -412,10 +474,6 @@ const SearchBus = () => {
                     <div className="bus-header">
                       <div className="bus-operator">
                         <h4 className="bus-name">{trip.busId?.name || 'Unknown Bus'}</h4>
-                        <div className="bus-rating">
-                          <span className="rating-stars">★★★★☆</span>
-                          <span className="rating-count">4.1</span>
-                        </div>
                       </div>
                       <div className="bus-type-badge">
                         <span className="type-icon">{getBusTypeIcon(trip.busId?.type)}</span>
@@ -461,12 +519,16 @@ const SearchBus = () => {
                       <div className="bus-amenities">
                         <div className="amenity-title">Amenities</div>
                         <div className="amenity-list">
-                          {['WiFi', 'Charging', 'Water', 'Blanket'].map((amenity, index) => (
-                            <div className="amenity-item" key={index}>
-                              <span className="amenity-icon">{getAmenityIcon(amenity)}</span>
-                              <span className="amenity-name">{amenity}</span>
-                            </div>
-                          ))}
+                          {trip.busId?.amenities && trip.busId.amenities.length > 0 ? (
+                            trip.busId.amenities.map((amenity, index) => (
+                              <div className="amenity-item" key={index}>
+                                <span className="amenity-icon">{getAmenityIcon(amenity)}</span>
+                                <span className="amenity-name">{amenity}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="amenity-name">No amenities available</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -478,17 +540,17 @@ const SearchBus = () => {
                       </div>
                       
                       <div className="seat-availability">
-                        <div className={`seat-status ${trip.availableSeats > 10 ? 'many' : trip.availableSeats > 0 ? 'few' : 'none'}`}>
-                          {trip.availableSeats > 0 ? `${trip.availableSeats} seats available` : 'Sold Out'}
+                        <div className={`seat-status ${availabilityMap[trip._id] > 10 ? 'many' : availabilityMap[trip._id] > 0 ? 'few' : 'none'}`}>
+                          {availabilityMap[trip._id] > 0 ? `${availabilityMap[trip._id]} seats available` : 'Sold Out'}
                         </div>
                       </div>
                       
                       <button 
                         className="view-seats-button" 
                         onClick={() => openBookingModal(trip)}
-                        disabled={trip.availableSeats <= 0}
+                        disabled={availabilityMap[trip._id] <= 0}
                       >
-                        {trip.availableSeats <= 0 ? 'Sold Out' : 'View Seats'}
+                        {availabilityMap[trip._id] <= 0 ? 'Sold Out' : 'View Seats'}
                       </button>
                     </div>
                   </div>
@@ -533,7 +595,6 @@ const calculateDuration = (start, end) => {
   return `${hours}h ${minutes}m`;
 };
 
-// Helper function to calculate duration in minutes for sorting
 const calculateDurationInMinutes = (start, end) => {
   const startTime = new Date(start);
   const endTime = new Date(end);

@@ -11,56 +11,72 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
     bookedSeats: [],  
     pendingSeats: []  
   });
+  const [realAvailableSeats, setRealAvailableSeats] = useState(trip.availableSeats);
   
   const totalSeats = trip.busId.totalSeats;
-  const availableSeats = trip.availableSeats;
   const price = trip.price;
   
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await api.get('/bookings/user');
+        // First, always get trip data with all booked and pending seats from all users
+        const tripResponse = await api.get(`/trips/${trip._id}`);
         
-        if (response.data.success && response.data.data && response.data.data.length > 0) {
-          const allBookings = response.data.data;
+        if (tripResponse.data.success && tripResponse.data.data) {
+          const tripData = tripResponse.data.data;
+          const allBookedSeats = tripData.bookedSeats || [];
+          const allPendingSeats = tripData.pendingSeats || [];
           
-          const tripBookings = allBookings.filter(booking => 
-            booking.tripId && booking.tripId._id === trip._id
-          );
+          console.log('All booked seats from trip API:', allBookedSeats);
+          console.log('All pending seats from trip API:', allPendingSeats);
           
-          const bookedSeats = [];
-          const pendingSeats = [];
-          
-          // Process all bookings for this trip
-          tripBookings.forEach(booking => {
-            if (booking.paymentStatus === 'success') {
-              bookedSeats.push(...booking.seats);
-            } else {
-              pendingSeats.push(...booking.seats);
-            }
+          // Set the booking data from the trip endpoint that includes ALL users' seats
+          setBookingsData({
+            bookedSeats: allBookedSeats,
+            pendingSeats: allPendingSeats
           });
           
-          setBookingsData({ bookedSeats, pendingSeats });
-          console.log('Booking data for trip:', { bookedSeats, pendingSeats });
-        } else {
-          console.log('No user bookings found, checking trip data');
+          // Calculate real available seats using complete trip data
+          const calculatedAvailableSeats = totalSeats - (allBookedSeats.length + allPendingSeats.length);
+          setRealAvailableSeats(calculatedAvailableSeats);
           
-          // Make another API call to get all bookings for this trip
-          // This would need a new endpoint in your API
-          try {
-            const adminResponse = await api.get(`/trips/${trip._id}`);
-            if (adminResponse.data.success && adminResponse.data.data) {
-              const tripData = adminResponse.data.data;
-              if (tripData.bookedSeats) {
-                setBookingsData({
-                  bookedSeats: tripData.bookedSeats,
-                  pendingSeats: []
-                });
-                console.log('Using trip data for booked seats:', tripData.bookedSeats);
+          console.log(`Trip ${trip._id} total calculation:
+            Total seats: ${totalSeats}
+            All booked seats: ${allBookedSeats.length} (${allBookedSeats.join(',')})
+            All pending seats: ${allPendingSeats.length} (${allPendingSeats.join(',')})
+            Available: ${calculatedAvailableSeats}
+          `);
+          
+        } else {
+          // Fallback to user's own bookings if trip data isn't available
+          console.log('Trip data not available, falling back to user bookings');
+          
+          const userResponse = await api.get('/bookings/user');
+          
+          if (userResponse.data.success && userResponse.data.data && userResponse.data.data.length > 0) {
+            const allBookings = userResponse.data.data;
+            
+            const tripBookings = allBookings.filter(booking => 
+              booking.tripId && booking.tripId._id === trip._id
+            );
+            
+            const bookedSeats = [];
+            const pendingSeats = [];
+            
+            // Process user's bookings for this trip
+            tripBookings.forEach(booking => {
+              if (booking.paymentStatus === 'success') {
+                bookedSeats.push(...booking.seats);
+              } else {
+                pendingSeats.push(...booking.seats);
               }
-            }
-          } catch (tripErr) {
-            console.log('Could not get specific trip booking data');
+            });
+            
+            setBookingsData({ bookedSeats, pendingSeats });
+            console.log('User booking data only (incomplete):', { bookedSeats, pendingSeats });
+            
+            // Using user booking data is incomplete, just using for display
+            // We don't calculate available seats here because it would be wrong
           }
         }
       } catch (err) {
@@ -69,7 +85,7 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
     };
     
     fetchBookings();
-  }, [trip._id]);
+  }, [trip._id, trip.availableSeats, totalSeats]);
   
   const allSeats = Array.from({ length: totalSeats }, (_, i) => i + 1);
   
@@ -100,6 +116,18 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
       
       if (response.data.success) {
         setSuccess(true);
+        
+        // Immediately update our local state to reflect the new booking
+        setBookingsData(prevState => ({
+          bookedSeats: prevState.bookedSeats,
+          pendingSeats: [...prevState.pendingSeats, ...selectedSeats]
+        }));
+        
+        // Calculate new available seats locally
+        const newUnavailableSeats = [...bookingsData.bookedSeats, ...bookingsData.pendingSeats, ...selectedSeats];
+        setRealAvailableSeats(totalSeats - newUnavailableSeats.length);
+        
+        // Notify parent component of booking success
         onBookingSuccess(response.data.data);
         
         setTimeout(() => {

@@ -79,7 +79,6 @@ const Profile = () => {
         phone: formData.phone
       };
       
-      // Include company information for operators
       if (user?.role === 'operator') {
         updateData.companyName = formData.companyName;
         updateData.companyAddress = formData.companyAddress;
@@ -97,7 +96,6 @@ const Profile = () => {
         setUser({...user, ...updateData});
         setIsEditing(false);
         
-        // Reset password fields
         setFormData({
           ...formData,
           currentPassword: '',

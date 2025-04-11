@@ -1,4 +1,4 @@
-import Booking from '../models/Booking.js';
+import Booking from '../models/booking.js';
 import { logger } from '../utils/logger.js';
 
 class BookingRepository {
@@ -20,7 +20,7 @@ class BookingRepository {
                     path: 'tripId',
                     populate: {
                         path: 'busId',
-                        select: 'name type operator regNumber totalSeats amenities rating'
+                        select: 'name type operatorId registrationNumber totalSeats amenities'
                     }
                 })
                 .populate('userId', 'name email phone')
