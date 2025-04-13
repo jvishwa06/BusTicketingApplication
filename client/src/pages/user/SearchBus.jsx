@@ -54,15 +54,7 @@ const SearchBus = () => {
           
           availabilityData[trip._id] = calculatedAvailableSeats !== undefined ? 
             calculatedAvailableSeats : manuallyCalculated;
-          
-          console.log(`Trip ${trip._id} seat calculation:
-            Total seats: ${totalSeats}
-            Booked seats: ${bookedSeats}
-            Pending seats: ${pendingSeats}
-            Formula: ${totalSeats} - (${bookedSeats} + ${pendingSeats}) = ${manuallyCalculated}
-            Backend calculated: ${calculatedAvailableSeats}
-            Using: ${availabilityData[trip._id]} seats available
-          `);
+
         } else {
           const totalSeats = trip.busId?.totalSeats || 0;
           availabilityData[trip._id] = totalSeats;
