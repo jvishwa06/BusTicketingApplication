@@ -1,6 +1,6 @@
 import AdminService from '../services/adminService.js';
 import AdminRepository from '../repositories/adminRepository.js';
-import { logger } from '../utils/logger.js';
+import { appLogger } from '../utils/logger.js';
 
 jest.mock('../repositories/adminRepository.js');
 jest.mock('../utils/logger.js');
@@ -19,7 +19,7 @@ describe('AdminService', () => {
             const result = await AdminService.blockUser(mockUserId);
 
             expect(AdminRepository.updateUserStatus).toHaveBeenCalledWith(mockUserId, true);
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual({ message: 'User blocked successfully', user: mockUser });
         });
 
@@ -28,7 +28,7 @@ describe('AdminService', () => {
             AdminRepository.updateUserStatus.mockResolvedValue(null);
 
             await expect(AdminService.blockUser(mockUserId)).rejects.toThrow(`User with ID ${mockUserId} not found`);
-            expect(logger.warn).toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalled();
         });
     });
 
@@ -41,7 +41,7 @@ describe('AdminService', () => {
             const result = await AdminService.unblockUser(mockUserId);
 
             expect(AdminRepository.updateUserStatus).toHaveBeenCalledWith(mockUserId, false);
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual({ message: 'User unblocked successfully', user: mockUser });
         });
 
@@ -50,7 +50,7 @@ describe('AdminService', () => {
             AdminRepository.updateUserStatus.mockResolvedValue(null);
 
             await expect(AdminService.unblockUser(mockUserId)).rejects.toThrow(`User with ID ${mockUserId} not found`);
-            expect(logger.warn).toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalled();
         });
     });
 });

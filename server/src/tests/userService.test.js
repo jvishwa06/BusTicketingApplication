@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import UserService from '../services/userService.js';
 import userRepository from '../repositories/userRepository.js';
-import { logger } from '../utils/logger.js';
+import { appLogger } from '../utils/logger.js';
 
 jest.mock('bcryptjs');
 jest.mock('jsonwebtoken');
@@ -42,7 +42,7 @@ describe('UserService', () => {
         ...userData,
         password: 'hashedPassword'
       });
-      expect(logger.info).toHaveBeenCalledWith(`User registered successfully: ${userData.email}`);
+      expect(appLogger.info).toHaveBeenCalledWith(`User registered successfully: ${userData.email}`);
       expect(result).toEqual({
         _id: 'user123',
         ...userData,
@@ -54,7 +54,7 @@ describe('UserService', () => {
       const invalidUserData = { ...validUserData, role: 'superadmin' };
 
       await expect(UserService.register(invalidUserData)).rejects.toThrow('Invalid role specified');
-      expect(logger.warn).toHaveBeenCalledWith(`Invalid role specified: ${invalidUserData.role}`);
+      expect(appLogger.warn).toHaveBeenCalledWith(`Invalid role specified: ${invalidUserData.role}`);
       expect(userRepository.createUser).not.toHaveBeenCalled();
     });
 
@@ -62,7 +62,7 @@ describe('UserService', () => {
       userRepository.getUserByEmail.mockResolvedValue({ email: validUserData.email });
 
       await expect(UserService.register({ ...validUserData })).rejects.toThrow('User already exists');
-      expect(logger.warn).toHaveBeenCalledWith(`User with email ${validUserData.email} already exists`);
+      expect(appLogger.warn).toHaveBeenCalledWith(`User with email ${validUserData.email} already exists`);
       expect(userRepository.createUser).not.toHaveBeenCalled();
     });
 
@@ -71,7 +71,7 @@ describe('UserService', () => {
       userRepository.getUserByEmail.mockRejectedValue(error);
 
       await expect(UserService.register({ ...validUserData })).rejects.toThrow('Database error');
-      expect(logger.error).toHaveBeenCalledWith(`Error registering user: ${error.message}`);
+      expect(appLogger.error).toHaveBeenCalledWith(`Error registering user: ${error.message}`);
     });
   });
 
@@ -105,7 +105,7 @@ describe('UserService', () => {
         'test-secret',
         { expiresIn: '1d' }
       );
-      expect(logger.info).toHaveBeenCalledWith(`User logged in successfully: ${mockUser.email}`);
+      expect(appLogger.info).toHaveBeenCalledWith(`User logged in successfully: ${mockUser.email}`);
       expect(result).toEqual({
         token: 'test-token',
         user: mockUser
@@ -116,7 +116,7 @@ describe('UserService', () => {
       userRepository.getUserByEmail.mockResolvedValue(null);
 
       await expect(UserService.login({ ...credentials })).rejects.toThrow('Invalid credentials');
-      expect(logger.warn).toHaveBeenCalledWith(`Failed login attempt for email: ${credentials.email}`);
+      expect(appLogger.warn).toHaveBeenCalledWith(`Failed login attempt for email: ${credentials.email}`);
     });
 
     it('should throw an error if password does not match', async () => {
@@ -124,7 +124,7 @@ describe('UserService', () => {
       bcrypt.compare.mockResolvedValue(false);
 
       await expect(UserService.login({ ...credentials })).rejects.toThrow('Invalid credentials');
-      expect(logger.warn).toHaveBeenCalledWith(`Failed login attempt for email: ${credentials.email}`);
+      expect(appLogger.warn).toHaveBeenCalledWith(`Failed login attempt for email: ${credentials.email}`);
     });
 
     it('should handle and log login errors', async () => {
@@ -132,7 +132,7 @@ describe('UserService', () => {
       userRepository.getUserByEmail.mockRejectedValue(error);
 
       await expect(UserService.login({ ...credentials })).rejects.toThrow('Authentication error');
-      expect(logger.error).toHaveBeenCalledWith(`Error logging in user with email ${credentials.email}: ${error.message}`);
+      expect(appLogger.error).toHaveBeenCalledWith(`Error logging in user with email ${credentials.email}: ${error.message}`);
     });
   });
 
@@ -151,7 +151,7 @@ describe('UserService', () => {
       const result = await UserService.getProfile(userId);
 
       expect(userRepository.getUserById).toHaveBeenCalledWith(userId);
-      expect(logger.info).toHaveBeenCalledWith(`User profile retrieved: ${mockUser.email}`);
+      expect(appLogger.info).toHaveBeenCalledWith(`User profile retrieved: ${mockUser.email}`);
       expect(result).toEqual(mockUser);
     });
 
@@ -159,7 +159,7 @@ describe('UserService', () => {
       userRepository.getUserById.mockResolvedValue(null);
 
       await expect(UserService.getProfile(userId)).rejects.toThrow('User not found');
-      expect(logger.warn).toHaveBeenCalledWith(`Profile not found for user ID: ${userId}`);
+      expect(appLogger.warn).toHaveBeenCalledWith(`Profile not found for user ID: ${userId}`);
     });
 
     it('should handle and log profile retrieval errors', async () => {
@@ -167,7 +167,7 @@ describe('UserService', () => {
       userRepository.getUserById.mockRejectedValue(error);
 
       await expect(UserService.getProfile(userId)).rejects.toThrow('Database error');
-      expect(logger.error).toHaveBeenCalledWith(`Error fetching profile for user ID ${userId}: ${error.message}`);
+      expect(appLogger.error).toHaveBeenCalledWith(`Error fetching profile for user ID ${userId}: ${error.message}`);
     });
   });
 
@@ -191,7 +191,7 @@ describe('UserService', () => {
       const result = await UserService.updateProfile(userId, updateData);
 
       expect(userRepository.updateUserProfile).toHaveBeenCalledWith(userId, updateData);
-      expect(logger.info).toHaveBeenCalledWith(`User profile updated: ${mockUser.email}`);
+      expect(appLogger.info).toHaveBeenCalledWith(`User profile updated: ${mockUser.email}`);
       expect(result).toEqual(mockUser);
     });
 
@@ -199,7 +199,7 @@ describe('UserService', () => {
       userRepository.updateUserProfile.mockResolvedValue(null);
 
       await expect(UserService.updateProfile(userId, updateData)).rejects.toThrow('User not found');
-      expect(logger.warn).toHaveBeenCalledWith(`Profile update failed, user not found: ${userId}`);
+      expect(appLogger.warn).toHaveBeenCalledWith(`Profile update failed, user not found: ${userId}`);
     });
 
     it('should handle and log profile update errors', async () => {
@@ -207,7 +207,7 @@ describe('UserService', () => {
       userRepository.updateUserProfile.mockRejectedValue(error);
 
       await expect(UserService.updateProfile(userId, updateData)).rejects.toThrow('Database error');
-      expect(logger.error).toHaveBeenCalledWith(`Error updating profile for user ID ${userId}: ${error.message}`);
+      expect(appLogger.error).toHaveBeenCalledWith(`Error updating profile for user ID ${userId}: ${error.message}`);
     });
   });
 });

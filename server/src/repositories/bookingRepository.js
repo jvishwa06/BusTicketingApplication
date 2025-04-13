@@ -1,14 +1,14 @@
 import Booking from '../models/booking.js';
-import { logger } from '../utils/logger.js';
+import { appLogger } from '../utils/logger.js';
 
 class BookingRepository {
     async createBooking(bookingData) {
         try {
             const booking = await Booking.create(bookingData);
-            logger.info(`Booking created with ID: ${booking._id}`);
+            appLogger.info(`Booking created with ID: ${booking._id}`);
             return booking;
         } catch (error) {
-            logger.error(`Error creating booking: ${error.message}`);
+            appLogger.error(`Error creating booking: ${error.message}`);
             throw error;
         }
     }
@@ -25,10 +25,10 @@ class BookingRepository {
                 })
                 .populate('userId', 'name email phone')
                 .sort({ createdAt: -1 });
-            logger.info(`Fetched bookings with complete details for user ${userId}`);
+            appLogger.info(`Fetched bookings with complete details for user ${userId}`);
             return bookings;
         } catch (error) {
-            logger.error(`Error fetching bookings for user ${userId}: ${error.message}`);
+            appLogger.error(`Error fetching bookings for user ${userId}: ${error.message}`);
             throw error;
         }
     }
@@ -36,10 +36,10 @@ class BookingRepository {
     async getAllBookings() {
         try {
             const bookings = await Booking.find().populate('tripId userId');
-            logger.info("Fetched all bookings successfully");
+            appLogger.info("Fetched all bookings successfully");
             return bookings;
         } catch (error) {
-            logger.error(`Error fetching all bookings: ${error.message}`);
+            appLogger.error(`Error fetching all bookings: ${error.message}`);
             throw error;
         }
     }
@@ -47,10 +47,10 @@ class BookingRepository {
     async getBookingsByTripId(tripId) {  
         try {
             const bookings = await Booking.find({ tripId });
-            logger.info(`Fetched bookings for trip ${tripId}`);
+            appLogger.info(`Fetched bookings for trip ${tripId}`);
             return bookings;
         } catch (error) {
-            logger.error(`Error fetching bookings for trip ${tripId}: ${error.message}`);
+            appLogger.error(`Error fetching bookings for trip ${tripId}: ${error.message}`);
             throw error;
         }
     }
@@ -59,13 +59,13 @@ class BookingRepository {
         try {
             const booking = await Booking.findById(bookingId).populate('tripId userId');
             if (!booking) {
-                logger.warn(`Booking not found with ID: ${bookingId}`);
+                appLogger.warn(`Booking not found with ID: ${bookingId}`);
             } else {
-                logger.info(`Fetched booking with ID: ${bookingId}`);
+                appLogger.info(`Fetched booking with ID: ${bookingId}`);
             }
             return booking;
         } catch (error) {
-            logger.error(`Error fetching booking by ID ${bookingId}: ${error.message}`);
+            appLogger.error(`Error fetching booking by ID ${bookingId}: ${error.message}`);
             throw error;
         }
     }
@@ -74,13 +74,13 @@ class BookingRepository {
         try {
             const updatedBooking = await Booking.findByIdAndUpdate(bookingId, updateData, { new: true });
             if (!updatedBooking) {
-                logger.warn(`Booking not found for update: ${bookingId}`);
+                appLogger.warn(`Booking not found for update: ${bookingId}`);
             } else {
-                logger.info(`Booking updated with ID: ${bookingId}`);
+                appLogger.info(`Booking updated with ID: ${bookingId}`);
             }
             return updatedBooking;
         } catch (error) {
-            logger.error(`Error updating booking ${bookingId}: ${error.message}`);
+            appLogger.error(`Error updating booking ${bookingId}: ${error.message}`);
             throw error;
         }
     }
@@ -89,13 +89,13 @@ class BookingRepository {
         try {
             const deletedBooking = await Booking.findByIdAndDelete(bookingId);
             if (!deletedBooking) {
-                logger.warn(`Booking not found for deletion: ${bookingId}`);
+                appLogger.warn(`Booking not found for deletion: ${bookingId}`);
             } else {
-                logger.info(`Booking deleted with ID: ${bookingId}`);
+                appLogger.info(`Booking deleted with ID: ${bookingId}`);
             }
             return deletedBooking;
         } catch (error) {
-            logger.error(`Error deleting booking ${bookingId}: ${error.message}`);
+            appLogger.error(`Error deleting booking ${bookingId}: ${error.message}`);
             throw error;
         }
     }

@@ -1,18 +1,18 @@
 import UserService from '../services/userService.js';
-import { logger } from '../utils/logger.js';
+import { appLogger } from '../utils/logger.js';
 
 class UserController {
     static async register(req, res, next) {
         try {
             const user = await UserService.register(req.body);
-            logger.info(`New user registered: ${user.email}`);
+            appLogger.info(`New user registered: ${user.email}`);
             res.status(201).json({
                 success: true,
                 message: 'User registered successfully',
                 data: {}
             });
         } catch (error) {
-            logger.error(`Registration failed: ${error.message}`);
+            appLogger.error(`Registration failed: ${error.message}`);
             next(error); 
         }
     }
@@ -28,14 +28,14 @@ class UserController {
                 maxAge: 24 * 60 * 60 * 1000, // 1 day
             });
 
-            logger.info(`User login successful: ${user.email}`);
+            appLogger.info(`User login successful: ${user.email}`);
             res.status(200).json({
                 success: true,
                 message: 'Login successful',
                 data: {token: token}
             });
         } catch (error) {
-            logger.error(`Login failed for ${req.body.email}: ${error.message}`);
+            appLogger.error(`Login failed for ${req.body.email}: ${error.message}`);
             res.status(401).json({
                 success: false,
                 message: 'Login failed',
@@ -52,13 +52,13 @@ class UserController {
                 sameSite: 'Strict',
             });
 
-            logger.info(`User logged out: ${req.user?.email || 'Unknown user'}`);
+            appLogger.info(`User logged out: ${req.user?.email || 'Unknown user'}`);
             res.status(200).json({
                 success: true,
                 message: 'Logout successful'
             });
         } catch (error) {
-            logger.error(`Logout failed: ${error.message}`);
+            appLogger.error(`Logout failed: ${error.message}`);
             res.status(500).json({
                 success: false,
                 message: 'Logout failed',
@@ -70,7 +70,7 @@ class UserController {
     static async getProfile(req, res, next) {
         try {
             const user = await UserService.getProfile(req.user.id);
-            logger.info(`Profile retrieved: ${user.email}`);
+            appLogger.info(`Profile retrieved: ${user.email}`);
             res.status(200).json({
                 success: true,
                 message: 'Profile retrieved successfully',
@@ -85,7 +85,7 @@ class UserController {
                 }
             });
         } catch (error) {
-            logger.error(`Profile retrieval failed for user ID ${req.user.id}: ${error.message}`);
+            appLogger.error(`Profile retrieval failed for user ID ${req.user.id}: ${error.message}`);
             res.status(404).json({
                 success: false,
                 message: 'Profile retrieval failed',
@@ -97,7 +97,7 @@ class UserController {
     static async updateProfile(req, res, next) {
         try {
             const updatedUser = await UserService.updateProfile(req.user.id, req.body);
-            logger.info(`Profile updated: ${updatedUser.email}`);
+            appLogger.info(`Profile updated: ${updatedUser.email}`);
             res.status(200).json({
                 success: true,
                 message: 'Profile updated successfully',
@@ -112,7 +112,7 @@ class UserController {
                 }
             });
         } catch (error) {
-            logger.error(`Profile update failed for user ID ${req.user.id}: ${error.message}`);
+            appLogger.error(`Profile update failed for user ID ${req.user.id}: ${error.message}`);
             res.status(404).json({
                 success: false,
                 message: 'Profile update failed',

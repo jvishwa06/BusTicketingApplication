@@ -1,7 +1,7 @@
 import TripService from '../services/tripService.js';
 import TripRepository from '../repositories/tripRepository.js';
 import BusRepository from '../repositories/busRepository.js';
-import { logger } from '../utils/logger.js';
+import { appLogger } from '../utils/logger.js';
 
 jest.mock('../repositories/tripRepository.js');
 jest.mock('../repositories/busRepository.js');
@@ -22,7 +22,7 @@ describe('TripService', () => {
             const result = await TripService.getTripsByFilters(mockFilters);
             
             expect(TripRepository.findTripsByFilters).toHaveBeenCalled();
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockTrips);
         });
     });
@@ -40,7 +40,7 @@ describe('TripService', () => {
 
             expect(BusRepository.getBusById).toHaveBeenCalledWith(mockTripData.busId);
             expect(TripRepository.createTrip).toHaveBeenCalledWith({ ...mockTripData, operatorId: mockBus.operatorId });
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockTrip);
         });
     });
@@ -53,7 +53,7 @@ describe('TripService', () => {
             const result = await TripService.getAllTrips();
 
             expect(TripRepository.getAllTrips).toHaveBeenCalled();
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockTrips);
         });
     });
@@ -66,7 +66,7 @@ describe('TripService', () => {
             const result = await TripService.getTripById('trip1');
 
             expect(TripRepository.getTripById).toHaveBeenCalledWith('trip1');
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockTrip);
         });
     });
@@ -81,7 +81,7 @@ describe('TripService', () => {
             const result = await TripService.updateTrip(mockTripId, mockUpdateData);
 
             expect(TripRepository.updateTrip).toHaveBeenCalledWith(mockTripId, mockUpdateData);
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockUpdatedTrip);
         });
     });
@@ -95,7 +95,7 @@ describe('TripService', () => {
             const result = await TripService.deleteTrip(mockTripId);
 
             expect(TripRepository.deleteTrip).toHaveBeenCalledWith(mockTripId);
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockDeletedTrip);
         });
     });

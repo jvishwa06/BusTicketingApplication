@@ -1,13 +1,13 @@
 import PaymentRepository from '../repositories/PaymentRepository.js';
-import { logger } from '../utils/logger.js';
+import { appLogger } from '../utils/logger.js';
 
 class PaymentService {
     async processPayment(userId, paymentData) {
         try {
-            logger.info(`Processing payment for user ID: ${userId}`);
+            appLogger.info(`Processing payment for user ID: ${userId}`);
 
             const payment = await PaymentRepository.createPayment({ ...paymentData, userId });
-            logger.info(`Payment created with ID: ${payment._id}`);
+            appLogger.info(`Payment created with ID: ${payment._id}`);
 
             const paymentGatewayResponse = { status: 'successful', transactionId: 'TX123456789' };
 
@@ -19,34 +19,34 @@ class PaymentService {
                 throw new Error('Payment failed during processing.');
             }
 
-            logger.info(`Payment processed successfully for user ID: ${userId}`);
+            appLogger.info(`Payment processed successfully for user ID: ${userId}`);
             return payment;
         } catch (error) {
-            logger.error(`Error processing payment for user ID ${userId}: ${error.message}`);
+            appLogger.error(`Error processing payment for user ID ${userId}: ${error.message}`);
             throw error;
         }
     }
 
     async getPaymentById(paymentId) {
         try {
-            logger.info(`Fetching payment with ID: ${paymentId}`);
+            appLogger.info(`Fetching payment with ID: ${paymentId}`);
             const payment = await PaymentRepository.getPaymentById(paymentId);
             if (!payment) {
-                logger.warn(`Payment not found with ID: ${paymentId}`);
+                appLogger.warn(`Payment not found with ID: ${paymentId}`);
             }
             return payment;
         } catch (error) {
-            logger.error(`Error fetching payment with ID ${paymentId}: ${error.message}`);
+            appLogger.error(`Error fetching payment with ID ${paymentId}: ${error.message}`);
             throw error;
         }
     }
 
     async getUserPayments(userId) {
         try {
-            logger.info(`Fetching payments for user ID: ${userId}`);
+            appLogger.info(`Fetching payments for user ID: ${userId}`);
             return await PaymentRepository.getUserPayments(userId);
         } catch (error) {
-            logger.error(`Error fetching payments for user ID ${userId}: ${error.message}`);
+            appLogger.error(`Error fetching payments for user ID ${userId}: ${error.message}`);
             throw error;
         }
     }

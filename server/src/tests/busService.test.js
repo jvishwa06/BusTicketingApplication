@@ -1,6 +1,6 @@
 import BusService from '../services/busService.js';
 import BusRepository from '../repositories/busRepository.js';
-import { logger } from '../utils/logger.js';
+import { appLogger } from '../utils/logger.js';
 
 jest.mock('../repositories/busRepository.js');
 jest.mock('../utils/logger.js');
@@ -21,7 +21,7 @@ describe('BusService', () => {
             const result = await BusService.createBus(mockOperatorId, mockBusData);
             
             expect(BusRepository.createBus).toHaveBeenCalledWith({ ...mockBusData, operatorId: mockOperatorId });
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockBus);
         });
     });
@@ -34,7 +34,7 @@ describe('BusService', () => {
             const result = await BusService.getBuses();
 
             expect(BusRepository.getAllBuses).toHaveBeenCalled();
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockBuses);
         });
     });
@@ -50,7 +50,7 @@ describe('BusService', () => {
             const result = await BusService.updateBus(mockBusId, mockUpdateData);
 
             expect(BusRepository.updateBus).toHaveBeenCalledWith(mockBusId, mockUpdateData);
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockUpdatedBus);
         });
 
@@ -61,7 +61,7 @@ describe('BusService', () => {
             await expect(BusService.updateBus(mockBusId, {})).rejects.toThrow('Bus not found');
 
             expect(BusRepository.updateBus).toHaveBeenCalledWith(mockBusId, {});
-            expect(logger.warn).toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalled();
         });
     });
 
@@ -75,7 +75,7 @@ describe('BusService', () => {
             const result = await BusService.deleteBus(mockBusId);
 
             expect(BusRepository.deleteBus).toHaveBeenCalledWith(mockBusId);
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockDeletedBus);
         });
 
@@ -86,7 +86,7 @@ describe('BusService', () => {
             await expect(BusService.deleteBus(mockBusId)).rejects.toThrow('Bus not found');
 
             expect(BusRepository.deleteBus).toHaveBeenCalledWith(mockBusId);
-            expect(logger.warn).toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalled();
         });
     });
 });

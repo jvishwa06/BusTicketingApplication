@@ -1,6 +1,6 @@
 import PaymentService from '../services/paymentService.js';
 import paymentRepository from '../repositories/PaymentRepository.js';
-import { logger } from '../utils/logger.js';
+import { appLogger } from '../utils/logger.js';
 
 jest.mock('../repositories/PaymentRepository.js');
 jest.mock('../utils/logger.js');
@@ -20,7 +20,7 @@ describe('PaymentService', () => {
             const result = await PaymentService.getUserPayments(mockUserId);
 
             expect(paymentRepository.getPaymentsByUserId).toHaveBeenCalledWith(mockUserId);
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockPayments);
         });
     });
@@ -33,7 +33,7 @@ describe('PaymentService', () => {
             const result = await PaymentService.getPaymentById('payment1');
 
             expect(paymentRepository.getPaymentById).toHaveBeenCalledWith('payment1');
-            expect(logger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockPayment);
         });
     });
