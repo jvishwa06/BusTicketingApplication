@@ -1,4 +1,4 @@
-import Payment from '../models/Payment.js';
+import Payment from '../models/payment.js';
 import { appLogger } from '../utils/logger.js';
 
 class PaymentRepository {
