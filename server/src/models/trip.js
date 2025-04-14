@@ -4,7 +4,6 @@ const tripSchema = new mongoose.Schema(
     {
         busId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bus', required: true },
         operatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, 
-
         source: { type: String, required: true, trim: true },
         destination: { type: String, required: true, trim: true },
         departureTime: { type: Date, required: true },
@@ -23,4 +22,4 @@ tripSchema.pre('save', async function (next) {
     next();
 });
 
-export default mongoose.model('Trip', tripSchema);
+export default mongoose.models.Trip || mongoose.model('Trip', tripSchema);

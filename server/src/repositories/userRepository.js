@@ -1,4 +1,4 @@
-import User from '../models/User.js';
+import User from '../models/user.js';
 import { appLogger } from '../utils/logger.js';
 class UserRepository {
     async createUser(userData) {
@@ -42,6 +42,17 @@ class UserRepository {
             return user;
         } catch (error) {
             appLogger.error(`Error updating user profile: ${error.message}`);
+            throw error;
+        }
+    }
+    
+    async getAllUsers() {
+        try {
+            const users = await User.find().select('-password');
+            appLogger.info(`Retrieved all users from database (Count: ${users.length})`);
+            return users;
+        } catch (error) {
+            appLogger.error(`Error fetching all users: ${error.message}`);
             throw error;
         }
     }

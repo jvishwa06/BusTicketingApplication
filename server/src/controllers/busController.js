@@ -40,6 +40,26 @@ class BusController {
         }
     }
 
+    static async getOperatorBuses(req, res) {
+        try {
+            const operatorId = req.user.id;
+            const buses = await BusService.getBusesByOperator(operatorId);
+            appLogger.info(`Fetched buses for operator ${operatorId}`);
+            res.status(200).json({
+                success: true,
+                message: 'Operator buses retrieved successfully',
+                data: buses
+            });
+        } catch (error) {
+            appLogger.error(`Error fetching buses for operator ${req.user.id}: ${error.message}`);
+            res.status(400).json({
+                success: false,
+                message: error.message,
+                data: null
+            });
+        }
+    }
+
     static async updateBus(req, res) {
         try {
             const { busId } = req.params;
@@ -63,7 +83,6 @@ class BusController {
             res.status(500).json({ success: false, message: error.message });
         }
     }
-
 }
 
 export default BusController;

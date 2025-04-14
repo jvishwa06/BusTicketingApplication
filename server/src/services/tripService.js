@@ -69,6 +69,21 @@ class TripService {
         }
     }
 
+    async getTripsByBusIds(busIds) {
+        try {
+            if (!busIds || !Array.isArray(busIds) || busIds.length === 0) {
+                appLogger.warn("Trip search failed: Invalid bus IDs");
+                throw new Error("Valid bus IDs are required to fetch trips");
+            }
+            
+            appLogger.info(`Fetching trips for bus IDs: ${busIds.join(', ')}`);
+            return await TripRepository.getTripsByBusIds(busIds);
+        } catch (error) {
+            appLogger.error(`Error fetching trips by bus IDs: ${error.message}`);
+            throw error;
+        }
+    }
+
     async updateTrip(tripId, updateData) {
         try {
             appLogger.info(`Updating trip with ID: ${tripId}`);

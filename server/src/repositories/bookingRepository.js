@@ -54,6 +54,25 @@ class BookingRepository {
             throw error;
         }
     }
+    
+    async getBookingsByTripIds(tripIds) {
+        try {
+            const bookings = await Booking.find({ tripId: { $in: tripIds } })
+                .populate({
+                    path: 'tripId',
+                    populate: {
+                        path: 'busId',
+                        select: 'name type operatorId registrationNumber'
+                    }
+                })
+                .populate('userId', 'name email phone');
+            appLogger.info(`Fetched bookings for trips: ${tripIds.join(', ')}`);
+            return bookings;
+        } catch (error) {
+            appLogger.error(`Error fetching bookings for trips: ${error.message}`);
+            throw error;
+        }
+    }
 
     async getBookingById(bookingId) {
         try {

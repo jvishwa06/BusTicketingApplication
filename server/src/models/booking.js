@@ -7,7 +7,8 @@ const BookingSchema = new mongoose.Schema(
     seats: { type: [Number], required: true },
     totalPrice: { type: Number, required: true },
     paymentStatus: {type: String,enum: ['success', 'failed', 'pending'],default: 'pending'},
-    paymentDetails: {type: mongoose.Schema.Types.ObjectId,ref: 'Payment', default: null},
+    discount: { type: Number, default: 0 },
+    discountId: { type: mongoose.Schema.Types.ObjectId, ref: 'Discount', default: null }
   },
   { timestamps: true }
 );

@@ -73,6 +73,31 @@ class UserService {
 
     async updateProfile(userId, updateData) {
         try {
+            if (updateData.role !== undefined) {
+                appLogger.warn(`Attempt to change role for user ID: ${userId} prevented`);
+                throw new Error('Role modification is not allowed through profile update');
+            }
+            
+            const allowedFields = ['name', 'email', 'phone'];
+            const filteredUpdateData = {};
+            
+            const nonAllowedFields = Object.keys(updateData).filter(key => 
+                !allowedFields.includes(key) && 
+                key !== 'currentPassword' && 
+                key !== 'newPassword'
+            );
+            
+            if (nonAllowedFields.length > 0) {
+                appLogger.warn(`Attempt to update non-allowed fields for user ID: ${userId}: ${nonAllowedFields.join(', ')}`);
+                throw new Error(`Only name, email, and phone can be updated. Cannot update: ${nonAllowedFields.join(', ')}`);
+            }
+            
+            Object.keys(updateData).forEach(key => {
+                if (allowedFields.includes(key)) {
+                    filteredUpdateData[key] = updateData[key];
+                }
+            });
+            
             if (updateData.currentPassword && updateData.newPassword) {
                 const currentUser = await userRepository.getUserByEmail(
                     (await userRepository.getUserById(userId)).email
@@ -94,13 +119,13 @@ class UserService {
                     throw new Error('Current password is incorrect');
                 }
                 
-                updateData.password = await bcrypt.hash(updateData.newPassword, 10);
-                
-                delete updateData.currentPassword;
-                delete updateData.newPassword;
+                filteredUpdateData.password = await bcrypt.hash(updateData.newPassword, 10);
             }
             
-            const user = await userRepository.updateUserProfile(userId, updateData);
+            delete updateData.currentPassword;
+            delete updateData.newPassword;
+            
+            const user = await userRepository.updateUserProfile(userId, filteredUpdateData);
             if (!user) {
                 appLogger.warn(`Profile update failed, user not found: ${userId}`);
                 throw new Error('User not found');

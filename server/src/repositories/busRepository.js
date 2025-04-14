@@ -54,6 +54,17 @@ class BusRepository {
         }
     }
 
+    async getBusesByOperator(operatorId) {
+        try {
+            const buses = await Bus.find({ operatorId });
+            appLogger.info(`Retrieved buses for operator: ${operatorId}`);
+            return buses;
+        } catch (error) {
+            appLogger.error(`Error retrieving buses for operator ${operatorId}: ${error.message}`);
+            throw error;
+        }
+    }
+
     async deleteBus(busId) {
         try {
             const bus = await Bus.findByIdAndDelete(busId);

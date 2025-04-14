@@ -24,6 +24,17 @@ class BusService {
         }
     }
 
+    async getBusesByOperator(operatorId) {
+        try {
+            const buses = await BusRepository.getBusesByOperator(operatorId);
+            appLogger.info(`Fetched buses for operator ${operatorId} successfully`);
+            return buses;
+        } catch (error) {
+            appLogger.error(`Error fetching buses for operator ${operatorId}: ${error.message}`);
+            throw error;
+        }
+    }
+
     async updateBus(busId, busData) {
         try {
             const updatedBus = await BusRepository.updateBus(busId, busData);

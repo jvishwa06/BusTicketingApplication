@@ -3,12 +3,13 @@ import TripController from '../controllers/tripController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+router.use(authMiddleware.authenticate);
 
-router.post('/', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin', 'operator'), TripController.createTrip);
-router.get('/', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin', 'operator'),TripController.getAllTrips);
-router.get('/search', authMiddleware.authenticate, TripController.getFilteredTrips);
-router.get('/:tripId', authMiddleware.authenticate, TripController.getTripById);
-router.put('/:tripId', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin', 'operator'), TripController.updateTrip);
-router.delete('/:tripId', authMiddleware.authenticate, authMiddleware.authorizeRoles('admin', 'operator'), TripController.deleteTrip);
+router.post('/', authMiddleware.authorizeRoles('admin', 'operator'), TripController.createTrip);
+router.get('/', authMiddleware.authorizeRoles('admin', 'operator'),TripController.getAllTrips);
+router.get('/search', TripController.getFilteredTrips);
+router.get('/:tripId', TripController.getTripById);
+router.put('/:tripId', authMiddleware.authorizeRoles('admin', 'operator'), TripController.updateTrip);
+router.delete('/:tripId', authMiddleware.authorizeRoles('admin', 'operator'), TripController.deleteTrip);
 
 export default router;

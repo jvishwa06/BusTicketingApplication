@@ -11,10 +11,67 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
     bookedSeats: [],  
     pendingSeats: []  
   });
+  // Add new state variables for discount functionality
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [discountError, setDiscountError] = useState('');
+  const [discountInfo, setDiscountInfo] = useState(null);
+  
   const [realAvailableSeats, setRealAvailableSeats] = useState(trip.availableSeats);
   
   const totalSeats = trip.busId.totalSeats;
   const price = trip.price;
+  
+  // Calculate total price with discount applied
+  const calculateTotalPrice = () => {
+    const basePrice = selectedSeats.length * price;
+    if (discountInfo && discountInfo.valid) {
+      return discountInfo.finalAmount;
+    }
+    return basePrice;
+  };
+  
+  // Add function to validate discount code
+  const validateDiscountCode = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError('Please enter a discount code');
+      return;
+    }
+    
+    try {
+      setDiscountLoading(true);
+      setDiscountError('');
+      
+      const response = await api.post('/discounts/validate', {
+        code: discountCode,
+        amount: selectedSeats.length * price,
+        busType: trip.busId.type
+      });
+      
+      if (response.data.success) {
+        setDiscountInfo(response.data.data);
+        if (!response.data.data.valid) {
+          setDiscountError(response.data.message);
+        }
+      } else {
+        setDiscountError(response.data.message || 'Invalid discount code');
+        setDiscountInfo(null);
+      }
+    } catch (err) {
+      setDiscountError(err.response?.data?.message || 'Error validating discount code');
+      setDiscountInfo(null);
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+  
+  // Clear discount when seat selection changes
+  useEffect(() => {
+    if (discountInfo) {
+      setDiscountInfo(null);
+      setDiscountError('');
+    }
+  }, [selectedSeats]);
   
   useEffect(() => {
     const fetchBookings = async () => {
@@ -109,10 +166,19 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
       
       console.log('Creating booking with trip:', trip);
       
-      const response = await api.post('/bookings/user', {
+      // Prepare booking data with optional discount
+      const bookingData = {
         tripId: trip._id,
         seats: selectedSeats
-      });
+      };
+      
+      // Include discount information if a valid discount was applied
+      if (discountInfo && discountInfo.valid) {
+        bookingData.discountId = discountInfo.discountId;
+        bookingData.discountAmount = discountInfo.discountAmount;
+      }
+      
+      const response = await api.post('/bookings/user', bookingData);
       
       if (response.data.success) {
         setSuccess(true);
@@ -207,9 +273,53 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
             </div>
           </div>
           
+          {/* Add discount code section */}
+          <div className="discount-section">
+            <h4>Have a discount code?</h4>
+            <div className="discount-input-container">
+              <input 
+                type="text" 
+                placeholder="Enter discount code" 
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value)}
+                className="discount-input"
+                disabled={discountLoading || success}
+              />
+              <button 
+                onClick={validateDiscountCode}
+                className="apply-discount-btn"
+                disabled={discountLoading || !discountCode.trim() || success}
+              >
+                {discountLoading ? 'Applying...' : 'Apply'}
+              </button>
+            </div>
+            
+            {discountError && <div className="discount-error">{discountError}</div>}
+            
+            {discountInfo && discountInfo.valid && (
+              <div className="discount-success">
+                <p>Discount applied successfully!</p>
+                <div className="discount-details">
+                  <div className="discount-row">
+                    <span>Original Price:</span>
+                    <span>${selectedSeats.length * price}</span>
+                  </div>
+                  <div className="discount-row">
+                    <span>Discount Amount:</span>
+                    <span>-${discountInfo.discountAmount}</span>
+                  </div>
+                  <div className="discount-row total">
+                    <span>Final Price:</span>
+                    <span>${discountInfo.finalAmount}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
           <div className="booking-summary">
             <p><strong>Selected Seats:</strong> {selectedSeats.length ? selectedSeats.join(', ') : 'None'}</p>
-            <p><strong>Total Price:</strong> ${selectedSeats.length * price}</p>
+            <p><strong>Total Price:</strong> ${calculateTotalPrice()}</p>
           </div>
           
           {error && <div className="alert alert-error">{error}</div>}

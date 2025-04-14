@@ -49,13 +49,48 @@ class BookingService {
                 throw new Error("Not enough available seats.");
             }
 
-            const totalPrice = seats.length * trip.price;
+            let totalPrice = seats.length * trip.price;
+            let discountAmount = 0;
+            let appliedDiscountId = null;
+            
+            // Handle discount if provided
+            if (bookingData.discountId && bookingData.discountAmount) {
+                // Get discount service to validate discount
+                const discountService = (await import('../services/discountService.js')).default;
+                
+                // Validate the discount again server-side
+                const discountValidation = await discountService.validateAndApplyDiscount(
+                    bookingData.discountId,
+                    totalPrice,
+                    trip.busId.type
+                );
+                
+                if (discountValidation.valid) {
+                    discountAmount = discountValidation.discountAmount;
+                    totalPrice = discountValidation.finalAmount;
+                    appliedDiscountId = discountValidation.discountId;
+                    
+                    // Increment the usage count of the discount
+                    await discountService.incrementUsage(appliedDiscountId);
+                    appLogger.info(`Applied discount ${appliedDiscountId} with amount ${discountAmount}`);
+                }
+            }
             
             await TripRepository.updateTrip(tripId, { 
                 availableSeats: trip.availableSeats - seats.length 
             });
 
-            return await BookingRepository.createBooking({ userId, tripId, seats, totalPrice });
+            // Create booking with discount information if applicable
+            const bookingToCreate = { 
+                userId, 
+                tripId, 
+                seats, 
+                totalPrice,
+                discount: discountAmount,
+                discountId: appliedDiscountId
+            };
+            
+            return await BookingRepository.createBooking(bookingToCreate);
         } catch (error) {
             appLogger.error(`Error creating booking: ${error.message}`);
             throw error;
@@ -129,6 +164,21 @@ class BookingService {
             return await BookingRepository.getBookingsByTripId(tripId);
         } catch (error) {
             appLogger.error(`Error fetching bookings for trip ${tripId}: ${error.message}`);
+            throw error;
+        }
+    }
+    
+    async getBookingsByTripIds(tripIds) {
+        try {
+            if (!tripIds || !Array.isArray(tripIds) || tripIds.length === 0) {
+                appLogger.warn("Invalid trip IDs provided");
+                throw new Error("Valid trip IDs are required to fetch bookings");
+            }
+            
+            appLogger.info(`Fetching bookings for trips: ${tripIds.join(', ')}`);
+            return await BookingRepository.getBookingsByTripIds(tripIds);
+        } catch (error) {
+            appLogger.error(`Error fetching bookings for multiple trips: ${error.message}`);
             throw error;
         }
     }

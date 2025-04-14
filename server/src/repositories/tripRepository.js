@@ -1,4 +1,4 @@
-import Trip from '../models/Trip.js';
+import Trip from '../models/trip.js';
 import { appLogger } from '../utils/logger.js';
 
 class TripRepository {
@@ -29,6 +29,16 @@ class TripRepository {
     async getTripsByOperator(operatorId) {
         appLogger.info(`Fetching trips from DB for operator ID: ${operatorId}`);
         return await Trip.find({ operatorId });
+    }
+
+    async getTripsByBusIds(busIds) {
+        try {
+            appLogger.info(`Fetching trips from DB for bus IDs: ${busIds}`);
+            return await Trip.find({ busId: { $in: busIds } }).populate('busId');
+        } catch (error) {
+            appLogger.error(`Error fetching trips for bus IDs: ${error.message}`);
+            throw error;
+        }
     }
 
     async updateTrip(tripId, updateData) {
