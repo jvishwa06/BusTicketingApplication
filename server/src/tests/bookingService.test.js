@@ -22,7 +22,14 @@ describe('BookingService', () => {
                 price: 50,
                 save: jest.fn()
             };
-            const mockBooking = { userId: mockUserId, tripId: mockTripId, seats: mockSeats, totalPrice: 100 };
+            const mockBooking = { 
+                userId: mockUserId, 
+                tripId: mockTripId, 
+                seats: mockSeats, 
+                totalPrice: 100,
+                discount: 0,
+                discountId: null
+            };
 
             TripRepository.getTripById.mockResolvedValue(mockTrip);
             BookingRepository.getBookingsByTripId.mockResolvedValue([]);

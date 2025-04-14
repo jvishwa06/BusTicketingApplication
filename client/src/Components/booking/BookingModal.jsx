@@ -172,10 +172,9 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
         seats: selectedSeats
       };
       
-      // Include discount information if a valid discount was applied
+      // Include discount code if a valid discount was applied
       if (discountInfo && discountInfo.valid) {
-        bookingData.discountId = discountInfo.discountId;
-        bookingData.discountAmount = discountInfo.discountAmount;
+        bookingData.discountCode = discountCode;
       }
       
       const response = await api.post('/bookings/user', bookingData);

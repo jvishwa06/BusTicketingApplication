@@ -1,12 +1,12 @@
+import paymentRepository from '../repositories/paymentRepository.js';
 import PaymentService from '../services/paymentService.js';
-import paymentRepository from '../repositories/PaymentRepository.js';
 import { appLogger } from '../utils/logger.js';
 
-jest.mock('../repositories/PaymentRepository.js');
+jest.mock('../repositories/paymentRepository.js');
 jest.mock('../utils/logger.js');
 
 describe('PaymentService', () => {
-    afterEach(() => {
+    beforeEach(() => {
         jest.clearAllMocks();
     });
 
@@ -15,11 +15,11 @@ describe('PaymentService', () => {
             const mockUserId = 'user123';
             const mockPayments = [{ id: 'payment1', amount: 100 }, { id: 'payment2', amount: 200 }];
             
-            paymentRepository.getPaymentsByUserId.mockResolvedValue(mockPayments);
+            paymentRepository.getUserPayments = jest.fn().mockResolvedValue(mockPayments);
 
             const result = await PaymentService.getUserPayments(mockUserId);
 
-            expect(paymentRepository.getPaymentsByUserId).toHaveBeenCalledWith(mockUserId);
+            expect(paymentRepository.getUserPayments).toHaveBeenCalledWith(mockUserId);
             expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockPayments);
         });
@@ -28,7 +28,8 @@ describe('PaymentService', () => {
     describe('getPaymentById', () => {
         it('should return a payment by ID', async () => {
             const mockPayment = { id: 'payment1', amount: 100 };
-            paymentRepository.getPaymentById.mockResolvedValue(mockPayment);
+            
+            paymentRepository.getPaymentById = jest.fn().mockResolvedValue(mockPayment);
 
             const result = await PaymentService.getPaymentById('payment1');
 

@@ -175,14 +175,16 @@ describe('UserService', () => {
     const userId = 'user123';
     const updateData = {
       name: 'Updated Name',
-      bio: 'New bio information'
+      email: 'updated@example.com',
+      phone: '1234567890'
+      // Removed bio field as it's not allowed according to error
     };
     const mockUser = {
       _id: userId,
-      email: 'test@example.com',
+      email: 'updated@example.com',
       role: 'user',
       name: 'Updated Name',
-      bio: 'New bio information'
+      phone: '1234567890'
     };
 
     it('should update a user profile successfully', async () => {

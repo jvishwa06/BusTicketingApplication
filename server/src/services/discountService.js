@@ -109,6 +109,8 @@ class DiscountService {
         discountAmount: discountAmount,
         finalAmount: finalAmount,
         discountCode: discount.code,
+        discountId: discount._id,
+        discountId: discount._id, 
         discountId: discount._id
       };
     } catch (error) {

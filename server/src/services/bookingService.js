@@ -53,14 +53,11 @@ class BookingService {
             let discountAmount = 0;
             let appliedDiscountId = null;
             
-            // Handle discount if provided
-            if (bookingData.discountId && bookingData.discountAmount) {
-                // Get discount service to validate discount
+            if (bookingData.discountCode) {
                 const discountService = (await import('../services/discountService.js')).default;
                 
-                // Validate the discount again server-side
                 const discountValidation = await discountService.validateAndApplyDiscount(
-                    bookingData.discountId,
+                    bookingData.discountCode,
                     totalPrice,
                     trip.busId.type
                 );
@@ -70,9 +67,10 @@ class BookingService {
                     totalPrice = discountValidation.finalAmount;
                     appliedDiscountId = discountValidation.discountId;
                     
-                    // Increment the usage count of the discount
                     await discountService.incrementUsage(appliedDiscountId);
-                    appLogger.info(`Applied discount ${appliedDiscountId} with amount ${discountAmount}`);
+                    appLogger.info(`Applied discount code ${bookingData.discountCode} with amount ${discountAmount}`);
+                } else {
+                    appLogger.warn(`Invalid discount code ${bookingData.discountCode}: ${discountValidation.message}`);
                 }
             }
             
@@ -80,7 +78,6 @@ class BookingService {
                 availableSeats: trip.availableSeats - seats.length 
             });
 
-            // Create booking with discount information if applicable
             const bookingToCreate = { 
                 userId, 
                 tripId, 
