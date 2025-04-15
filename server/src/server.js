@@ -36,9 +36,9 @@ app.use('/buses', rateLimiter.apiRateLimiter, busRoutes);
 app.use('/trips', rateLimiter.apiRateLimiter, tripRoutes);
 app.use('/bookings', rateLimiter.bookingRateLimiter, bookingRoutes);
 app.use('/payments', rateLimiter.paymentRateLimiter, paymentRoutes);
-app.use('/admin', rateLimiter.apiRateLimiter, adminRoutes);
+app.use('/admin', adminRoutes);
 app.use('/ratings', rateLimiter.apiRateLimiter, ratingRoutes);
-app.use('/analytics', rateLimiter.apiRateLimiter, analyticsRoutes); 
+app.use('/analytics', analyticsRoutes); 
 app.use('/discounts', rateLimiter.apiRateLimiter, discountRoutes); 
 
 const PORT = process.env.PORT || 5001;
