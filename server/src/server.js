@@ -9,7 +9,6 @@ import bookingRoutes from './routes/bookingRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import ratingRoutes from './routes/ratingRoutes.js';
-import analyticsRoutes from './routes/analyticsRoutes.js';
 import discountRoutes from './routes/discountRoutes.js'; 
 import { requestLogger } from './utils/logger.js';
 import cors from 'cors';
@@ -38,7 +37,6 @@ app.use('/bookings', rateLimiter.bookingRateLimiter, bookingRoutes);
 app.use('/payments', rateLimiter.paymentRateLimiter, paymentRoutes);
 app.use('/admin', adminRoutes);
 app.use('/ratings', rateLimiter.apiRateLimiter, ratingRoutes);
-app.use('/analytics', analyticsRoutes); 
 app.use('/discounts', rateLimiter.apiRateLimiter, discountRoutes); 
 
 const PORT = process.env.PORT || 5001;
