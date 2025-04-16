@@ -99,4 +99,46 @@ describe('TripService', () => {
             expect(result).toEqual(mockDeletedTrip);
         });
     });
+
+    describe('getTripsByBusIds', () => {
+        it('should return trips for the specified bus IDs', async () => {
+            const mockBusIds = ['bus1', 'bus2'];
+            const mockTrips = [
+                { id: 'trip1', busId: 'bus1', source: 'City A', destination: 'City B' },
+                { id: 'trip2', busId: 'bus2', source: 'City C', destination: 'City D' }
+            ];
+            
+            TripRepository.getTripsByBusIds.mockResolvedValue(mockTrips);
+            
+            const result = await TripService.getTripsByBusIds(mockBusIds);
+            
+            expect(TripRepository.getTripsByBusIds).toHaveBeenCalledWith(mockBusIds);
+            expect(appLogger.info).toHaveBeenCalledWith(`Fetching trips for bus IDs: ${mockBusIds.join(', ')}`);
+            expect(result).toEqual(mockTrips);
+        });
+        
+        it('should throw error if bus IDs are invalid', async () => {
+            const invalidInputs = [null, [], undefined];
+            
+            for (const invalidInput of invalidInputs) {
+                await expect(TripService.getTripsByBusIds(invalidInput))
+                    .rejects.toThrow('Valid bus IDs are required to fetch trips');
+                expect(appLogger.warn).toHaveBeenCalledWith('Trip search failed: Invalid bus IDs');
+                expect(TripRepository.getTripsByBusIds).not.toHaveBeenCalled();
+                
+                jest.clearAllMocks();
+            }
+        });
+        
+        it('should handle repository errors', async () => {
+            const mockBusIds = ['bus1', 'bus2'];
+            const error = new Error('Database error');
+            
+            TripRepository.getTripsByBusIds.mockRejectedValue(error);
+            
+            await expect(TripService.getTripsByBusIds(mockBusIds))
+                .rejects.toThrow('Database error');
+            expect(appLogger.error).toHaveBeenCalledWith(`Error fetching trips by bus IDs: ${error.message}`);
+        });
+    });
 });

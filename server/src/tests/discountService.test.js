@@ -720,41 +720,44 @@ describe('DiscountService', () => {
       const result = discountService.calculateDiscountAmount(discount, bookingAmount);
       expect(result).toBe(500);
     });
-
-    it('should apply fixed discount correctly', () => {
+    
+    it('should calculate fixed discount correctly', () => {
       const discount = {
         discountType: 'fixed',
-        value: 500,
-        minBookingAmount: 1000
-      };
-      const bookingAmount = 2000;
-      
-      const result = discountService.calculateDiscountAmount(discount, bookingAmount);
-      expect(result).toBe(500);
-    });
-
-    it('should not apply discount if below minBookingAmount', () => {
-      const discount = {
-        discountType: 'percentage',
-        value: 10,
-        minBookingAmount: 1000
-      };
-      const bookingAmount = 500; // Below minimum
-      
-      const result = discountService.calculateDiscountAmount(discount, bookingAmount);
-      expect(result).toBe(0);
-    });
-
-    it('should not discount more than the booking amount', () => {
-      const discount = {
-        discountType: 'fixed',
-        value: 3000,
+        value: 300,
+        maxDiscountAmount: null,
         minBookingAmount: 500
       };
       const bookingAmount = 2000;
       
       const result = discountService.calculateDiscountAmount(discount, bookingAmount);
-      expect(result).toBe(2000); // Limited to booking amount
+      expect(result).toBe(300);
+    });
+    
+    it('should not exceed booking amount for any discount', () => {
+      const discount = {
+        discountType: 'fixed',
+        value: 3000,
+        maxDiscountAmount: null,
+        minBookingAmount: 500
+      };
+      const bookingAmount = 2000;
+      
+      const result = discountService.calculateDiscountAmount(discount, bookingAmount);
+      expect(result).toBe(2000); // Discount capped at booking amount
+    });
+    
+    it('should return 0 if booking amount is less than minimum', () => {
+      const discount = {
+        discountType: 'percentage',
+        value: 10,
+        maxDiscountAmount: null,
+        minBookingAmount: 1000
+      };
+      const bookingAmount = 500; // Less than minimum
+      
+      const result = discountService.calculateDiscountAmount(discount, bookingAmount);
+      expect(result).toBe(0);
     });
   });
 });

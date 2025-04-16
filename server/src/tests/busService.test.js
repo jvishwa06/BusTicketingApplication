@@ -89,4 +89,36 @@ describe('BusService', () => {
             expect(appLogger.warn).toHaveBeenCalled();
         });
     });
+    
+    describe('getBusesByOperator', () => {
+        it('should fetch buses for a specific operator successfully', async () => {
+            const mockOperatorId = 'operator123';
+            const mockBuses = [
+                { id: 'bus1', operatorId: mockOperatorId, name: 'Luxury Bus' },
+                { id: 'bus2', operatorId: mockOperatorId, name: 'Economy Bus' }
+            ];
+            
+            BusRepository.getBusesByOperator.mockResolvedValue(mockBuses);
+
+            const result = await BusService.getBusesByOperator(mockOperatorId);
+
+            expect(BusRepository.getBusesByOperator).toHaveBeenCalledWith(mockOperatorId);
+            expect(appLogger.info).toHaveBeenCalledWith(`Fetched buses for operator ${mockOperatorId} successfully`);
+            expect(result).toEqual(mockBuses);
+        });
+
+        it('should handle errors when fetching buses by operator', async () => {
+            const mockOperatorId = 'operator123';
+            const mockError = new Error('Database error');
+            
+            BusRepository.getBusesByOperator.mockRejectedValue(mockError);
+
+            await expect(BusService.getBusesByOperator(mockOperatorId))
+                .rejects.toThrow('Database error');
+                
+            expect(appLogger.error).toHaveBeenCalledWith(
+                `Error fetching buses for operator ${mockOperatorId}: ${mockError.message}`
+            );
+        });
+    });
 });
