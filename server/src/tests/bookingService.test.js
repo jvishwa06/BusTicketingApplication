@@ -26,9 +26,7 @@ describe('BookingService', () => {
                 userId: mockUserId, 
                 tripId: mockTripId, 
                 seats: mockSeats, 
-                totalPrice: 100,
-                discount: 0,
-                discountId: null
+                totalPrice: 100
             };
 
             TripRepository.getTripById.mockResolvedValue(mockTrip);
@@ -97,7 +95,7 @@ describe('BookingService', () => {
         it('should throw an error if invalid seat numbers', async () => {
             const mockUserId = 'user123';
             const mockTripId = 'trip123';
-            const mockSeats = [0, 41]; // Invalid seats (outside range 1-40)
+            const mockSeats = [0, 41]; 
             const mockTrip = {
                 busId: { totalSeats: 40 },
                 availableSeats: 10,
@@ -115,7 +113,7 @@ describe('BookingService', () => {
         it('should throw an error if duplicate seats in the request', async () => {
             const mockUserId = 'user123';
             const mockTripId = 'trip123';
-            const mockSeats = [1, 1, 2]; // Duplicate seat 1
+            const mockSeats = [1, 1, 2]; 
             const mockTrip = {
                 busId: { totalSeats: 40 },
                 availableSeats: 10,
@@ -140,7 +138,7 @@ describe('BookingService', () => {
                 price: 50
             };
             const existingBookings = [
-                { seats: [1, 3] }, // Seat 1 already booked
+                { seats: [1, 3] }, 
             ];
 
             TripRepository.getTripById.mockResolvedValue(mockTrip);
@@ -158,7 +156,7 @@ describe('BookingService', () => {
             const mockSeats = [1, 2, 3];
             const mockTrip = {
                 busId: { totalSeats: 40 },
-                availableSeats: 2, // Only 2 seats available
+                availableSeats: 2, 
                 price: 50
             };
 
@@ -172,7 +170,6 @@ describe('BookingService', () => {
         });
 
         it('should create booking without discount code', async () => {
-            // Mock setup
             const mockUserId = 'user123';
             const mockTripId = 'trip123';
             const mockSeats = [1, 2];
@@ -190,7 +187,7 @@ describe('BookingService', () => {
                 userId: mockUserId,
                 tripId: mockTripId,
                 seats: mockSeats,
-                totalPrice: 100, // 2 seats * 50 price per seat
+                totalPrice: 100, 
                 discount: 0,
                 discountId: null
             };
@@ -218,6 +215,16 @@ describe('BookingService', () => {
             expect(BookingRepository.getBookingsByUserId).toHaveBeenCalledWith(mockUserId);
             expect(result).toEqual(mockBookings);
         });
+
+        it('should handle and log errors when fetching user bookings', async () => {
+            const mockUserId = 'user123';
+            const mockError = new Error('Database error');
+            
+            BookingRepository.getBookingsByUserId.mockRejectedValue(mockError);
+            
+            await expect(BookingService.getUserBookings(mockUserId))
+                .rejects.toThrow('Database error');
+        });
     });
 
     describe('getAllBookings', () => {
@@ -230,6 +237,15 @@ describe('BookingService', () => {
             expect(BookingRepository.getAllBookings).toHaveBeenCalled();
             expect(result).toEqual(mockBookings);
         });
+
+        it('should handle and log errors when fetching all bookings', async () => {
+            const mockError = new Error('Database error');
+            
+            BookingRepository.getAllBookings.mockRejectedValue(mockError);
+            
+            await expect(BookingService.getAllBookings())
+                .rejects.toThrow('Database error');
+        });
     });
 
     describe('getBookingById', () => {
@@ -241,6 +257,27 @@ describe('BookingService', () => {
 
             expect(BookingRepository.getBookingById).toHaveBeenCalledWith('b1');
             expect(result).toEqual(mockBooking);
+        });
+
+        it('should handle and log errors when fetching booking by ID', async () => {
+            const mockBookingId = 'b1';
+            const mockError = new Error('Database error');
+            
+            BookingRepository.getBookingById.mockRejectedValue(mockError);
+            
+            await expect(BookingService.getBookingById(mockBookingId))
+                .rejects.toThrow('Database error');
+        });
+
+        it('should return null when booking not found', async () => {
+            const mockBookingId = 'nonexistent';
+            
+            BookingRepository.getBookingById.mockResolvedValue(null);
+            
+            const result = await BookingService.getBookingById(mockBookingId);
+            
+            expect(result).toBeNull();
+            expect(BookingRepository.getBookingById).toHaveBeenCalledWith(mockBookingId);
         });
     });
 
@@ -256,6 +293,29 @@ describe('BookingService', () => {
             expect(BookingRepository.updateBooking).toHaveBeenCalledWith(mockBookingId, mockUpdateData);
             expect(result).toEqual(mockUpdatedBooking);
         });
+
+        it('should handle and log errors when updating a booking', async () => {
+            const mockBookingId = 'b1';
+            const mockUpdateData = { seats: [3, 4] };
+            const mockError = new Error('Database error');
+            
+            BookingRepository.updateBooking.mockRejectedValue(mockError);
+            
+            await expect(BookingService.updateBooking(mockBookingId, mockUpdateData))
+                .rejects.toThrow('Database error');
+        });
+
+        it('should return null when booking not found for update', async () => {
+            const mockBookingId = 'nonexistent';
+            const mockUpdateData = { seats: [3, 4] };
+            
+            BookingRepository.updateBooking.mockResolvedValue(null);
+            
+            const result = await BookingService.updateBooking(mockBookingId, mockUpdateData);
+            
+            expect(result).toBeNull();
+            expect(BookingRepository.updateBooking).toHaveBeenCalledWith(mockBookingId, mockUpdateData);
+        });
     });
 
     describe('deleteBooking', () => {
@@ -268,6 +328,27 @@ describe('BookingService', () => {
 
             expect(BookingRepository.deleteBooking).toHaveBeenCalledWith(mockBookingId);
             expect(result).toEqual(mockDeletedBooking);
+        });
+
+        it('should handle and log errors when deleting a booking', async () => {
+            const mockBookingId = 'b1';
+            const mockError = new Error('Database error');
+            
+            BookingRepository.deleteBooking.mockRejectedValue(mockError);
+            
+            await expect(BookingService.deleteBooking(mockBookingId))
+                .rejects.toThrow('Database error');
+        });
+
+        it('should return null when booking not found for deletion', async () => {
+            const mockBookingId = 'nonexistent';
+            
+            BookingRepository.deleteBooking.mockResolvedValue(null);
+            
+            const result = await BookingService.deleteBooking(mockBookingId);
+            
+            expect(result).toBeNull();
+            expect(BookingRepository.deleteBooking).toHaveBeenCalledWith(mockBookingId);
         });
     });
 
@@ -302,10 +383,9 @@ describe('BookingService', () => {
         it('should return bookings for a trip', async () => {
             const mockTripId = 'trip123';
             const mockBookings = [
-                { id: 'b1', tripId: mockTripId, seats: [1, 2] },
-                { id: 'b2', tripId: mockTripId, seats: [3, 4] }
+                { id: 'b1', tripId: mockTripId },
+                { id: 'b2', tripId: mockTripId }
             ];
-            
             BookingRepository.getBookingsByTripId.mockResolvedValue(mockBookings);
 
             const result = await BookingService.getBookingsByTripId(mockTripId);
@@ -314,12 +394,12 @@ describe('BookingService', () => {
             expect(result).toEqual(mockBookings);
         });
 
-        it('should handle errors when fetching trip bookings', async () => {
+        it('should handle and log errors when fetching bookings by trip id', async () => {
             const mockTripId = 'trip123';
             const mockError = new Error('Database error');
             
             BookingRepository.getBookingsByTripId.mockRejectedValue(mockError);
-
+            
             await expect(BookingService.getBookingsByTripId(mockTripId))
                 .rejects.toThrow('Database error');
         });

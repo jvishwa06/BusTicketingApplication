@@ -8,3 +8,4 @@ build
 mongo_data
 .DS_Store
 others/
+coverage/

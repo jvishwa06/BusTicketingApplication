@@ -12,12 +12,4 @@ const BusSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-BusSchema.pre('save', function (next) {
-  this.name = this.name
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-  next();
-});
-
 export default mongoose.model('Bus', BusSchema);

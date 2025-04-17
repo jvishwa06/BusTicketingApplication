@@ -15,11 +15,4 @@ const tripSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-tripSchema.pre('save', async function (next) {
-    if (this.arrivalTime <= this.departureTime) {
-        return next(new Error('Arrival time must be after departure time.'));
-    }
-    next();
-});
-
 export default mongoose.models.Trip || mongoose.model('Trip', tripSchema);

@@ -50,29 +50,6 @@ class BookingService {
             }
 
             let totalPrice = seats.length * trip.price;
-            let discountAmount = 0;
-            let appliedDiscountId = null;
-            
-            if (bookingData.discountCode) {
-                const discountService = (await import('../services/discountService.js')).default;
-                
-                const discountValidation = await discountService.validateAndApplyDiscount(
-                    bookingData.discountCode,
-                    totalPrice,
-                    trip.busId.type
-                );
-                
-                if (discountValidation.valid) {
-                    discountAmount = discountValidation.discountAmount;
-                    totalPrice = discountValidation.finalAmount;
-                    appliedDiscountId = discountValidation.discountId;
-                    
-                    await discountService.incrementUsage(appliedDiscountId);
-                    appLogger.info(`Applied discount code ${bookingData.discountCode} with amount ${discountAmount}`);
-                } else {
-                    appLogger.warn(`Invalid discount code ${bookingData.discountCode}: ${discountValidation.message}`);
-                }
-            }
             
             await TripRepository.updateTrip(tripId, { 
                 availableSeats: trip.availableSeats - seats.length 
@@ -82,9 +59,7 @@ class BookingService {
                 userId, 
                 tripId, 
                 seats, 
-                totalPrice,
-                discount: discountAmount,
-                discountId: appliedDiscountId
+                totalPrice
             };
             
             return await BookingRepository.createBooking(bookingToCreate);

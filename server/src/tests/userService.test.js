@@ -210,7 +210,7 @@ describe('UserService', () => {
       
       userRepository.getUserById.mockResolvedValue(existingUser);
       userRepository.getUserByEmail.mockResolvedValue(existingUser);
-      bcrypt.compare.mockResolvedValue(true); // Current password is correct
+      bcrypt.compare.mockResolvedValue(true); 
       bcrypt.hash.mockResolvedValue('hashedNewPassword');
       
       userRepository.updateUserProfile.mockResolvedValue({
@@ -247,7 +247,7 @@ describe('UserService', () => {
       
       userRepository.getUserById.mockResolvedValue(existingUser);
       userRepository.getUserByEmail.mockResolvedValue(existingUser);
-      bcrypt.compare.mockResolvedValue(false); // Current password is incorrect
+      bcrypt.compare.mockResolvedValue(false); 
 
       await expect(UserService.updateProfile(userId, passwordUpdateData))
         .rejects.toThrow('Current password is incorrect');
@@ -261,7 +261,7 @@ describe('UserService', () => {
     it('should throw error if attempting to update role', async () => {
       const roleUpdateData = {
         ...updateData,
-        role: 'admin' // Attempting to change role
+        role: 'admin' 
       };
 
       await expect(UserService.updateProfile(userId, roleUpdateData))
@@ -274,8 +274,8 @@ describe('UserService', () => {
     it('should throw error if attempting to update non-allowed fields', async () => {
       const nonAllowedUpdateData = {
         ...updateData,
-        isVerified: true, // Non-allowed field
-        createdAt: new Date() // Non-allowed field
+        isVerified: true, 
+        createdAt: new Date() 
       };
 
       await expect(UserService.updateProfile(userId, nonAllowedUpdateData))
@@ -292,13 +292,17 @@ describe('UserService', () => {
         newPassword: 'newPassword'
       };
       
-      userRepository.getUserById.mockResolvedValue(null);
+      userRepository.getUserById.mockResolvedValue(mockUser);
+      userRepository.getUserByEmail.mockResolvedValue(null);
 
       await expect(UserService.updateProfile(userId, passwordUpdateData))
-        .rejects.toThrow("Cannot read properties of null"); // This matches the actual error
+        .rejects.toThrow('User not found');
       
+      expect(userRepository.getUserById).toHaveBeenCalledWith(userId);
+      expect(userRepository.getUserByEmail).toHaveBeenCalled();
       expect(bcrypt.compare).not.toHaveBeenCalled();
       expect(userRepository.updateUserProfile).not.toHaveBeenCalled();
+      expect(appLogger.warn).toHaveBeenCalledWith(`User not found: ${userId}`);
     });
 
     it('should throw error if password field is missing during password update', async () => {
@@ -310,7 +314,7 @@ describe('UserService', () => {
       
       const userWithoutPassword = {
         ...mockUser,
-        password: null // Missing password field
+        password: null 
       };
       
       userRepository.getUserById.mockResolvedValue(userWithoutPassword);

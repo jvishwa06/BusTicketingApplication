@@ -12,11 +12,4 @@ const paymentSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-paymentSchema.pre('save', function (next) {
-    if (this.isModified('status') && this.status === 'successful') {
-        return next(new Error('Payment status cannot be changed once marked successful.'));
-    }
-    next();
-});
-
 export default mongoose.model('Payment', paymentSchema);

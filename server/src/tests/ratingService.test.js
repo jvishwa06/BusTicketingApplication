@@ -33,7 +33,7 @@ describe('RatingService', () => {
       const mockTrip = {
         _id: 'trip123',
         busId: 'bus123',
-        arrivalTime: new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
+        arrivalTime: new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000) 
       };
       
       const mockRating = {
@@ -48,7 +48,7 @@ describe('RatingService', () => {
 
       bookingRepository.getBookingById.mockResolvedValue(mockBooking);
       tripRepository.getTripById.mockResolvedValue(mockTrip);
-      ratingRepository.getRatingByBookingId.mockResolvedValue(null); // No existing rating
+      ratingRepository.getRatingByBookingId.mockResolvedValue(null); 
       ratingRepository.createRating.mockResolvedValue(mockRating);
 
       const result = await ratingService.submitRating(userId, bookingId, ratingData);
@@ -141,7 +141,7 @@ describe('RatingService', () => {
       const mockTrip = {
         _id: 'trip123',
         busId: 'bus123',
-        arrivalTime: new Date(new Date().getTime() + 1 * 24 * 60 * 60 * 1000) // 1 day in future
+        arrivalTime: new Date(new Date().getTime() + 1 * 24 * 60 * 60 * 1000) 
       };
       
       bookingRepository.getBookingById.mockResolvedValue(mockBooking);
@@ -166,7 +166,7 @@ describe('RatingService', () => {
       const mockTrip = {
         _id: 'trip123',
         busId: 'bus123',
-        arrivalTime: new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
+        arrivalTime: new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000) 
       };
       
       const existingRating = {
@@ -202,16 +202,16 @@ describe('RatingService', () => {
     const userId = 'user123';
     const ratingId = 'rating123';
     const updateData = {
-      rating: 3.5,
-      review: 'Updated review'
+      rating: 5.0,
+      review: 'Updated review - even better service than initially thought!'
     };
 
-    it('should update rating successfully', async () => {
-      const mockRating = {
+    it('should update a rating successfully', async () => {
+      const existingRating = {
         _id: ratingId,
         userId: { _id: userId },
         rating: 4.5,
-        review: 'Original review'
+        review: 'Great service!'
       };
 
       const updatedRating = {
@@ -220,8 +220,8 @@ describe('RatingService', () => {
         rating: updateData.rating,
         review: updateData.review
       };
-      
-      ratingRepository.getRatingById.mockResolvedValue(mockRating);
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
       ratingRepository.updateRating.mockResolvedValue(updatedRating);
 
       const result = await ratingService.updateRating(userId, ratingId, updateData);
@@ -240,21 +240,24 @@ describe('RatingService', () => {
 
       await expect(ratingService.updateRating(userId, ratingId, updateData))
         .rejects.toThrow('Rating not found');
+      
       expect(appLogger.warn).toHaveBeenCalledWith(`Attempt to update non-existent rating: ${ratingId}`);
       expect(ratingRepository.updateRating).not.toHaveBeenCalled();
     });
 
     it('should throw error if rating belongs to another user', async () => {
-      const mockRating = {
+      const existingRating = {
         _id: ratingId,
         userId: { _id: 'different-user' },
-        rating: 4.5
+        rating: 4.5,
+        review: 'Great service!'
       };
-      
-      ratingRepository.getRatingById.mockResolvedValue(mockRating);
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
 
       await expect(ratingService.updateRating(userId, ratingId, updateData))
         .rejects.toThrow('You can only update your own ratings');
+      
       expect(appLogger.warn).toHaveBeenCalledWith(
         `User ${userId} attempted to update rating ${ratingId} that doesn't belong to them`
       );
@@ -267,6 +270,7 @@ describe('RatingService', () => {
 
       await expect(ratingService.updateRating(userId, ratingId, updateData))
         .rejects.toThrow('Database error');
+      
       expect(appLogger.error).toHaveBeenCalledWith(`Error updating rating: ${error.message}`);
     });
   });
@@ -275,15 +279,16 @@ describe('RatingService', () => {
     const userId = 'user123';
     const ratingId = 'rating123';
 
-    it('should delete rating successfully', async () => {
-      const mockRating = {
+    it('should delete a rating successfully', async () => {
+      const existingRating = {
         _id: ratingId,
         userId: { _id: userId },
-        rating: 4.5
+        rating: 4.5,
+        review: 'Great service!'
       };
-      
-      ratingRepository.getRatingById.mockResolvedValue(mockRating);
-      ratingRepository.deleteRating.mockResolvedValue({ acknowledged: true });
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
+      ratingRepository.deleteRating.mockResolvedValue({ acknowledged: true, deletedCount: 1 });
 
       const result = await ratingService.deleteRating(userId, ratingId);
 
@@ -298,21 +303,24 @@ describe('RatingService', () => {
 
       await expect(ratingService.deleteRating(userId, ratingId))
         .rejects.toThrow('Rating not found');
+      
       expect(appLogger.warn).toHaveBeenCalledWith(`Attempt to delete non-existent rating: ${ratingId}`);
       expect(ratingRepository.deleteRating).not.toHaveBeenCalled();
     });
 
     it('should throw error if rating belongs to another user', async () => {
-      const mockRating = {
+      const existingRating = {
         _id: ratingId,
         userId: { _id: 'different-user' },
-        rating: 4.5
+        rating: 4.5,
+        review: 'Great service!'
       };
-      
-      ratingRepository.getRatingById.mockResolvedValue(mockRating);
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
 
       await expect(ratingService.deleteRating(userId, ratingId))
         .rejects.toThrow('You can only delete your own ratings');
+      
       expect(appLogger.warn).toHaveBeenCalledWith(
         `User ${userId} attempted to delete rating ${ratingId} that doesn't belong to them`
       );
@@ -325,19 +333,20 @@ describe('RatingService', () => {
 
       await expect(ratingService.deleteRating(userId, ratingId))
         .rejects.toThrow('Database error');
+      
       expect(appLogger.error).toHaveBeenCalledWith(`Error deleting rating: ${error.message}`);
     });
   });
 
   describe('getRatingsByUserId', () => {
     const userId = 'user123';
-    
-    it('should return user ratings successfully', async () => {
+
+    it('should return ratings for a user', async () => {
       const mockRatings = [
         { _id: 'rating1', userId, rating: 4.5 },
-        { _id: 'rating2', userId, rating: 3.0 }
+        { _id: 'rating2', userId, rating: 5.0 }
       ];
-      
+
       ratingRepository.getRatingsByUserId.mockResolvedValue(mockRatings);
 
       const result = await ratingService.getRatingsByUserId(userId);
@@ -352,6 +361,7 @@ describe('RatingService', () => {
 
       await expect(ratingService.getRatingsByUserId(userId))
         .rejects.toThrow('Database error');
+      
       expect(appLogger.error).toHaveBeenCalledWith(`Error fetching ratings for user ${userId}: ${error.message}`);
     });
   });
@@ -359,12 +369,12 @@ describe('RatingService', () => {
   describe('getRatingsByBusId', () => {
     const busId = 'bus123';
     
-    it('should return bus ratings successfully', async () => {
+    it('should return ratings for a bus', async () => {
       const mockRatings = [
         { _id: 'rating1', busId, rating: 4.5 },
-        { _id: 'rating2', busId, rating: 3.0 }
+        { _id: 'rating2', busId, rating: 5.0 }
       ];
-      
+
       ratingRepository.getRatingsByBusId.mockResolvedValue(mockRatings);
 
       const result = await ratingService.getRatingsByBusId(busId);
@@ -379,16 +389,17 @@ describe('RatingService', () => {
 
       await expect(ratingService.getRatingsByBusId(busId))
         .rejects.toThrow('Database error');
+      
       expect(appLogger.error).toHaveBeenCalledWith(`Error fetching ratings for bus ${busId}: ${error.message}`);
     });
   });
 
   describe('getRatingForBooking', () => {
     const bookingId = 'booking123';
-    
-    it('should return booking rating successfully', async () => {
+
+    it('should return rating for a booking', async () => {
       const mockRating = { _id: 'rating1', bookingId, rating: 4.5 };
-      
+
       ratingRepository.getRatingByBookingId.mockResolvedValue(mockRating);
 
       const result = await ratingService.getRatingForBooking(bookingId);
@@ -403,6 +414,7 @@ describe('RatingService', () => {
 
       await expect(ratingService.getRatingForBooking(bookingId))
         .rejects.toThrow('Database error');
+      
       expect(appLogger.error).toHaveBeenCalledWith(`Error fetching rating for booking ${bookingId}: ${error.message}`);
     });
   });

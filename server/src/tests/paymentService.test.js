@@ -50,7 +50,6 @@ describe('PaymentService', () => {
             expect(appLogger.info).toHaveBeenCalledWith(`Payment created with ID: payment123`);
             expect(appLogger.info).toHaveBeenCalledWith(`Payment processed successfully for user ID: ${mockUserId}`);
             
-            // Create a copy of the result without the save function for assertion
             const resultWithoutSave = {...result};
             delete resultWithoutSave.save;
             
@@ -100,8 +99,8 @@ describe('PaymentService', () => {
                 .rejects.toThrow('Payment failed during processing.');
             expect(appLogger.error).toHaveBeenCalled();
         });
-
-        it('should handle repository errors', async () => {
+        
+        it('should handle and log repository errors during payment creation', async () => {
             const mockUserId = 'user123';
             const mockPaymentData = { 
                 bookingId: 'booking123', 
@@ -109,41 +108,92 @@ describe('PaymentService', () => {
                 paymentMethod: 'card' 
             };
             
-            const error = new Error('Database error');
-            paymentRepository.createPayment = jest.fn().mockRejectedValue(error);
-
+            const mockError = new Error('Database error');
+            paymentRepository.createPayment = jest.fn().mockRejectedValue(mockError);
+            
             await expect(PaymentService.processPayment(mockUserId, mockPaymentData))
                 .rejects.toThrow('Database error');
-            expect(appLogger.error).toHaveBeenCalledWith(`Error processing payment for user ID ${mockUserId}: ${error.message}`);
+            
+            expect(paymentRepository.createPayment).toHaveBeenCalledWith({ 
+                ...mockPaymentData, 
+                userId: mockUserId 
+            });
+            expect(appLogger.error).toHaveBeenCalledWith(`Error processing payment for user ID ${mockUserId}: ${mockError.message}`);
         });
     });
 
     describe('getUserPayments', () => {
-        it('should fetch all payments for a user', async () => {
+        it('should return all payments for a user', async () => {
             const mockUserId = 'user123';
-            const mockPayments = [{ id: 'payment1', amount: 100 }, { id: 'payment2', amount: 200 }];
-            
+            const mockPayments = [
+                { _id: 'payment1', userId: mockUserId, amount: 100 },
+                { _id: 'payment2', userId: mockUserId, amount: 150 }
+            ];
+
             paymentRepository.getUserPayments = jest.fn().mockResolvedValue(mockPayments);
 
             const result = await PaymentService.getUserPayments(mockUserId);
 
             expect(paymentRepository.getUserPayments).toHaveBeenCalledWith(mockUserId);
-            expect(appLogger.info).toHaveBeenCalled();
+            expect(appLogger.info).toHaveBeenCalledWith(`Fetching payments for user ID: ${mockUserId}`);
             expect(result).toEqual(mockPayments);
+        });
+
+        it('should handle and log repository errors', async () => {
+            const mockUserId = 'user123';
+            const mockError = new Error('Database error');
+
+            paymentRepository.getUserPayments = jest.fn().mockRejectedValue(mockError);
+
+            await expect(PaymentService.getUserPayments(mockUserId))
+                .rejects.toThrow('Database error');
+
+            expect(paymentRepository.getUserPayments).toHaveBeenCalledWith(mockUserId);
+            expect(appLogger.error).toHaveBeenCalledWith(`Error fetching payments for user ID ${mockUserId}: ${mockError.message}`);
         });
     });
 
     describe('getPaymentById', () => {
-        it('should return a payment by ID', async () => {
-            const mockPayment = { id: 'payment1', amount: 100 };
-            
+        it('should return payment when found', async () => {
+            const mockPaymentId = 'payment123';
+            const mockPayment = { 
+                _id: mockPaymentId, 
+                userId: 'user123', 
+                amount: 100 
+            };
+
             paymentRepository.getPaymentById = jest.fn().mockResolvedValue(mockPayment);
 
-            const result = await PaymentService.getPaymentById('payment1');
+            const result = await PaymentService.getPaymentById(mockPaymentId);
 
-            expect(paymentRepository.getPaymentById).toHaveBeenCalledWith('payment1');
-            expect(appLogger.info).toHaveBeenCalled();
+            expect(paymentRepository.getPaymentById).toHaveBeenCalledWith(mockPaymentId);
+            expect(appLogger.info).toHaveBeenCalledWith(`Fetching payment with ID: ${mockPaymentId}`);
             expect(result).toEqual(mockPayment);
+        });
+
+        it('should return null when payment not found', async () => {
+            const mockPaymentId = 'nonexistent';
+
+            paymentRepository.getPaymentById = jest.fn().mockResolvedValue(null);
+
+            const result = await PaymentService.getPaymentById(mockPaymentId);
+
+            expect(paymentRepository.getPaymentById).toHaveBeenCalledWith(mockPaymentId);
+            expect(appLogger.warn).toHaveBeenCalledWith(`Payment not found with ID: ${mockPaymentId}`);
+            expect(result).toBeNull();
+        });
+
+        it('should handle and log repository errors', async () => {
+            const mockPaymentId = 'payment123';
+            const mockError = new Error('Database error');
+
+            paymentRepository.getPaymentById = jest.fn().mockRejectedValue(mockError);
+
+            await expect(PaymentService.getPaymentById(mockPaymentId))
+                .rejects.toThrow('Database error');
+
+            expect(paymentRepository.getPaymentById).toHaveBeenCalledWith(mockPaymentId);
+            expect(appLogger.error).toHaveBeenCalledWith(`Error fetching payment with ID ${mockPaymentId}: ${mockError.message}`);
         });
     });
 });

@@ -6,51 +6,85 @@ jest.mock('../repositories/adminRepository.js');
 jest.mock('../utils/logger.js');
 
 describe('AdminService', () => {
-    afterEach(() => {
-        jest.clearAllMocks();
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('blockUser', () => {
+    it('should block a user successfully', async () => {
+      const mockUserId = '12345';
+      const mockUser = { id: mockUserId, blocked: true };
+      AdminRepository.updateUserStatus.mockResolvedValue(mockUser);
+
+      const result = await AdminService.blockUser(mockUserId);
+      
+      expect(AdminRepository.updateUserStatus).toHaveBeenCalledWith(mockUserId, true);
+      expect(appLogger.info).toHaveBeenCalled();
+      expect(result).toEqual({ message: 'User blocked successfully', user: mockUser });
     });
 
-    describe('blockUser', () => {
-        it('should block a user successfully', async () => {
-            const mockUserId = '12345';
-            const mockUser = { id: mockUserId, blocked: true };
-            AdminRepository.updateUserStatus.mockResolvedValue(mockUser);
-
-            const result = await AdminService.blockUser(mockUserId);
-
-            expect(AdminRepository.updateUserStatus).toHaveBeenCalledWith(mockUserId, true);
-            expect(appLogger.info).toHaveBeenCalled();
-            expect(result).toEqual({ message: 'User blocked successfully', user: mockUser });
-        });
-
-        it('should throw an error if user not found', async () => {
-            const mockUserId = '12345';
-            AdminRepository.updateUserStatus.mockResolvedValue(null);
-
-            await expect(AdminService.blockUser(mockUserId)).rejects.toThrow(`User with ID ${mockUserId} not found`);
-            expect(appLogger.warn).toHaveBeenCalled();
-        });
+    it('should throw an error if user not found', async () => {
+      const mockUserId = '12345';
+      AdminRepository.updateUserStatus.mockResolvedValue(null);
+      
+      await expect(AdminService.blockUser(mockUserId)).rejects.toThrow(`User with ID ${mockUserId} not found`);
+      expect(appLogger.warn).toHaveBeenCalled();
     });
 
-    describe('unblockUser', () => {
-        it('should unblock a user successfully', async () => {
-            const mockUserId = '12345';
-            const mockUser = { id: mockUserId, blocked: false };
-            AdminRepository.updateUserStatus.mockResolvedValue(mockUser);
-
-            const result = await AdminService.unblockUser(mockUserId);
-
-            expect(AdminRepository.updateUserStatus).toHaveBeenCalledWith(mockUserId, false);
-            expect(appLogger.info).toHaveBeenCalled();
-            expect(result).toEqual({ message: 'User unblocked successfully', user: mockUser });
-        });
-
-        it('should throw an error if user not found', async () => {
-            const mockUserId = '12345';
-            AdminRepository.updateUserStatus.mockResolvedValue(null);
-
-            await expect(AdminService.unblockUser(mockUserId)).rejects.toThrow(`User with ID ${mockUserId} not found`);
-            expect(appLogger.warn).toHaveBeenCalled();
-        });
+    it('should handle and log repository errors when blocking user', async () => {
+      const mockUserId = '12345';
+      const mockError = new Error('Database connection failed');
+      AdminRepository.updateUserStatus.mockRejectedValue(mockError);
+      
+      await expect(AdminService.blockUser(mockUserId)).rejects.toThrow('Database connection failed');
+      expect(appLogger.error).toHaveBeenCalled();
     });
+
+    it('should throw a generic error when no error message is provided', async () => {
+      const mockUserId = '12345';
+      AdminRepository.updateUserStatus.mockRejectedValue({});
+      
+      await expect(AdminService.blockUser(mockUserId)).rejects.toThrow('Error blocking user');
+      expect(appLogger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('unblockUser', () => {
+    it('should unblock a user successfully', async () => {
+      const mockUserId = '12345';
+      const mockUser = { id: mockUserId, blocked: false };
+      AdminRepository.updateUserStatus.mockResolvedValue(mockUser);
+
+      const result = await AdminService.unblockUser(mockUserId);
+      
+      expect(AdminRepository.updateUserStatus).toHaveBeenCalledWith(mockUserId, false);
+      expect(appLogger.info).toHaveBeenCalled();
+      expect(result).toEqual({ message: 'User unblocked successfully', user: mockUser });
+    });
+
+    it('should throw an error if user not found', async () => {
+      const mockUserId = '12345';
+      AdminRepository.updateUserStatus.mockResolvedValue(null);
+      
+      await expect(AdminService.unblockUser(mockUserId)).rejects.toThrow(`User with ID ${mockUserId} not found`);
+      expect(appLogger.warn).toHaveBeenCalled();
+    });
+
+    it('should handle and log repository errors when unblocking user', async () => {
+      const mockUserId = '12345';
+      const mockError = new Error('Database connection failed');
+      AdminRepository.updateUserStatus.mockRejectedValue(mockError);
+      
+      await expect(AdminService.unblockUser(mockUserId)).rejects.toThrow('Database connection failed');
+      expect(appLogger.error).toHaveBeenCalled();
+    });
+
+    it('should throw a generic error when no error message is provided', async () => {
+      const mockUserId = '12345';
+      AdminRepository.updateUserStatus.mockRejectedValue({});
+      
+      await expect(AdminService.unblockUser(mockUserId)).rejects.toThrow('Error unblocking user');
+      expect(appLogger.error).toHaveBeenCalled();
+    });
+  });
 });

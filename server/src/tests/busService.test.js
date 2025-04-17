@@ -24,6 +24,20 @@ describe('BusService', () => {
             expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockBus);
         });
+
+        it('should handle and log errors when creating a bus', async () => {
+            const mockOperatorId = 'operator123';
+            const mockBusData = { name: 'Luxury Bus', totalSeats: 50 };
+            const mockError = new Error('Database error');
+            
+            BusRepository.createBus.mockRejectedValue(mockError);
+            
+            await expect(BusService.createBus(mockOperatorId, mockBusData))
+                .rejects.toThrow('Database error');
+            
+            expect(BusRepository.createBus).toHaveBeenCalledWith({ ...mockBusData, operatorId: mockOperatorId });
+            expect(appLogger.error).toHaveBeenCalledWith(`Error creating bus for operator ${mockOperatorId}: ${mockError.message}`);
+        });
     });
 
     describe('getBuses', () => {
@@ -36,6 +50,17 @@ describe('BusService', () => {
             expect(BusRepository.getAllBuses).toHaveBeenCalled();
             expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockBuses);
+        });
+
+        it('should handle and log errors when fetching all buses', async () => {
+            const mockError = new Error('Database error');
+            BusRepository.getAllBuses.mockRejectedValue(mockError);
+
+            await expect(BusService.getBuses())
+                .rejects.toThrow('Database error');
+
+            expect(BusRepository.getAllBuses).toHaveBeenCalled();
+            expect(appLogger.error).toHaveBeenCalledWith(`Error fetching buses: ${mockError.message}`);
         });
     });
 
@@ -63,6 +88,20 @@ describe('BusService', () => {
             expect(BusRepository.updateBus).toHaveBeenCalledWith(mockBusId, {});
             expect(appLogger.warn).toHaveBeenCalled();
         });
+
+        it('should handle and log errors when updating a bus', async () => {
+            const mockBusId = 'bus1';
+            const mockUpdateData = { name: 'Updated Bus', totalSeats: 55 };
+            const mockError = new Error('Database error');
+            
+            BusRepository.updateBus.mockRejectedValue(mockError);
+            
+            await expect(BusService.updateBus(mockBusId, mockUpdateData))
+                .rejects.toThrow('Database error');
+            
+            expect(BusRepository.updateBus).toHaveBeenCalledWith(mockBusId, mockUpdateData);
+            expect(appLogger.error).toHaveBeenCalledWith(`Error updating bus with ID ${mockBusId}: ${mockError.message}`);
+        });
     });
 
     describe('deleteBus', () => {
@@ -87,6 +126,19 @@ describe('BusService', () => {
 
             expect(BusRepository.deleteBus).toHaveBeenCalledWith(mockBusId);
             expect(appLogger.warn).toHaveBeenCalled();
+        });
+
+        it('should handle and log errors when deleting a bus', async () => {
+            const mockBusId = 'bus1';
+            const mockError = new Error('Database error');
+            
+            BusRepository.deleteBus.mockRejectedValue(mockError);
+            
+            await expect(BusService.deleteBus(mockBusId))
+                .rejects.toThrow('Database error');
+            
+            expect(BusRepository.deleteBus).toHaveBeenCalledWith(mockBusId);
+            expect(appLogger.error).toHaveBeenCalledWith(`Error deleting bus with ID ${mockBusId}: ${mockError.message}`);
         });
     });
     

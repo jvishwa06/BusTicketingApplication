@@ -25,6 +25,49 @@ describe('TripService', () => {
             expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockTrips);
         });
+
+        it('should throw error when source is missing', async () => {
+            const mockFilters = { destination: 'City B', date: '2025-04-01' };
+            
+            await expect(TripService.getTripsByFilters(mockFilters))
+                .rejects.toThrow('Source, destination, and date are required to search for trips.');
+            
+            expect(TripRepository.findTripsByFilters).not.toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalledWith('Trip search failed: Missing required parameters');
+        });
+
+        it('should throw error when destination is missing', async () => {
+            const mockFilters = { source: 'City A', date: '2025-04-01' };
+            
+            await expect(TripService.getTripsByFilters(mockFilters))
+                .rejects.toThrow('Source, destination, and date are required to search for trips.');
+            
+            expect(TripRepository.findTripsByFilters).not.toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalledWith('Trip search failed: Missing required parameters');
+        });
+
+        it('should throw error when date is missing', async () => {
+            const mockFilters = { source: 'City A', destination: 'City B' };
+            
+            await expect(TripService.getTripsByFilters(mockFilters))
+                .rejects.toThrow('Source, destination, and date are required to search for trips.');
+            
+            expect(TripRepository.findTripsByFilters).not.toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalledWith('Trip search failed: Missing required parameters');
+        });
+
+        it('should handle and log repository errors', async () => {
+            const mockFilters = { source: 'City A', destination: 'City B', date: '2025-04-01' };
+            const mockError = new Error('Database error');
+            
+            TripRepository.findTripsByFilters.mockRejectedValue(mockError);
+            
+            await expect(TripService.getTripsByFilters(mockFilters))
+                .rejects.toThrow('Database error');
+            
+            expect(TripRepository.findTripsByFilters).toHaveBeenCalled();
+            expect(appLogger.error).toHaveBeenCalledWith(`Error fetching trips by filters: ${mockError.message}`);
+        });
     });
 
     describe('createTrip', () => {
@@ -43,6 +86,46 @@ describe('TripService', () => {
             expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockTrip);
         });
+
+        it('should throw error when busId is not provided', async () => {
+            const mockTripData = { source: 'City A', destination: 'City B' };
+            
+            await expect(TripService.createTrip(mockTripData))
+                .rejects.toThrow('Bus ID is required to create a trip');
+            
+            expect(BusRepository.getBusById).not.toHaveBeenCalled();
+            expect(TripRepository.createTrip).not.toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalledWith('Trip creation failed: Missing bus ID');
+        });
+
+        it('should throw error when bus is not found', async () => {
+            const mockTripData = { busId: 'invalidBus', source: 'City A', destination: 'City B' };
+            
+            BusRepository.getBusById.mockResolvedValue(null);
+            
+            await expect(TripService.createTrip(mockTripData))
+                .rejects.toThrow(`Bus with ID ${mockTripData.busId} not found`);
+            
+            expect(BusRepository.getBusById).toHaveBeenCalledWith(mockTripData.busId);
+            expect(TripRepository.createTrip).not.toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalledWith(`Trip creation failed: Bus not found with ID ${mockTripData.busId}`);
+        });
+
+        it('should handle and log repository errors', async () => {
+            const mockTripData = { busId: 'bus123', source: 'City A', destination: 'City B' };
+            const mockBus = { id: 'bus123', operatorId: 'operator1' };
+            const mockError = new Error('Database error');
+            
+            BusRepository.getBusById.mockResolvedValue(mockBus);
+            TripRepository.createTrip.mockRejectedValue(mockError);
+            
+            await expect(TripService.createTrip(mockTripData))
+                .rejects.toThrow('Database error');
+            
+            expect(BusRepository.getBusById).toHaveBeenCalledWith(mockTripData.busId);
+            expect(TripRepository.createTrip).toHaveBeenCalled();
+            expect(appLogger.error).toHaveBeenCalledWith(`Error creating trip: ${mockError.message}`);
+        });
     });
 
     describe('getAllTrips', () => {
@@ -56,6 +139,17 @@ describe('TripService', () => {
             expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockTrips);
         });
+
+        it('should handle and log repository errors', async () => {
+            const mockError = new Error('Database error');
+            TripRepository.getAllTrips.mockRejectedValue(mockError);
+            
+            await expect(TripService.getAllTrips())
+                .rejects.toThrow('Database error');
+            
+            expect(TripRepository.getAllTrips).toHaveBeenCalled();
+            expect(appLogger.error).toHaveBeenCalledWith(`Error fetching all trips: ${mockError.message}`);
+        });
     });
 
     describe('getTripById', () => {
@@ -68,6 +162,18 @@ describe('TripService', () => {
             expect(TripRepository.getTripById).toHaveBeenCalledWith('trip1');
             expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockTrip);
+        });
+
+        it('should handle and log repository errors', async () => {
+            const mockTripId = 'trip1';
+            const mockError = new Error('Database error');
+            TripRepository.getTripById.mockRejectedValue(mockError);
+            
+            await expect(TripService.getTripById(mockTripId))
+                .rejects.toThrow('Database error');
+            
+            expect(TripRepository.getTripById).toHaveBeenCalledWith(mockTripId);
+            expect(appLogger.error).toHaveBeenCalledWith(`Error fetching trip by ID ${mockTripId}: ${mockError.message}`);
         });
     });
 
@@ -84,6 +190,20 @@ describe('TripService', () => {
             expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockUpdatedTrip);
         });
+
+        it('should handle and log repository errors', async () => {
+            const mockTripId = 'trip1';
+            const mockUpdateData = { price: 100 };
+            const mockError = new Error('Database error');
+            
+            TripRepository.updateTrip.mockRejectedValue(mockError);
+            
+            await expect(TripService.updateTrip(mockTripId, mockUpdateData))
+                .rejects.toThrow('Database error');
+            
+            expect(TripRepository.updateTrip).toHaveBeenCalledWith(mockTripId, mockUpdateData);
+            expect(appLogger.error).toHaveBeenCalledWith(`Error updating trip with ID ${mockTripId}: ${mockError.message}`);
+        });
     });
 
     describe('deleteTrip', () => {
@@ -98,10 +218,23 @@ describe('TripService', () => {
             expect(appLogger.info).toHaveBeenCalled();
             expect(result).toEqual(mockDeletedTrip);
         });
+
+        it('should handle and log repository errors', async () => {
+            const mockTripId = 'trip1';
+            const mockError = new Error('Database error');
+            
+            TripRepository.deleteTrip.mockRejectedValue(mockError);
+            
+            await expect(TripService.deleteTrip(mockTripId))
+                .rejects.toThrow('Database error');
+            
+            expect(TripRepository.deleteTrip).toHaveBeenCalledWith(mockTripId);
+            expect(appLogger.error).toHaveBeenCalledWith(`Error deleting trip with ID ${mockTripId}: ${mockError.message}`);
+        });
     });
 
     describe('getTripsByBusIds', () => {
-        it('should return trips for the specified bus IDs', async () => {
+        it('should return trips for given bus IDs', async () => {
             const mockBusIds = ['bus1', 'bus2'];
             const mockTrips = [
                 { id: 'trip1', busId: 'bus1', source: 'City A', destination: 'City B' },
@@ -116,29 +249,42 @@ describe('TripService', () => {
             expect(appLogger.info).toHaveBeenCalledWith(`Fetching trips for bus IDs: ${mockBusIds.join(', ')}`);
             expect(result).toEqual(mockTrips);
         });
-        
-        it('should throw error if bus IDs are invalid', async () => {
-            const invalidInputs = [null, [], undefined];
+
+        it('should throw error when busIds is not provided', async () => {
+            await expect(TripService.getTripsByBusIds())
+                .rejects.toThrow('Valid bus IDs are required to fetch trips');
             
-            for (const invalidInput of invalidInputs) {
-                await expect(TripService.getTripsByBusIds(invalidInput))
-                    .rejects.toThrow('Valid bus IDs are required to fetch trips');
-                expect(appLogger.warn).toHaveBeenCalledWith('Trip search failed: Invalid bus IDs');
-                expect(TripRepository.getTripsByBusIds).not.toHaveBeenCalled();
-                
-                jest.clearAllMocks();
-            }
+            expect(TripRepository.getTripsByBusIds).not.toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalledWith('Trip search failed: Invalid bus IDs');
         });
-        
-        it('should handle repository errors', async () => {
-            const mockBusIds = ['bus1', 'bus2'];
-            const error = new Error('Database error');
+
+        it('should throw error when busIds is not an array', async () => {
+            await expect(TripService.getTripsByBusIds('bus1'))
+                .rejects.toThrow('Valid bus IDs are required to fetch trips');
             
-            TripRepository.getTripsByBusIds.mockRejectedValue(error);
+            expect(TripRepository.getTripsByBusIds).not.toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalledWith('Trip search failed: Invalid bus IDs');
+        });
+
+        it('should throw error when busIds is an empty array', async () => {
+            await expect(TripService.getTripsByBusIds([]))
+                .rejects.toThrow('Valid bus IDs are required to fetch trips');
+            
+            expect(TripRepository.getTripsByBusIds).not.toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalledWith('Trip search failed: Invalid bus IDs');
+        });
+
+        it('should handle and log repository errors', async () => {
+            const mockBusIds = ['bus1', 'bus2'];
+            const mockError = new Error('Database error');
+            
+            TripRepository.getTripsByBusIds.mockRejectedValue(mockError);
             
             await expect(TripService.getTripsByBusIds(mockBusIds))
                 .rejects.toThrow('Database error');
-            expect(appLogger.error).toHaveBeenCalledWith(`Error fetching trips by bus IDs: ${error.message}`);
+            
+            expect(TripRepository.getTripsByBusIds).toHaveBeenCalledWith(mockBusIds);
+            expect(appLogger.error).toHaveBeenCalledWith(`Error fetching trips by bus IDs: ${mockError.message}`);
         });
     });
 });

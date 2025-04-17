@@ -11,67 +11,21 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
     bookedSeats: [],  
     pendingSeats: []  
   });
-  // Add new state variables for discount functionality
-  const [discountCode, setDiscountCode] = useState('');
-  const [discountLoading, setDiscountLoading] = useState(false);
-  const [discountError, setDiscountError] = useState('');
-  const [discountInfo, setDiscountInfo] = useState(null);
+  // Discount functionality has been removed
   
   const [realAvailableSeats, setRealAvailableSeats] = useState(trip.availableSeats);
   
   const totalSeats = trip.busId.totalSeats;
   const price = trip.price;
   
-  // Calculate total price with discount applied
+  // Calculate total price
   const calculateTotalPrice = () => {
-    const basePrice = selectedSeats.length * price;
-    if (discountInfo && discountInfo.valid) {
-      return discountInfo.finalAmount;
-    }
-    return basePrice;
+    return selectedSeats.length * price;
   };
   
-  // Add function to validate discount code
-  const validateDiscountCode = async () => {
-    if (!discountCode.trim()) {
-      setDiscountError('Please enter a discount code');
-      return;
-    }
-    
-    try {
-      setDiscountLoading(true);
-      setDiscountError('');
-      
-      const response = await api.post('/discounts/validate', {
-        code: discountCode,
-        amount: selectedSeats.length * price,
-        busType: trip.busId.type
-      });
-      
-      if (response.data.success) {
-        setDiscountInfo(response.data.data);
-        if (!response.data.data.valid) {
-          setDiscountError(response.data.message);
-        }
-      } else {
-        setDiscountError(response.data.message || 'Invalid discount code');
-        setDiscountInfo(null);
-      }
-    } catch (err) {
-      setDiscountError(err.response?.data?.message || 'Error validating discount code');
-      setDiscountInfo(null);
-    } finally {
-      setDiscountLoading(false);
-    }
-  };
+  // Discount validation functionality has been removed
   
-  // Clear discount when seat selection changes
-  useEffect(() => {
-    if (discountInfo) {
-      setDiscountInfo(null);
-      setDiscountError('');
-    }
-  }, [selectedSeats]);
+  // Discount clearing functionality has been removed
   
   useEffect(() => {
     const fetchBookings = async () => {
@@ -166,16 +120,11 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
       
       console.log('Creating booking with trip:', trip);
       
-      // Prepare booking data with optional discount
+      // Prepare booking data (discount functionality removed)
       const bookingData = {
         tripId: trip._id,
         seats: selectedSeats
       };
-      
-      // Include discount code if a valid discount was applied
-      if (discountInfo && discountInfo.valid) {
-        bookingData.discountCode = discountCode;
-      }
       
       const response = await api.post('/bookings/user', bookingData);
       
