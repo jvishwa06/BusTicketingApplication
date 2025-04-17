@@ -1,6 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import busRoutes from './routes/busRoutes.js';
@@ -11,7 +12,6 @@ import adminRoutes from './routes/adminRoutes.js';
 import ratingRoutes from './routes/ratingRoutes.js';
 import discountRoutes from './routes/discountRoutes.js'; 
 import { requestLogger } from './utils/logger.js';
-import cors from 'cors';
 import rateLimiter from './middlewares/rateLimiterMiddleware.js';
 
 dotenv.config();
