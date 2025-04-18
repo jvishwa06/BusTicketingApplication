@@ -102,6 +102,56 @@ describe('RatingService', () => {
       expect(result).toEqual(mockRating);
     });
 
+    it('should submit a rating successfully with no review provided', async () => {
+      const mockBooking = {
+        _id: bookingId,
+        userId: { _id: userId },
+        tripId: 'trip123',
+        paymentStatus: 'success'
+      };
+      
+      const mockTrip = {
+        _id: 'trip123',
+        busId: 'bus123',
+        arrivalTime: new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000) 
+      };
+      
+      const ratingDataWithoutReview = {
+        rating: 4.5
+        // No review field
+      };
+      
+      const mockRating = {
+        _id: 'rating123',
+        bookingId,
+        userId,
+        busId: mockTrip.busId,
+        tripId: mockTrip._id,
+        rating: ratingDataWithoutReview.rating,
+        review: '' // Empty string default
+      };
+
+      bookingRepository.getBookingById.mockResolvedValue(mockBooking);
+      tripRepository.getTripById.mockResolvedValue(mockTrip);
+      ratingRepository.getRatingByBookingId.mockResolvedValue(null); 
+      ratingRepository.createRating.mockResolvedValue(mockRating);
+
+      const result = await ratingService.submitRating(userId, bookingId, ratingDataWithoutReview);
+
+      expect(bookingRepository.getBookingById).toHaveBeenCalledWith(bookingId);
+      expect(tripRepository.getTripById).toHaveBeenCalledWith(mockBooking.tripId);
+      expect(ratingRepository.getRatingByBookingId).toHaveBeenCalledWith(bookingId);
+      expect(ratingRepository.createRating).toHaveBeenCalledWith({
+        bookingId,
+        userId,
+        busId: mockTrip.busId,
+        tripId: mockTrip._id,
+        rating: ratingDataWithoutReview.rating,
+        review: '' // Should use the default empty string
+      });
+      expect(result).toEqual(mockRating);
+    });
+
     it('should throw error if booking not found', async () => {
       bookingRepository.getBookingById.mockResolvedValue(null);
 
@@ -272,7 +322,7 @@ describe('RatingService', () => {
     it('should handle userId as an object without _id property', async () => {
       const existingRating = {
         _id: ratingId,
-        userId: userId, 
+        userId: userId, // userId as string directly
         rating: 4.5,
         review: 'Great service!'
       };
@@ -334,6 +384,68 @@ describe('RatingService', () => {
         .rejects.toThrow('Database error');
       
       expect(appLogger.error).toHaveBeenCalledWith(`Error updating rating: ${error.message}`);
+    });
+  });
+
+  // Additional targeted tests for updateRating edge cases
+  describe('updateRating edge cases', () => {
+    const userId = 'user123';
+    const ratingId = 'rating123';
+    const updateData = { rating: 5.0, review: 'Updated review' };
+
+    it('should handle complex userId objects in comparison', async () => {
+      // Create a rating with a complex userId object structure
+      const existingRating = {
+        _id: ratingId,
+        userId: {
+          // No _id property, but has toString method
+          toString: () => 'different-user'
+        },
+        rating: 4.5,
+        review: 'Great service!'
+      };
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
+
+      // This should throw an error due to userId mismatch
+      await expect(ratingService.updateRating(userId, ratingId, updateData))
+        .rejects.toThrow('You can only update your own ratings');
+      
+      expect(appLogger.warn).toHaveBeenCalledWith(
+        `User ${userId} attempted to update rating ${ratingId} that doesn't belong to them`
+      );
+      expect(ratingRepository.updateRating).not.toHaveBeenCalled();
+    });
+    
+    it('should handle when userId objects match', async () => {
+      const complexUserId = {
+        toString: () => userId
+      };
+      
+      const existingRating = {
+        _id: ratingId,
+        userId: complexUserId,
+        rating: 4.5,
+        review: 'Great service!'
+      };
+
+      const updatedRating = {
+        _id: ratingId,
+        userId: complexUserId,
+        rating: updateData.rating,
+        review: updateData.review
+      };
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
+      ratingRepository.updateRating.mockResolvedValue(updatedRating);
+
+      const result = await ratingService.updateRating(complexUserId, ratingId, updateData);
+      
+      expect(ratingRepository.updateRating).toHaveBeenCalledWith(ratingId, {
+        rating: updateData.rating,
+        review: updateData.review
+      });
+      expect(result).toEqual(updatedRating);
     });
   });
 
@@ -415,6 +527,57 @@ describe('RatingService', () => {
         .rejects.toThrow('Database error');
       
       expect(appLogger.error).toHaveBeenCalledWith(`Error deleting rating: ${error.message}`);
+    });
+  });
+
+  // Additional targeted tests for deleteRating edge cases
+  describe('deleteRating edge cases', () => {
+    const userId = 'user123';
+    const ratingId = 'rating123';
+
+    it('should handle complex userId objects in comparison', async () => {
+      // Create a rating with a complex userId object structure
+      const existingRating = {
+        _id: ratingId,
+        userId: {
+          // No _id property, but has toString method
+          toString: () => 'different-user'
+        },
+        rating: 4.5,
+        review: 'Great service!'
+      };
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
+
+      // This should throw an error due to userId mismatch
+      await expect(ratingService.deleteRating(userId, ratingId))
+        .rejects.toThrow('You can only delete your own ratings');
+      
+      expect(appLogger.warn).toHaveBeenCalledWith(
+        `User ${userId} attempted to delete rating ${ratingId} that doesn't belong to them`
+      );
+      expect(ratingRepository.deleteRating).not.toHaveBeenCalled();
+    });
+    
+    it('should handle when userId objects match', async () => {
+      const complexUserId = {
+        toString: () => userId
+      };
+      
+      const existingRating = {
+        _id: ratingId,
+        userId: complexUserId,
+        rating: 4.5,
+        review: 'Great service!'
+      };
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
+      ratingRepository.deleteRating.mockResolvedValue({ acknowledged: true, deletedCount: 1 });
+
+      const result = await ratingService.deleteRating(complexUserId, ratingId);
+      
+      expect(ratingRepository.deleteRating).toHaveBeenCalledWith(ratingId);
+      expect(result).toEqual({ success: true, message: 'Rating deleted successfully' });
     });
   });
 
