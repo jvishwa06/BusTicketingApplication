@@ -68,6 +68,40 @@ describe('RatingService', () => {
       expect(result).toEqual(mockRating);
     });
 
+    it('should submit a rating successfully with userId as string', async () => {
+      const mockBooking = {
+        _id: bookingId,
+        userId: userId, // userId as direct string
+        tripId: 'trip123',
+        paymentStatus: 'success'
+      };
+      
+      const mockTrip = {
+        _id: 'trip123',
+        busId: 'bus123',
+        arrivalTime: new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000) 
+      };
+      
+      const mockRating = {
+        _id: 'rating123',
+        bookingId,
+        userId,
+        busId: mockTrip.busId,
+        tripId: mockTrip._id,
+        rating: ratingData.rating,
+        review: ratingData.review
+      };
+
+      bookingRepository.getBookingById.mockResolvedValue(mockBooking);
+      tripRepository.getTripById.mockResolvedValue(mockTrip);
+      ratingRepository.getRatingByBookingId.mockResolvedValue(null); 
+      ratingRepository.createRating.mockResolvedValue(mockRating);
+
+      const result = await ratingService.submitRating(userId, bookingId, ratingData);
+
+      expect(result).toEqual(mockRating);
+    });
+
     it('should throw error if booking not found', async () => {
       bookingRepository.getBookingById.mockResolvedValue(null);
 
@@ -235,6 +269,34 @@ describe('RatingService', () => {
       expect(result).toEqual(updatedRating);
     });
 
+    it('should handle userId as an object without _id property', async () => {
+      const existingRating = {
+        _id: ratingId,
+        userId: userId, 
+        rating: 4.5,
+        review: 'Great service!'
+      };
+
+      const updatedRating = {
+        _id: ratingId,
+        userId: userId,
+        rating: updateData.rating,
+        review: updateData.review
+      };
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
+      ratingRepository.updateRating.mockResolvedValue(updatedRating);
+
+      const result = await ratingService.updateRating(userId, ratingId, updateData);
+
+      expect(ratingRepository.getRatingById).toHaveBeenCalledWith(ratingId);
+      expect(ratingRepository.updateRating).toHaveBeenCalledWith(ratingId, {
+        rating: updateData.rating,
+        review: updateData.review
+      });
+      expect(result).toEqual(updatedRating);
+    });
+
     it('should throw error if rating not found', async () => {
       ratingRepository.getRatingById.mockResolvedValue(null);
 
@@ -295,6 +357,24 @@ describe('RatingService', () => {
       expect(ratingRepository.getRatingById).toHaveBeenCalledWith(ratingId);
       expect(ratingRepository.deleteRating).toHaveBeenCalledWith(ratingId);
       expect(appLogger.info).toHaveBeenCalledWith(`User ${userId} successfully deleted rating ${ratingId}`);
+      expect(result).toEqual({ success: true, message: 'Rating deleted successfully' });
+    });
+
+    it('should handle userId as an object without _id property', async () => {
+      const existingRating = {
+        _id: ratingId,
+        userId: userId, // userId as string directly
+        rating: 4.5,
+        review: 'Great service!'
+      };
+
+      ratingRepository.getRatingById.mockResolvedValue(existingRating);
+      ratingRepository.deleteRating.mockResolvedValue({ acknowledged: true, deletedCount: 1 });
+
+      const result = await ratingService.deleteRating(userId, ratingId);
+
+      expect(ratingRepository.getRatingById).toHaveBeenCalledWith(ratingId);
+      expect(ratingRepository.deleteRating).toHaveBeenCalledWith(ratingId);
       expect(result).toEqual({ success: true, message: 'Rating deleted successfully' });
     });
 
