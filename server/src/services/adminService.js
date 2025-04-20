@@ -33,6 +33,84 @@ class AdminService {
             throw new Error(error.message || 'Error unblocking user');
         }
     }
+
+    async getAllUsers(filters = {}) {
+        try {
+            appLogger.info('Admin retrieving all users with filters', filters);
+            const users = await AdminRepository.getAllUsers(filters);
+            return users;
+        } catch (error) {
+            appLogger.error(`Error fetching users: ${error.message}`);
+            throw new Error(error.message || 'Error fetching users');
+        }
+    }
+
+    async verifyOperator(userId, verificationStatus) {
+        try {
+            appLogger.info(`Admin verifying operator ${userId} with status: ${verificationStatus}`);
+            const result = await AdminRepository.verifyOperator(userId, verificationStatus);
+            if (!result) {
+                appLogger.warn(`Operator with ID ${userId} not found`);
+                throw new Error(`Operator with ID ${userId} not found`);
+            }
+            return result;
+        } catch (error) {
+            appLogger.error(`Error verifying operator: ${error.message}`);
+            throw new Error(error.message || 'Error verifying operator');
+        }
+    }
+
+    async getAllTrips(filters = {}) {
+        try {
+            appLogger.info('Admin monitoring all trips with filters', filters);
+            const trips = await AdminRepository.getAllTrips(filters);
+            return trips;
+        } catch (error) {
+            appLogger.error(`Error fetching trips: ${error.message}`);
+            throw new Error(error.message || 'Error fetching trips');
+        }
+    }
+
+    async getAllBookings(filters = {}) {
+        try {
+            appLogger.info('Admin monitoring all bookings with filters', filters);
+            const bookings = await AdminRepository.getAllBookings(filters);
+            return bookings;
+        } catch (error) {
+            appLogger.error(`Error fetching bookings: ${error.message}`);
+            throw new Error(error.message || 'Error fetching bookings');
+        }
+    }
+
+    async modifyTrip(tripId, tripData) {
+        try {
+            appLogger.info(`Admin modifying trip ${tripId} with data:`, tripData);
+            const result = await AdminRepository.modifyTrip(tripId, tripData);
+            if (!result) {
+                appLogger.warn(`Trip with ID ${tripId} not found`);
+                throw new Error(`Trip with ID ${tripId} not found`);
+            }
+            return result;
+        } catch (error) {
+            appLogger.error(`Error modifying trip: ${error.message}`);
+            throw new Error(error.message || 'Error modifying trip');
+        }
+    }
+
+    async cancelTrip(tripId, reason) {
+        try {
+            appLogger.info(`Admin cancelling trip ${tripId} due to: ${reason}`);
+            const result = await AdminRepository.cancelTrip(tripId, reason);
+            if (!result) {
+                appLogger.warn(`Trip with ID ${tripId} not found`);
+                throw new Error(`Trip with ID ${tripId} not found`);
+            }
+            return result;
+        } catch (error) {
+            appLogger.error(`Error cancelling trip: ${error.message}`);
+            throw new Error(error.message || 'Error cancelling trip');
+        }
+    }
 }
 
 export default new AdminService();

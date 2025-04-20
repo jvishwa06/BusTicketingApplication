@@ -3,7 +3,6 @@ import RatingController from '../controllers/ratingController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
-
 router.use(authMiddleware.authenticate);
 
 router.post('/bookings/:bookingId', authMiddleware.authorizeRoles('user'), RatingController.submitRating);
