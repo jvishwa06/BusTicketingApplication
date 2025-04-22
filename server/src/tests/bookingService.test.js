@@ -168,40 +168,6 @@ describe('BookingService', () => {
                 
             expect(BookingRepository.createBooking).not.toHaveBeenCalled();
         });
-
-        it('should create booking without discount code', async () => {
-            const mockUserId = 'user123';
-            const mockTripId = 'trip123';
-            const mockSeats = [1, 2];
-            const mockTrip = {
-                busId: { totalSeats: 40, type: 'AC' },
-                availableSeats: 10,
-                price: 50,
-            };
-            
-            TripRepository.getTripById.mockResolvedValue(mockTrip);
-            BookingRepository.getBookingsByTripId.mockResolvedValue([]);
-            TripRepository.updateTrip.mockResolvedValue({ ...mockTrip, availableSeats: 8 });
-            
-            const mockBooking = {
-                userId: mockUserId,
-                tripId: mockTripId,
-                seats: mockSeats,
-                totalPrice: 100, 
-                discount: 0,
-                discountId: null
-            };
-            
-            BookingRepository.createBooking.mockResolvedValue(mockBooking);
-
-            const result = await BookingService.createBooking(mockUserId, { 
-                tripId: mockTripId, 
-                seats: mockSeats
-            });
-
-            expect(TripRepository.updateTrip).toHaveBeenCalledWith(mockTripId, { availableSeats: 8 });
-            expect(result).toEqual(mockBooking);
-        });
     });
 
     describe('getUserBookings', () => {

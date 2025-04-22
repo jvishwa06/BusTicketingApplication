@@ -132,7 +132,6 @@ const Profile = () => {
 
   return (
     <div className="app-container">
-      {/* Header Navigation */}
       <header className="app-header">
         <div className="header-container">
           <div className="logo">

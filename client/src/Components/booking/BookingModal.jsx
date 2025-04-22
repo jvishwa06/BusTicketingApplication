@@ -10,27 +10,19 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
   const [bookingsData, setBookingsData] = useState({ 
     bookedSeats: [],  
     pendingSeats: []  
-  });
-  // Discount functionality has been removed
-  
+  });  
   const [realAvailableSeats, setRealAvailableSeats] = useState(trip.availableSeats);
   
   const totalSeats = trip.busId.totalSeats;
   const price = trip.price;
   
-  // Calculate total price
   const calculateTotalPrice = () => {
     return selectedSeats.length * price;
   };
   
-  // Discount validation functionality has been removed
-  
-  // Discount clearing functionality has been removed
-  
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        // First, always get trip data with all booked and pending seats from all users
         const tripResponse = await api.get(`/trips/${trip._id}`);
         
         if (tripResponse.data.success && tripResponse.data.data) {
@@ -41,13 +33,11 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
           console.log('All booked seats from trip API:', allBookedSeats);
           console.log('All pending seats from trip API:', allPendingSeats);
           
-          // Set the booking data from the trip endpoint that includes ALL users' seats
           setBookingsData({
             bookedSeats: allBookedSeats,
             pendingSeats: allPendingSeats
           });
           
-          // Calculate real available seats using complete trip data
           const calculatedAvailableSeats = totalSeats - (allBookedSeats.length + allPendingSeats.length);
           setRealAvailableSeats(calculatedAvailableSeats);
           
@@ -59,7 +49,6 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
           `);
           
         } else {
-          // Fallback to user's own bookings if trip data isn't available
           console.log('Trip data not available, falling back to user bookings');
           
           const userResponse = await api.get('/bookings/user');
@@ -74,7 +63,6 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
             const bookedSeats = [];
             const pendingSeats = [];
             
-            // Process user's bookings for this trip
             tripBookings.forEach(booking => {
               if (booking.paymentStatus === 'success') {
                 bookedSeats.push(...booking.seats);
@@ -86,8 +74,6 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
             setBookingsData({ bookedSeats, pendingSeats });
             console.log('User booking data only (incomplete):', { bookedSeats, pendingSeats });
             
-            // Using user booking data is incomplete, just using for display
-            // We don't calculate available seats here because it would be wrong
           }
         }
       } catch (err) {
@@ -120,7 +106,6 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
       
       console.log('Creating booking with trip:', trip);
       
-      // Prepare booking data (discount functionality removed)
       const bookingData = {
         tripId: trip._id,
         seats: selectedSeats
@@ -131,17 +116,14 @@ const BookingModal = ({ trip, onClose, onBookingSuccess }) => {
       if (response.data.success) {
         setSuccess(true);
         
-        // Immediately update our local state to reflect the new booking
         setBookingsData(prevState => ({
           bookedSeats: prevState.bookedSeats,
           pendingSeats: [...prevState.pendingSeats, ...selectedSeats]
         }));
         
-        // Calculate new available seats locally
         const newUnavailableSeats = [...bookingsData.bookedSeats, ...bookingsData.pendingSeats, ...selectedSeats];
         setRealAvailableSeats(totalSeats - newUnavailableSeats.length);
         
-        // Notify parent component of booking success
         onBookingSuccess(response.data.data);
         
         setTimeout(() => {

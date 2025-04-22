@@ -281,7 +281,6 @@ const SearchBus = () => {
         </div>
       </header>
       
-      {/* Main Content */}
       <main className="main-content">
         <section className="search-section">
           <div className="search-container">
@@ -348,7 +347,6 @@ const SearchBus = () => {
           </div>
         </section>
         
-        {/* Search Results */}
         <section className="results-section">
           {error && <div className="alert alert-error">{error}</div>}
           
@@ -575,7 +573,6 @@ const SearchBus = () => {
   );
 };
 
-// Helper function to calculate trip duration
 const calculateDuration = (start, end) => {
   const startTime = new Date(start);
   const endTime = new Date(end);

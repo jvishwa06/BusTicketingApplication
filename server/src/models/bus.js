@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const BusSchema = new mongoose.Schema(
+const busSchema = new mongoose.Schema(
   {
     operatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true,trim: true},
@@ -12,4 +12,4 @@ const BusSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model('Bus', BusSchema);
+export default mongoose.models.Bus || mongoose.model('Bus', busSchema);

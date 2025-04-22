@@ -74,7 +74,6 @@ class AdminController {
         }
     }
 
-    // New methods for admin functionality
     static async getAllUsers(req, res) {
         try {
             const filters = req.query;

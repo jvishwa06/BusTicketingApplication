@@ -19,4 +19,4 @@ const ratingSchema = new mongoose.Schema(
 
 ratingSchema.index({ bookingId: 1, userId: 1 }, { unique: true });
 
-export default mongoose.model('Rating', ratingSchema);
+export default mongoose.models.Rating || mongoose.model('Rating', ratingSchema);

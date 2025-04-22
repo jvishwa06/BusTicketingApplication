@@ -10,7 +10,7 @@ router.put('/:ratingId', authMiddleware.authorizeRoles('user'), RatingController
 router.get('/', authMiddleware.authorizeRoles('user'), RatingController.getUserRatings);
 router.delete('/:ratingId', authMiddleware.authorizeRoles('user'), RatingController.deleteRating);
 
-router.get('/buses/:busId', authMiddleware.authorizeRoles('operator'), RatingController.getBusRatings);
-router.get('/bookings/:bookingId', authMiddleware.authorizeRoles('operator'), RatingController.getBookingRating);
+router.get('/buses/:busId', authMiddleware.authorizeRoles('operator','admin'), RatingController.getBusRatings);
+router.get('/bookings/:bookingId', authMiddleware.authorizeRoles('operator','admin'), RatingController.getBookingRating);
 
 export default router;

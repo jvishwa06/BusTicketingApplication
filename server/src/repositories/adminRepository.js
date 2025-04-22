@@ -4,21 +4,6 @@ import Booking from '../models/booking.js';
 import { appLogger } from '../utils/logger.js';
 
 class AdminRepository {
-    async updateUserStatus(userId, isBlocked) {
-        try {
-            const user = await User.findByIdAndUpdate(userId, { isBlocked }, { new: true });
-            if (!user) {
-                appLogger.warn(`User with ID ${userId} not found`);
-                return null;
-            }
-            appLogger.info(`User ${userId} status updated: ${isBlocked ? 'Blocked' : 'Unblocked'}`);
-            return user;
-        } catch (error) {
-            appLogger.error(`Error updating user status for ID ${userId}: ${error.message}`);
-            throw error;
-        }
-    }
-
     async getAllUsers(filters = {}) {
         try {
             const query = {};
@@ -30,27 +15,6 @@ class AdminRepository {
             return users;
         } catch (error) {
             appLogger.error(`Error fetching users: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async verifyOperator(userId, verificationStatus) {
-        try {
-            const operator = await User.findOneAndUpdate(
-                { _id: userId, role: 'operator' },
-                { isVerified: verificationStatus },
-                { new: true }
-            );
-            
-            if (!operator) {
-                appLogger.warn(`Operator with ID ${userId} not found`);
-                return null;
-            }
-            
-            appLogger.info(`Operator ${userId} verification status updated to: ${verificationStatus}`);
-            return operator;
-        } catch (error) {
-            appLogger.error(`Error verifying operator: ${error.message}`);
             throw error;
         }
     }
@@ -99,6 +63,42 @@ class AdminRepository {
         }
     }
 
+    async verifyOperator(userId, verificationStatus) {
+        try {
+            const operator = await User.findOneAndUpdate(
+                { _id: userId, role: 'operator' },
+                { isVerified: verificationStatus },
+                { new: true }
+            );
+            
+            if (!operator) {
+                appLogger.warn(`Operator with ID ${userId} not found`);
+                return null;
+            }
+            
+            appLogger.info(`Operator ${userId} verification status updated to: ${verificationStatus}`);
+            return operator;
+        } catch (error) {
+            appLogger.error(`Error verifying operator: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async updateUserStatus(userId, isBlocked) {
+        try {
+            const user = await User.findByIdAndUpdate(userId, { isBlocked }, { new: true });
+            if (!user) {
+                appLogger.warn(`User with ID ${userId} not found`);
+                return null;
+            }
+            appLogger.info(`User ${userId} status updated: ${isBlocked ? 'Blocked' : 'Unblocked'}`);
+            return user;
+        } catch (error) {
+            appLogger.error(`Error updating user status for ID ${userId}: ${error.message}`);
+            throw error;
+        }
+    }
+    
     async modifyTrip(tripId, tripData) {
         try {
             const allowedUpdates = ['departureTime', 'arrivalTime', 'fare', 'status', 'availableSeats'];

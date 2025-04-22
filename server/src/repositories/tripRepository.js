@@ -2,6 +2,11 @@ import Trip from '../models/trip.js';
 import { appLogger } from '../utils/logger.js';
 
 class TripRepository {
+    async createTrip(tripData) {
+        appLogger.info(`Saving new trip to DB for bus ID: ${tripData.busId}`);
+        return await Trip.create(tripData);
+    }
+
     async findTripsByFilters(source, destination, searchDate, nextDay) {
         appLogger.info(`Querying trips from DB with source: ${source}, destination: ${destination}, date range: ${searchDate} - ${nextDay}`);
         return await Trip.find({
@@ -9,11 +14,6 @@ class TripRepository {
             destination: { $regex: new RegExp(`^${destination}$`, "i") },
             departureTime: { $gte: searchDate, $lt: nextDay }
         }).populate('busId');
-    }
-    
-    async createTrip(tripData) {
-        appLogger.info(`Saving new trip to DB for bus ID: ${tripData.busId}`);
-        return await Trip.create(tripData);
     }
 
     async getAllTrips(query = {}) {

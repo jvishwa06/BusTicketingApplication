@@ -27,5 +27,5 @@ logging.to_files: true
 logging.files:
   path: /var/log/filebeat
   name: filebeat
-  keepfiles: 7
+  keepfiles: 30
   permissions: 0644

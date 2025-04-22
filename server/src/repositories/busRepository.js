@@ -39,6 +39,17 @@ class BusRepository {
         }
     }
 
+    async getBusesByOperator(operatorId) {
+        try {
+            const buses = await Bus.find({ operatorId });
+            appLogger.info(`Retrieved buses for operator: ${operatorId}`);
+            return buses;
+        } catch (error) {
+            appLogger.error(`Error retrieving buses for operator ${operatorId}: ${error.message}`);
+            throw error;
+        }
+    }
+    
     async updateBus(busId, updateData) {
         try {
             const bus = await Bus.findByIdAndUpdate(busId, updateData, { new: true });
@@ -50,17 +61,6 @@ class BusRepository {
             return bus;
         } catch (error) {
             appLogger.error(`Error updating bus ${busId}: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getBusesByOperator(operatorId) {
-        try {
-            const buses = await Bus.find({ operatorId });
-            appLogger.info(`Retrieved buses for operator: ${operatorId}`);
-            return buses;
-        } catch (error) {
-            appLogger.error(`Error retrieving buses for operator ${operatorId}: ${error.message}`);
             throw error;
         }
     }

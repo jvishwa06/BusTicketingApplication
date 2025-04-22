@@ -5,7 +5,6 @@ const api = axios.create({
   withCredentials: true, 
 });
 
-// add a request interceptor to add the token to requests
 api.interceptors.request.use(
   (config) => {
     const storedUser = localStorage.getItem('user');
@@ -22,12 +21,10 @@ api.interceptors.request.use(
   }
 );
 
-// add a response interceptor to handle auth errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // clear local storage and redirect to login on auth errors
       localStorage.removeItem('user');
       window.location.href = '/login';
     }

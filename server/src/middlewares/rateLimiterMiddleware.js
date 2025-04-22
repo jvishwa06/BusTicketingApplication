@@ -47,16 +47,10 @@ export const bookingRateLimiter = createRateLimiter({
   message: 'Too many booking attempts, please try again after some time'
 });
 
-export const paymentRateLimiter = createRateLimiter({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, 
-  message: 'Too many payment attempts, please try again after some time'
-});
 
 export default {
   globalRateLimiter,
   authRateLimiter,
   apiRateLimiter,
   bookingRateLimiter,
-  paymentRateLimiter
 };

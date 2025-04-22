@@ -15,7 +15,8 @@ const userSchema = new mongoose.Schema(
         role: { type: String, enum: ['user', 'operator', 'admin'], default: 'user' },
         companyName: { type: String, default: null },
         companyAddress: { type: String, default: null },
-        isBlocked: { type: Boolean, default: false }
+        isBlocked: { type: Boolean, default: false },
+        isVerified: { type: Boolean, default: false }
     },
     { timestamps: true }
 );
