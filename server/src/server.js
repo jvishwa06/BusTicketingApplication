@@ -7,7 +7,6 @@ import userRoutes from './routes/userRoutes.js';
 import busRoutes from './routes/busRoutes.js';
 import tripRoutes from './routes/tripRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import ratingRoutes from './routes/ratingRoutes.js';
 import { requestLogger } from './utils/logger.js';
@@ -34,7 +33,6 @@ app.use('/users', rateLimiter.authRateLimiter, userRoutes);
 app.use('/buses', rateLimiter.apiRateLimiter, busRoutes);
 app.use('/trips', rateLimiter.apiRateLimiter, tripRoutes);
 app.use('/bookings', rateLimiter.bookingRateLimiter, bookingRoutes);
-app.use('/payments', rateLimiter.paymentRateLimiter, paymentRoutes);
 app.use('/ratings', rateLimiter.apiRateLimiter, ratingRoutes);
 
 const PORT = process.env.PORT || 5001;

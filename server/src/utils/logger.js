@@ -3,68 +3,38 @@ import morgan from 'morgan';
 import path from 'path';
 import fs from 'fs';
 
-const logDirectory = path.join('logs');
-if (!fs.existsSync(logDirectory)) {
-    fs.mkdirSync(logDirectory);
+const logDir = 'logs';
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
 }
 
-const requestLogPath = path.join(logDirectory, 'requests.log');
-const appLogPath = path.join(logDirectory, 'application.log');
-
-const logFormat = winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    winston.format.printf(({ timestamp, level, message, ...metadata }) => {
-        if (typeof message === 'string' && Object.keys(metadata).length === 0) {
-            return `${timestamp} [${level}] - ${message}`;
-        }
-        
-        if (message && typeof message === 'object' && message.message) {
-            const { message: msg, ...rest } = message;
-            return `${timestamp} [${level}] - ${msg} | ${JSON.stringify(rest)}`;
-        }
-        
-        if (typeof message === 'object') {
-            return `${timestamp} [${level}] - ${message.message || 'Event'} | ${JSON.stringify(message)}`;
-        }
-        
-        if (Object.keys(metadata).length > 0) {
-            return `${timestamp} [${level}] - ${message} | ${JSON.stringify(metadata)}`;
-        }
-        
-        return `${timestamp} [${level}] - ${message}`;
-    })
+const format = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' }), 
+  winston.format.json()
 );
 
 const appLogger = winston.createLogger({
-    level: 'info',
-    format: logFormat,
-    transports: [
-        new winston.transports.File({ filename: appLogPath }),
-        ...(process.env.NODE_ENV !== 'production' ? [new winston.transports.Console()] : []),
-    ],
+  level: 'info',
+  format,
+  transports: [
+    new winston.transports.File({ filename: path.join(logDir, 'application.log') }),
+    ...(!process.env.NODE_ENV || process.env.NODE_ENV !== 'production' ? [new winston.transports.Console()] : [])
+  ]
 });
 
-const httpRequestLogger = winston.createLogger({
-    level: 'info',
-    format: logFormat,
-    transports: [
-        new winston.transports.File({ filename: requestLogPath }),
-        ...(process.env.NODE_ENV !== 'production' ? [new winston.transports.Console()] : []),
-    ],
-});
+morgan.token('timestamp', () => new Date().toISOString()); 
 
-const requestLogger = morgan(':method :url :status - :remote-addr - :user-agent', {
-    stream: {
-        write: (message) => {
-            const [method, url, status, , clientIp, , ...userAgentParts] = message.trim().split(' ');
-            const userAgent = userAgentParts.join(' ');
-            httpRequestLogger.info(`${method} ${url}`, {
-                status,
-                clientIp,
-                userAgent,
-            });
-        },
-    },
-});
+const requestLogger = morgan(
+  (tokens, req, res) => JSON.stringify({
+    timestamp: tokens.timestamp(req, res), 
+    method: tokens.method(req, res),
+    url: tokens.url(req, res),
+    status: parseInt(tokens.status(req, res) || '0'),
+    responseTime: parseFloat(tokens['response-time'](req, res) || '0')
+  }),
+  {
+    stream: fs.createWriteStream(path.join(logDir, 'requests.log'), { flags: 'a' })
+  }
+);
 
 export { appLogger, requestLogger };
