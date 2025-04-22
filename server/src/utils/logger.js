@@ -13,10 +13,25 @@ const appLogPath = path.join(logDirectory, 'application.log');
 
 const logFormat = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    winston.format.printf(({ timestamp, level, message, stack }) => {
-        let logMessage = `${timestamp} [${level}] - ${message}`;
-        if (stack) logMessage += ` - Stack Trace: ${stack}`;
-        return logMessage;
+    winston.format.printf(({ timestamp, level, message, ...metadata }) => {
+        if (typeof message === 'string' && Object.keys(metadata).length === 0) {
+            return `${timestamp} [${level}] - ${message}`;
+        }
+        
+        if (message && typeof message === 'object' && message.message) {
+            const { message: msg, ...rest } = message;
+            return `${timestamp} [${level}] - ${msg} | ${JSON.stringify(rest)}`;
+        }
+        
+        if (typeof message === 'object') {
+            return `${timestamp} [${level}] - ${message.message || 'Event'} | ${JSON.stringify(message)}`;
+        }
+        
+        if (Object.keys(metadata).length > 0) {
+            return `${timestamp} [${level}] - ${message} | ${JSON.stringify(metadata)}`;
+        }
+        
+        return `${timestamp} [${level}] - ${message}`;
     })
 );
 
@@ -38,16 +53,15 @@ const httpRequestLogger = winston.createLogger({
     ],
 });
 
-const requestLogger = morgan(':method :url :status :response-time ms - :remote-addr - :user-agent', {
+const requestLogger = morgan(':method :url :status - :remote-addr - :user-agent', {
     stream: {
         write: (message) => {
-            const [method, url, status, , responseTime, clientIp, userAgent] = message.trim().split(' ');
-
+            const [method, url, status, , clientIp, , ...userAgentParts] = message.trim().split(' ');
+            const userAgent = userAgentParts.join(' ');
             httpRequestLogger.info(`${method} ${url}`, {
                 status,
-                responseTime: parseFloat(responseTime), 
                 clientIp,
-                userAgent
+                userAgent,
             });
         },
     },

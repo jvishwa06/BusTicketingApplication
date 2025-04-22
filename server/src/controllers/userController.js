@@ -28,7 +28,7 @@ class UserController {
                 maxAge: 24 * 60 * 60 * 1000, // 1 day
             });
 
-            appLogger.info(`User login successful: ${user.email}`);
+            appLogger.info(`User login request processed successfully: ${user.email}`);
             res.status(200).json({
                 success: true,
                 message: 'Login successful',
