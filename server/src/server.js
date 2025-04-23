@@ -16,24 +16,24 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(requestLogger); 
+app.use(requestLogger);
 
-app.use(rateLimiter.globalRateLimiter);
+app.use(rateLimiter);
 
 app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({ 
     origin: 'http://localhost:5173',
-    credentials: true 
+    credentials: true
 }));
 
 app.use('/admin', adminRoutes);
-app.use('/users', rateLimiter.authRateLimiter, userRoutes);
-app.use('/buses', rateLimiter.apiRateLimiter, busRoutes);
-app.use('/trips', rateLimiter.apiRateLimiter, tripRoutes);
-app.use('/bookings', rateLimiter.bookingRateLimiter, bookingRoutes);
-app.use('/ratings', rateLimiter.apiRateLimiter, ratingRoutes);
+app.use('/users', userRoutes);
+app.use('/buses', busRoutes);
+app.use('/trips', tripRoutes);
+app.use('/bookings', bookingRoutes);
+app.use('/ratings', ratingRoutes);
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

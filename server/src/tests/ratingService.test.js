@@ -71,7 +71,7 @@ describe('RatingService', () => {
     it('should submit a rating successfully with userId as string', async () => {
       const mockBooking = {
         _id: bookingId,
-        userId: userId, // userId as direct string
+        userId: userId, 
         tripId: 'trip123',
         paymentStatus: 'success'
       };
@@ -118,7 +118,6 @@ describe('RatingService', () => {
       
       const ratingDataWithoutReview = {
         rating: 4.5
-        // No review field
       };
       
       const mockRating = {
@@ -128,7 +127,7 @@ describe('RatingService', () => {
         busId: mockTrip.busId,
         tripId: mockTrip._id,
         rating: ratingDataWithoutReview.rating,
-        review: '' // Empty string default
+        review: '' 
       };
 
       bookingRepository.getBookingById.mockResolvedValue(mockBooking);
@@ -147,7 +146,7 @@ describe('RatingService', () => {
         busId: mockTrip.busId,
         tripId: mockTrip._id,
         rating: ratingDataWithoutReview.rating,
-        review: '' // Should use the default empty string
+        review: '' 
       });
       expect(result).toEqual(mockRating);
     });
@@ -322,7 +321,7 @@ describe('RatingService', () => {
     it('should handle userId as an object without _id property', async () => {
       const existingRating = {
         _id: ratingId,
-        userId: userId, // userId as string directly
+        userId: userId, 
         rating: 4.5,
         review: 'Great service!'
       };
@@ -387,18 +386,15 @@ describe('RatingService', () => {
     });
   });
 
-  // Additional targeted tests for updateRating edge cases
   describe('updateRating edge cases', () => {
     const userId = 'user123';
     const ratingId = 'rating123';
     const updateData = { rating: 5.0, review: 'Updated review' };
 
     it('should handle complex userId objects in comparison', async () => {
-      // Create a rating with a complex userId object structure
       const existingRating = {
         _id: ratingId,
         userId: {
-          // No _id property, but has toString method
           toString: () => 'different-user'
         },
         rating: 4.5,
@@ -407,7 +403,6 @@ describe('RatingService', () => {
 
       ratingRepository.getRatingById.mockResolvedValue(existingRating);
 
-      // This should throw an error due to userId mismatch
       await expect(ratingService.updateRating(userId, ratingId, updateData))
         .rejects.toThrow('You can only update your own ratings');
       
@@ -530,17 +525,14 @@ describe('RatingService', () => {
     });
   });
 
-  // Additional targeted tests for deleteRating edge cases
   describe('deleteRating edge cases', () => {
     const userId = 'user123';
     const ratingId = 'rating123';
 
     it('should handle complex userId objects in comparison', async () => {
-      // Create a rating with a complex userId object structure
       const existingRating = {
         _id: ratingId,
         userId: {
-          // No _id property, but has toString method
           toString: () => 'different-user'
         },
         rating: 4.5,
@@ -549,7 +541,6 @@ describe('RatingService', () => {
 
       ratingRepository.getRatingById.mockResolvedValue(existingRating);
 
-      // This should throw an error due to userId mismatch
       await expect(ratingService.deleteRating(userId, ratingId))
         .rejects.toThrow('You can only delete your own ratings');
       
@@ -609,56 +600,31 @@ describe('RatingService', () => {
     });
   });
 
-  describe('getRatingsByBusId', () => {
-    const busId = 'bus123';
+  describe('getRatingsByTripId', () => {
+    const tripId = 'trip123';
     
-    it('should return ratings for a bus', async () => {
+    it('should return ratings for a trip', async () => {
       const mockRatings = [
-        { _id: 'rating1', busId, rating: 4.5 },
-        { _id: 'rating2', busId, rating: 5.0 }
+        { _id: 'rating1', tripId, rating: 4.5 },
+        { _id: 'rating2', tripId, rating: 5.0 }
       ];
 
-      ratingRepository.getRatingsByBusId.mockResolvedValue(mockRatings);
+      ratingRepository.getRatingsByTripId.mockResolvedValue(mockRatings);
 
-      const result = await ratingService.getRatingsByBusId(busId);
+      const result = await ratingService.getRatingsByTripId(tripId);
 
-      expect(ratingRepository.getRatingsByBusId).toHaveBeenCalledWith(busId);
+      expect(ratingRepository.getRatingsByTripId).toHaveBeenCalledWith(tripId);
       expect(result).toEqual(mockRatings);
     });
 
     it('should handle and log repository errors', async () => {
       const error = new Error('Database error');
-      ratingRepository.getRatingsByBusId.mockRejectedValue(error);
+      ratingRepository.getRatingsByTripId.mockRejectedValue(error);
 
-      await expect(ratingService.getRatingsByBusId(busId))
+      await expect(ratingService.getRatingsByTripId(tripId))
         .rejects.toThrow('Database error');
       
-      expect(appLogger.error).toHaveBeenCalledWith(`Error fetching ratings for bus ${busId}: ${error.message}`);
-    });
-  });
-
-  describe('getRatingForBooking', () => {
-    const bookingId = 'booking123';
-
-    it('should return rating for a booking', async () => {
-      const mockRating = { _id: 'rating1', bookingId, rating: 4.5 };
-
-      ratingRepository.getRatingByBookingId.mockResolvedValue(mockRating);
-
-      const result = await ratingService.getRatingForBooking(bookingId);
-
-      expect(ratingRepository.getRatingByBookingId).toHaveBeenCalledWith(bookingId);
-      expect(result).toEqual(mockRating);
-    });
-
-    it('should handle and log repository errors', async () => {
-      const error = new Error('Database error');
-      ratingRepository.getRatingByBookingId.mockRejectedValue(error);
-
-      await expect(ratingService.getRatingForBooking(bookingId))
-        .rejects.toThrow('Database error');
-      
-      expect(appLogger.error).toHaveBeenCalledWith(`Error fetching rating for booking ${bookingId}: ${error.message}`);
+      expect(appLogger.error).toHaveBeenCalledWith(`Error fetching ratings for trip ${tripId}: ${error.message}`);
     });
   });
 
@@ -683,6 +649,30 @@ describe('RatingService', () => {
       await expect(ratingService.getBusAverageRating(busId))
         .rejects.toThrow('Database error');
       expect(appLogger.error).toHaveBeenCalledWith(`Error getting average rating for bus ${busId}: ${error.message}`);
+    });
+  });
+
+  describe('getTripAverageRating', () => {
+    const tripId = 'trip123';
+    
+    it('should return trip average rating successfully', async () => {
+      const mockAvgRating = { averageRating: 4.2, count: 5 };
+      
+      ratingRepository.getAverageRatingForTrip.mockResolvedValue(mockAvgRating);
+
+      const result = await ratingService.getTripAverageRating(tripId);
+
+      expect(ratingRepository.getAverageRatingForTrip).toHaveBeenCalledWith(tripId);
+      expect(result).toEqual(mockAvgRating);
+    });
+
+    it('should handle and log repository errors', async () => {
+      const error = new Error('Database error');
+      ratingRepository.getAverageRatingForTrip.mockRejectedValue(error);
+
+      await expect(ratingService.getTripAverageRating(tripId))
+        .rejects.toThrow('Database error');
+      expect(appLogger.error).toHaveBeenCalledWith(`Error getting average rating for trip ${tripId}: ${error.message}`);
     });
   });
 });

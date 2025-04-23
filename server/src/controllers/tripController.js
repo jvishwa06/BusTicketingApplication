@@ -1,5 +1,4 @@
 import TripService from '../services/tripService.js';
-import BookingService from '../services/bookingService.js';
 import { appLogger } from '../utils/logger.js';
 
 class TripController {
@@ -14,21 +13,45 @@ class TripController {
             });
         } catch (error) {
             appLogger.error(`Trip creation failed: ${error.message}`);
-            next(error); 
+            
+            if (error.name === 'ValidationError') {
+                const validationErrors = {};
+                
+                if (error.errors) {
+                    Object.keys(error.errors).forEach(field => {
+                        validationErrors[field] = error.errors[field].message;
+                    });
+                }
+                
+                return res.status(400).json({
+                    success: false,
+                    message: "Trip validation failed. Please check your input.",
+                    errors: validationErrors
+                });
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Failed to create trip. Please try again.",
+                error: error.message
+            });
         }
     }
 
-    static async getAllTrips(req, res, next) {
+    static async getTrip(req, res, next) {
         try {
-            appLogger.info("Received request to fetch all trips");
-            const trips = await TripService.getAllTrips(req.query);
+            appLogger.info("Received request to fetch operator trips");
+            
+            const operatorId = req.user._id;
+            const trips = await TripService.getTrip(operatorId);
+            
             res.status(200).json({ 
                 success: true, 
-                message: "Trips fetched successfully", 
+                message: "Operator trips fetched successfully", 
                 data: trips 
             });
         } catch (error) {
-            appLogger.error(`Failed to fetch trips: ${error.message}`);
+            appLogger.error(`Failed to fetch operator trips: ${error.message}`);
             next(error); 
         }
     }
@@ -62,88 +85,74 @@ class TripController {
 
     static async updateTrip(req, res) {
         try {
-            const updatedTrip = await TripService.updateTrip(req.params.tripId, req.body);
+            const tripId = req.params.tripId;
+            const operatorId = req.user._id;
+            
+            const updatedTrip = await TripService.updateTrip(tripId, req.body, operatorId);
+            
             if (!updatedTrip) {
-                return res.status(404).json({ success: false, message: "Trip not found" });
+                return res.status(404).json({ 
+                    success: false, 
+                    message: "Trip not found" 
+                });
             }
+            
             appLogger.info("Trip updated successfully");
-            res.status(200).json({ success: true, message: "Trip updated successfully", data: updatedTrip });
+            res.status(200).json({ 
+                success: true, 
+                message: "Trip updated successfully", 
+                data: updatedTrip 
+            });
         } catch (error) {
             appLogger.error(`Failed to update trip: ${error.message}`);
-            res.status(500).json({ success: false, message: error.message });
+            
+            if (error.message.includes('not authorized')) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: error.message 
+                });
+            }
+            
+            res.status(500).json({ 
+                success: false, 
+                message: error.message 
+            });
         }
     }
 
     static async deleteTrip(req, res) {
         try {
-            const deletedTrip = await TripService.deleteTrip(req.params.tripId);
+            const tripId = req.params.tripId;
+            const operatorId = req.user._id;
+            
+            const deletedTrip = await TripService.deleteTrip(tripId, operatorId);
+            
             if (!deletedTrip) {
-                return res.status(404).json({ success: false, message: "Trip not found" });
-            }
-            appLogger.info("Trip deleted successfully");
-            res.status(200).json({ success: true, message: "Trip deleted successfully" });
-        } catch (error) {
-            appLogger.error(`Failed to delete trip: ${error.message}`);
-            res.status(500).json({ success: false, message: error.message });
-        }
-    }
-    
-    static async getTripById(req, res, next) {
-        try {
-            const { tripId } = req.params;
-            appLogger.info(`Fetching trip with ID: ${tripId}`);
-            
-            const trip = await TripService.getTripById(tripId);
-            
-            if (!trip) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Trip not found"
+                return res.status(404).json({ 
+                    success: false, 
+                    message: "Trip not found" 
                 });
             }
             
-            const bookings = await BookingService.getBookingsByTripId(tripId);
-            
-            const bookedSeats = [];
-            const pendingSeats = [];
-            
-            bookings.forEach(booking => {
-                if (booking.paymentStatus === 'success') {
-                    bookedSeats.push(...booking.seats);
-                } else if (booking.paymentStatus === 'pending') {
-                    pendingSeats.push(...booking.seats);
-                }
-            });
-            
-            const tripWithBookings = trip.toObject();
-            tripWithBookings.bookedSeats = bookedSeats;
-            tripWithBookings.pendingSeats = pendingSeats;
-            
-            const totalSeats = trip.busId ? trip.busId.totalSeats : 0;
-            
-            const bookedCount = bookedSeats.length;
-            const pendingCount = pendingSeats.length;
-            const availableSeats = totalSeats - (bookedCount + pendingCount);
-            
-            tripWithBookings.availableSeats = availableSeats;
-            
-            tripWithBookings.availableSeats = Math.max(0, parseInt(availableSeats));
-            
-            appLogger.info(`Trip ${tripId} seat calculation:
-                Total seats: ${totalSeats}
-                Booked seats: ${bookedCount} (${bookedSeats.join(',')})
-                Pending seats: ${pendingCount} (${pendingSeats.join(',')})
-                available seats: ${tripWithBookings.availableSeats}
-            `);
-            
-            res.status(200).json({
-                success: true,
-                message: "Trip fetched successfully",
-                data: tripWithBookings
+            appLogger.info("Trip deleted successfully");
+            res.status(200).json({ 
+                success: true, 
+                message: "Trip deleted successfully" 
             });
         } catch (error) {
-            appLogger.error(`Failed to fetch trip: ${error.message}`);
-            next(error);
+            appLogger.error(`Failed to delete trip: ${error.message}`);
+            
+            if (error.message.includes('not authorized')) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: error.message 
+                });
+            }
+            
+            res.status(500).json({ 
+                success: false, 
+                message: error.message 
+            });
         }
     }
 }

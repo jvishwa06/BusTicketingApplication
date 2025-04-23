@@ -5,11 +5,10 @@ import authMiddleware from '../middlewares/authMiddleware.js';
 const router = express.Router();
 router.use(authMiddleware.authenticate);
 
-router.post('/', authMiddleware.authorizeRoles('operator'), TripController.createTrip);
-router.get('/', authMiddleware.authorizeRoles('operator'),TripController.getAllTrips);
+router.post('/', authMiddleware.authorizeRoles('operator'), authMiddleware.verifiedOperatorOnly, TripController.createTrip);
+router.get('/', authMiddleware.authorizeRoles('operator'), authMiddleware.verifiedOperatorOnly, TripController.getTrip);
+router.put('/:tripId', authMiddleware.authorizeRoles('operator'), authMiddleware.verifiedOperatorOnly, TripController.updateTrip);
+router.delete('/:tripId', authMiddleware.authorizeRoles('operator'), authMiddleware.verifiedOperatorOnly, TripController.deleteTrip);
 router.get('/search', TripController.getFilteredTrips);
-router.get('/:tripId', TripController.getTripById);
-router.put('/:tripId', authMiddleware.authorizeRoles('operator'), TripController.updateTrip);
-router.delete('/:tripId', authMiddleware.authorizeRoles('operator'), TripController.deleteTrip);
 
 export default router;

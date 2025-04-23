@@ -19,6 +19,22 @@ class AdminRepository {
         }
     }
 
+    async getAllOperators(filters = {}) {
+        try {
+            const query = { role: 'operator' };
+            if (filters.isVerified !== undefined) query.isVerified = filters.isVerified === 'true';
+            if (filters.isBlocked !== undefined) query.isBlocked = filters.isBlocked === 'true';
+            if (filters.companyName) query.companyName = new RegExp(filters.companyName, 'i');
+            
+            appLogger.info('Fetching operators with query:', query);
+            const operators = await User.find(query).select('-password');
+            return operators;
+        } catch (error) {
+            appLogger.error(`Error fetching operators: ${error.message}`);
+            throw error;
+        }
+    }
+
     async getAllTrips(filters = {}) {
         try {
             const query = {};
@@ -31,7 +47,7 @@ class AdminRepository {
             }
             
             appLogger.info('Fetching trips with query:', query);
-            const trips = await Trip.find(query).populate('bus', 'regNumber type operator');
+            const trips = await Trip.find(query).populate('busId', 'regNumber type operator');
             return trips;
         } catch (error) {
             appLogger.error(`Error fetching trips: ${error.message}`);
@@ -49,11 +65,11 @@ class AdminRepository {
             
             appLogger.info('Fetching bookings with query:', query);
             const bookings = await Booking.find(query)
-                .populate('user', 'name email phone')
+                .populate('userId', 'name email phone')
                 .populate({
-                    path: 'trip',
-                    select: 'from to departureTime arrivalTime fare bus',
-                    populate: { path: 'bus', select: 'regNumber type operator' }
+                    path: 'tripId',
+                    select: 'source destination departureTime arrivalTime price',
+                    populate: { path: 'busId', select: 'regNumber type operatorId' }
                 });
             
             return bookings;
@@ -101,7 +117,7 @@ class AdminRepository {
     
     async modifyTrip(tripId, tripData) {
         try {
-            const allowedUpdates = ['departureTime', 'arrivalTime', 'fare', 'status', 'availableSeats'];
+            const allowedUpdates = ['departureTime', 'arrivalTime', 'price', 'status', 'availableSeats', 'source', 'destination', 'distance'];
             const updates = {};
             
             Object.keys(tripData).forEach(key => {
@@ -110,8 +126,23 @@ class AdminRepository {
                 }
             });
             
+            if (tripData.fare && !updates.price) {
+                updates.price = tripData.fare;
+            }
+            
+            if (updates.departureTime) {
+                updates.departureTime = new Date(updates.departureTime);
+            }
+            if (updates.arrivalTime) {
+                updates.arrivalTime = new Date(updates.arrivalTime);
+            }
+            
             appLogger.info(`Modifying trip ${tripId} with data:`, updates);
-            const trip = await Trip.findByIdAndUpdate(tripId, updates, { new: true });
+            const trip = await Trip.findByIdAndUpdate(
+                tripId, 
+                updates, 
+                { new: true, runValidators: true }
+            );
             
             if (!trip) {
                 appLogger.warn(`Trip with ID ${tripId} not found`);

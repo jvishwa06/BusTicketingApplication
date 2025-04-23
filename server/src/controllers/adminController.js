@@ -5,6 +5,16 @@ class AdminController {
     static async blockUser(req, res) {
         try {
             const { userId } = req.params;
+            
+            if (userId === req.user._id.toString()) {
+                appLogger.warn(`Admin ${req.user.email} attempted to block themselves`);
+                return res.status(400).json({
+                    success: false,
+                    message: 'Administrators cannot block themselves',
+                    data: null
+                });
+            }
+            
             const user = await AdminService.blockUser(userId);
 
             if (!user) {
@@ -98,17 +108,8 @@ class AdminController {
     static async verifyOperator(req, res) {
         try {
             const { userId } = req.params;
-            const { verificationStatus } = req.body;
             
-            if (verificationStatus === undefined) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Verification status is required',
-                    data: null
-                });
-            }
-            
-            const operator = await AdminService.verifyOperator(userId, verificationStatus);
+            const operator = await AdminService.verifyOperator(userId, true);
             
             if (!operator) {
                 appLogger.warn(`Operator with ID ${userId} not found`);
@@ -119,10 +120,10 @@ class AdminController {
                 });
             }
             
-            appLogger.info(`Operator ${userId} verification status updated to: ${verificationStatus}`);
+            appLogger.info(`Operator ${userId} has been verified successfully`);
             res.status(200).json({
                 success: true,
-                message: 'Operator verification status updated successfully',
+                message: 'Operator verified successfully',
                 data: operator
             });
         } catch (error) {
@@ -244,6 +245,30 @@ class AdminController {
             res.status(500).json({
                 success: false,
                 message: 'Internal Server Error',
+                data: null
+            });
+        }
+    }
+
+    static async getAllOperators(req, res) {
+        try {
+            const filters = req.query;
+            appLogger.info('Request to get all operators with filters:', filters);
+            
+            const operators = await AdminService.getAllOperators(filters);
+            
+            appLogger.info(`Successfully retrieved ${operators.length} operators`);
+            res.status(200).json({
+                success: true,
+                message: 'Operators retrieved successfully',
+                count: operators.length,
+                data: operators
+            });
+        } catch (error) {
+            appLogger.error(`Error in getAllOperators: ${error.message}`);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to retrieve operators',
                 data: null
             });
         }

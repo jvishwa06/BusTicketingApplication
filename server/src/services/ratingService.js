@@ -60,6 +60,42 @@ class RatingService {
         }
     }
 
+    async getRatingsByUserId(userId) {
+        try {
+            return await ratingRepository.getRatingsByUserId(userId);
+        } catch (error) {
+            appLogger.error(`Error fetching ratings for user ${userId}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async getRatingsByTripId(tripId) {
+        try {
+            return await ratingRepository.getRatingsByTripId(tripId);
+        } catch (error) {
+            appLogger.error(`Error fetching ratings for trip ${tripId}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async getBusAverageRating(busId) {
+        try {
+            return await ratingRepository.getAverageRatingForBus(busId);
+        } catch (error) {
+            appLogger.error(`Error getting average rating for bus ${busId}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async getTripAverageRating(tripId) {
+        try {
+            return await ratingRepository.getAverageRatingForTrip(tripId);
+        } catch (error) {
+            appLogger.error(`Error getting average rating for trip ${tripId}: ${error.message}`);
+            throw error;
+        }
+    }
+    
     async updateRating(userId, ratingId, updateData) {
         try {
             const rating = await ratingRepository.getRatingById(ratingId);
@@ -111,42 +147,6 @@ class RatingService {
             return { success: true, message: 'Rating deleted successfully' };
         } catch (error) {
             appLogger.error(`Error deleting rating: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getRatingsByUserId(userId) {
-        try {
-            return await ratingRepository.getRatingsByUserId(userId);
-        } catch (error) {
-            appLogger.error(`Error fetching ratings for user ${userId}: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getRatingsByBusId(busId) {
-        try {
-            return await ratingRepository.getRatingsByBusId(busId);
-        } catch (error) {
-            appLogger.error(`Error fetching ratings for bus ${busId}: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getRatingForBooking(bookingId) {
-        try {
-            return await ratingRepository.getRatingByBookingId(bookingId);
-        } catch (error) {
-            appLogger.error(`Error fetching rating for booking ${bookingId}: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getBusAverageRating(busId) {
-        try {
-            return await ratingRepository.getAverageRatingForBus(busId);
-        } catch (error) {
-            appLogger.error(`Error getting average rating for bus ${busId}: ${error.message}`);
             throw error;
         }
     }

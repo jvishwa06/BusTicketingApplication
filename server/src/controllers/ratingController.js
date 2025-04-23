@@ -18,6 +18,62 @@ class RatingController {
             });
         } catch (error) {
             appLogger.error(`Rating submission failed: ${error.message}`);
+            
+            let statusCode = 500;
+            if (error.message.includes('booking not found') || error.message.includes('Trip not found')) {
+                statusCode = 404;
+            } else if (error.message.includes('You can only rate completed bookings') || 
+                      error.message.includes('already rated') ||
+                      error.message.includes('Invalid rating') ||
+                      error.message.includes('successful payment')) {
+                statusCode = 400;
+            }
+            
+            return res.status(statusCode).json({
+                success: false,
+                message: error.message || 'Rating submission failed',
+                data: null
+            });
+        }
+    }
+
+    static async getUserRatings(req, res, next) {
+        try {
+            const userId = req.user.id;
+
+            const ratings = await ratingService.getRatingsByUserId(userId);
+
+            appLogger.info(`Ratings retrieved for user ${userId}`);
+            res.status(200).json({
+                success: true,
+                message: 'User ratings retrieved successfully',
+                data: ratings
+            });
+        } catch (error) {
+            appLogger.error(`Retrieving user ratings failed: ${error.message}`);
+            next(error);
+        }
+    }
+
+    static async getTripRatings(req, res, next) {
+        try {
+            const { tripId } = req.params;
+
+            const ratings = await ratingService.getRatingsByTripId(tripId);
+            const averageRating = await ratingService.getTripAverageRating(tripId);
+
+            appLogger.info(`Ratings retrieved for trip ${tripId}`);
+            res.status(200).json({
+                success: true,
+                message: 'Trip ratings retrieved successfully',
+                data: {
+                    ratings,
+                    averageRating: averageRating.averageRating,
+                    totalRatings: averageRating.count
+                }
+            });
+        } catch (error) {
+            appLogger.error(`Retrieving trip ratings failed: ${error.message}`);
             next(error);
         }
     }
@@ -56,65 +112,6 @@ class RatingController {
             });
         } catch (error) {
             appLogger.error(`Rating deletion failed: ${error.message}`);
-            next(error);
-        }
-    }
-
-    static async getUserRatings(req, res, next) {
-        try {
-            const userId = req.user.id;
-
-            const ratings = await ratingService.getRatingsByUserId(userId);
-
-            appLogger.info(`Ratings retrieved for user ${userId}`);
-            res.status(200).json({
-                success: true,
-                message: 'User ratings retrieved successfully',
-                data: ratings
-            });
-        } catch (error) {
-            appLogger.error(`Retrieving user ratings failed: ${error.message}`);
-            next(error);
-        }
-    }
-
-    static async getBusRatings(req, res, next) {
-        try {
-            const { busId } = req.params;
-
-            const ratings = await ratingService.getRatingsByBusId(busId);
-            const averageRating = await ratingService.getBusAverageRating(busId);
-
-            appLogger.info(`Ratings retrieved for bus ${busId}`);
-            res.status(200).json({
-                success: true,
-                message: 'Bus ratings retrieved successfully',
-                data: {
-                    ratings,
-                    averageRating: averageRating.averageRating,
-                    totalRatings: averageRating.count
-                }
-            });
-        } catch (error) {
-            appLogger.error(`Retrieving bus ratings failed: ${error.message}`);
-            next(error);
-        }
-    }
-
-    static async getBookingRating(req, res, next) {
-        try {
-            const { bookingId } = req.params;
-
-            const rating = await ratingService.getRatingForBooking(bookingId);
-
-            appLogger.info(`Rating retrieved for booking ${bookingId}`);
-            res.status(200).json({
-                success: true,
-                message: 'Booking rating retrieved successfully',
-                data: rating
-            });
-        } catch (error) {
-            appLogger.error(`Retrieving booking rating failed: ${error.message}`);
             next(error);
         }
     }

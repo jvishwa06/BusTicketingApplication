@@ -3,6 +3,37 @@ import BusRepository from '../repositories/busRepository.js';
 import { appLogger } from '../utils/logger.js';
 
 class TripService {
+    async createTrip(tripData) {
+        try {
+            if (!tripData.busId) {
+                appLogger.warn("Trip creation failed: Missing bus ID");
+                throw new Error('Bus ID is required to create a trip');
+            }
+
+            const bus = await BusRepository.getBusById(tripData.busId);
+            if (!bus) {
+                appLogger.warn(`Trip creation failed: Bus not found with ID ${tripData.busId}`);
+                throw new Error(`Bus with ID ${tripData.busId} not found`);
+            }
+
+            appLogger.info(`Creating trip for bus ${tripData.busId}`);
+            return await TripRepository.createTrip({ ...tripData, operatorId: bus.operatorId });
+        } catch (error) {
+            appLogger.error(`Error creating trip: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async getTrip(operatorId) {
+        try {
+            appLogger.info(`Fetching trips for operator with ID: ${operatorId}`);
+            return await TripRepository.getTrip(operatorId);
+        } catch (error) {
+            appLogger.error(`Error fetching trips for operator ${operatorId}: ${error.message}`);
+            throw error;
+        }
+    }
+
     async getTripsByFilters(filters) {
         try {
             let { source, destination, date } = filters;
@@ -28,65 +59,22 @@ class TripService {
         }
     }
 
-    async createTrip(tripData) {
-        try {
-            if (!tripData.busId) {
-                appLogger.warn("Trip creation failed: Missing bus ID");
-                throw new Error('Bus ID is required to create a trip');
-            }
-
-            const bus = await BusRepository.getBusById(tripData.busId);
-            if (!bus) {
-                appLogger.warn(`Trip creation failed: Bus not found with ID ${tripData.busId}`);
-                throw new Error(`Bus with ID ${tripData.busId} not found`);
-            }
-
-            appLogger.info(`Creating trip for bus ${tripData.busId}`);
-            return await TripRepository.createTrip({ ...tripData, operatorId: bus.operatorId });
-        } catch (error) {
-            appLogger.error(`Error creating trip: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getAllTrips() {
-        try {
-            appLogger.info("Fetching all trips");
-            return await TripRepository.getAllTrips();
-        } catch (error) {
-            appLogger.error(`Error fetching all trips: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getTripById(tripId) {
-        try {
-            appLogger.info(`Fetching trip with ID: ${tripId}`);
-            return await TripRepository.getTripById(tripId);
-        } catch (error) {
-            appLogger.error(`Error fetching trip by ID ${tripId}: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getTripsByBusIds(busIds) {
-        try {
-            if (!busIds || !Array.isArray(busIds) || busIds.length === 0) {
-                appLogger.warn("Trip search failed: Invalid bus IDs");
-                throw new Error("Valid bus IDs are required to fetch trips");
-            }
-            
-            appLogger.info(`Fetching trips for bus IDs: ${busIds.join(', ')}`);
-            return await TripRepository.getTripsByBusIds(busIds);
-        } catch (error) {
-            appLogger.error(`Error fetching trips by bus IDs: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async updateTrip(tripId, updateData) {
+    async updateTrip(tripId, updateData, userId) {
         try {
             appLogger.info(`Updating trip with ID: ${tripId}`);
+            
+            if (userId) {
+                const trip = await TripRepository.getTripById(tripId);
+                if (!trip) {
+                    throw new Error(`Trip with ID ${tripId} not found`);
+                }
+                
+                if (trip.operatorId.toString() !== userId.toString()) {
+                    appLogger.warn(`Unauthorized attempt to update trip ${tripId} by user ${userId}`);
+                    throw new Error('You are not authorized to update this trip');
+                }
+            }
+            
             return await TripRepository.updateTrip(tripId, updateData);
         } catch (error) {
             appLogger.error(`Error updating trip with ID ${tripId}: ${error.message}`);
@@ -94,9 +82,21 @@ class TripService {
         }
     }
 
-    async deleteTrip(tripId) {
+    async deleteTrip(tripId, userId) {
         try {
-            appLogger.info(`Deleting trip with ID: ${tripId}`);
+            appLogger.info(`Deleting trip with ID: ${tripId}`);            
+            if (userId) {
+                const trip = await TripRepository.getTripById(tripId);
+                if (!trip) {
+                    throw new Error(`Trip with ID ${tripId} not found`);
+                }
+                
+                if (trip.operatorId.toString() !== userId.toString()) {
+                    appLogger.warn(`Unauthorized attempt to delete trip ${tripId} by user ${userId}`);
+                    throw new Error('You are not authorized to delete this trip');
+                }
+            }
+            
             return await TripRepository.deleteTrip(tripId);
         } catch (error) {
             appLogger.error(`Error deleting trip with ID ${tripId}: ${error.message}`);

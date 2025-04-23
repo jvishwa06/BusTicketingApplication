@@ -13,17 +13,6 @@ class BusRepository {
         }
     }
 
-    async getAllBuses() {
-        try {
-            const buses = await Bus.find();
-            appLogger.info("Retrieved all buses from DB");
-            return buses;
-        } catch (error) {
-            appLogger.error(`Error retrieving buses from DB: ${error.message}`);
-            throw error;
-        }
-    }
-
     async getBusById(busId) {
         try {
             const bus = await Bus.findById(busId);
@@ -39,7 +28,7 @@ class BusRepository {
         }
     }
 
-    async getBusesByOperator(operatorId) {
+    async getBus(operatorId) {
         try {
             const buses = await Bus.find({ operatorId });
             appLogger.info(`Retrieved buses for operator: ${operatorId}`);

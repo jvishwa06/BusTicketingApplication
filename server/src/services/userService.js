@@ -20,15 +20,35 @@ class UserService {
                 appLogger.warn(`User with email ${userData.email} already exists`);
                 throw new Error('User already exists');
             }
+            
+            const existingPhone = await userRepository.getUserByPhone(userData.phone);
+            if (existingPhone) {
+                appLogger.warn(`User with phone number ${userData.phone} already exists`);
+                throw new Error('User with this phone number already exists');
+            }
 
             const hashedPassword = await bcrypt.hash(userData.password, 10);
             userData.password = hashedPassword;
+            
+            if (userData.role === 'admin') {
+                userData.isVerified = true;
+                appLogger.info(`Auto-verifying admin account: ${userData.email}`);
+            }
 
             const user = await userRepository.createUser(userData);
             appLogger.info(`User registered successfully: ${user.email}`);
 
             return user;
         } catch (error) {
+            if (error.code === 11000) {
+                if (error.message.includes('phone_1')) {
+                    appLogger.warn(`Duplicate phone number detected: ${userData.phone}`);
+                    throw new Error('User with this phone number already exists');
+                } else if (error.message.includes('email_1')) {
+                    appLogger.warn(`Duplicate email detected: ${userData.email}`);
+                    throw new Error('User with this email already exists');
+                }
+            }
             appLogger.error(`Error registering user: ${error.message}`);
             throw error;
         }

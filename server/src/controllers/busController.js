@@ -21,29 +21,10 @@ class BusController {
         }
     }
 
-    static async getBuses(req, res) {
-        try {
-            const buses = await BusService.getBuses();
-            appLogger.info("Fetched buses successfully");
-            res.status(200).json({
-                success: true,
-                message: 'Buses retrieved successfully',
-                data: buses
-            });
-        } catch (error) {
-            appLogger.error(`Error fetching buses: ${error.message}`);
-            res.status(400).json({
-                success: false,
-                message: error.message,
-                data: null
-            });
-        }
-    }
-
-    static async getOperatorBuses(req, res) {
+    static async getBus(req, res) {
         try {
             const operatorId = req.user.id;
-            const buses = await BusService.getBusesByOperator(operatorId);
+            const buses = await BusService.getBus(operatorId);
             appLogger.info(`Fetched buses for operator ${operatorId}`);
             res.status(200).json({
                 success: true,
@@ -63,11 +44,22 @@ class BusController {
     static async updateBus(req, res) {
         try {
             const { busId } = req.params;
-            const updatedBus = await BusService.updateBus(busId, req.body);
-            appLogger.info("bus updated successfully");
+            const operatorId = req.user.id;
+            
+            const updatedBus = await BusService.updateBus(busId, req.body, operatorId);
+            appLogger.info(`Bus updated successfully by operator ${operatorId}`);
             res.status(200).json({ success: true, message: 'Bus updated successfully', data: updatedBus });
         } catch (error) {
-            appLogger.error(`Error updating buses: ${error.message}`);
+            appLogger.error(`Error updating bus: ${error.message}`);
+            
+            if (error.message.includes('Unauthorized')) {
+                return res.status(403).json({ success: false, message: error.message });
+            }
+            
+            if (error.message.includes('not found')) {
+                return res.status(404).json({ success: false, message: error.message });
+            }
+            
             res.status(500).json({ success: false, message: error.message });
         }
     }
@@ -75,11 +67,22 @@ class BusController {
     static async deleteBus(req, res) {
         try {
             const { busId } = req.params;
-            await BusService.deleteBus(busId);
-            appLogger.info("bus deleted successfully");
+            const operatorId = req.user.id;
+            
+            await BusService.deleteBus(busId, operatorId);
+            appLogger.info(`Bus deleted successfully by operator ${operatorId}`);
             res.status(200).json({ success: true, message: 'Bus deleted successfully' });
         } catch (error) {
-            appLogger.error(`Error deleting buses: ${error.message}`);
+            appLogger.error(`Error deleting bus: ${error.message}`);
+            
+            if (error.message.includes('Unauthorized')) {
+                return res.status(403).json({ success: false, message: error.message });
+            }
+            
+            if (error.message.includes('not found')) {
+                return res.status(404).json({ success: false, message: error.message });
+            }
+            
             res.status(500).json({ success: false, message: error.message });
         }
     }

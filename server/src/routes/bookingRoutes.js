@@ -5,12 +5,9 @@ import authMiddleware from '../middlewares/authMiddleware.js';
 const router = express.Router();
 router.use(authMiddleware.authenticate);
 
-router.post('/user', BookingController.createBooking);
-router.get('/user', BookingController.getUserBookings);
+router.post('/', authMiddleware.authorizeRoles('user'), BookingController.createBooking);
+router.get('/', authMiddleware.authorizeRoles('user'), BookingController.getUserBookings);
 router.get('/operator', authMiddleware.authorizeRoles('operator'), BookingController.getOperatorBookings);
-router.get('/', authMiddleware.authorizeRoles('admin'), BookingController.getAllBookings);
-router.get('/:id', authMiddleware.authorizeRoles('admin'), BookingController.getBookingById);
-router.put('/:id', authMiddleware.authorizeRoles('admin'), BookingController.updateBooking);
-router.delete('/:id', BookingController.deleteBooking);
+router.delete('/:id', authMiddleware.authorizeRoles('user'), BookingController.deleteBooking);
 
 export default router;

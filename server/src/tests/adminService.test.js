@@ -114,6 +114,61 @@ describe('AdminService', () => {
     });
   });
 
+  describe('getAllOperators', () => {
+    it('should retrieve all operators successfully', async () => {
+      const mockFilters = { isVerified: 'true' };
+      const mockOperators = [
+        { _id: '1', name: 'Operator 1', email: 'op1@example.com', role: 'operator', isVerified: true },
+        { _id: '2', name: 'Operator 2', email: 'op2@example.com', role: 'operator', isVerified: true }
+      ];
+      
+      AdminRepository.getAllOperators.mockResolvedValue(mockOperators);
+
+      const result = await AdminService.getAllOperators(mockFilters);
+      
+      expect(AdminRepository.getAllOperators).toHaveBeenCalledWith(mockFilters);
+      expect(appLogger.info).toHaveBeenCalled();
+      expect(result).toEqual(mockOperators);
+      expect(result.length).toBe(2);
+    });
+
+    it('should return empty array when no operators found', async () => {
+      AdminRepository.getAllOperators.mockResolvedValue([]);
+      
+      const result = await AdminService.getAllOperators({});
+      
+      expect(AdminRepository.getAllOperators).toHaveBeenCalled();
+      expect(appLogger.info).toHaveBeenCalledWith('Getting all operators with filters:', {});
+      expect(appLogger.info).toHaveBeenCalledWith('Retrieved 0 operators');
+      expect(result).toEqual([]);
+      expect(result.length).toBe(0);
+    });
+
+    it('should handle and log repository errors when retrieving operators', async () => {
+      const mockError = new Error('Database connection failed');
+      AdminRepository.getAllOperators.mockRejectedValue(mockError);
+      
+      await expect(AdminService.getAllOperators({})).rejects.toThrow('Failed to retrieve operators');
+      expect(appLogger.error).toHaveBeenCalledWith(`Error retrieving operators: ${mockError.message}`);
+    });
+    
+    it('should handle error with empty string message when retrieving operators', async () => {
+      const mockError = new Error('');
+      AdminRepository.getAllOperators.mockRejectedValue(mockError);
+      
+      await expect(AdminService.getAllOperators({})).rejects.toThrow('Failed to retrieve operators');
+      expect(appLogger.error).toHaveBeenCalledWith('Error retrieving operators: ');
+    });
+    
+    it('should handle error without message property when retrieving operators', async () => {
+      const mockError = {};  
+      AdminRepository.getAllOperators.mockRejectedValue(mockError);
+      
+      await expect(AdminService.getAllOperators({})).rejects.toThrow('Failed to retrieve operators');
+      expect(appLogger.error).toHaveBeenCalledWith('Error retrieving operators: undefined');
+    });
+  });
+
   describe('verifyOperator', () => {
     it('should verify an operator successfully', async () => {
       const mockUserId = '12345';
@@ -305,7 +360,6 @@ describe('AdminService', () => {
       expect(appLogger.error).toHaveBeenCalled();
     });
   });
-
 
   describe('error handling with undefined error messages', () => {
     it('should use default message for getAllUsers when error has no message', async () => {

@@ -102,21 +102,6 @@ class BookingRepository {
         }
     }
 
-    async updateBooking(bookingId, updateData) {
-        try {
-            const updatedBooking = await Booking.findByIdAndUpdate(bookingId, updateData, { new: true });
-            if (!updatedBooking) {
-                appLogger.warn(`Booking not found for update: ${bookingId}`);
-            } else {
-                appLogger.info(`Booking updated with ID: ${bookingId}`);
-            }
-            return updatedBooking;
-        } catch (error) {
-            appLogger.error(`Error updating booking ${bookingId}: ${error.message}`);
-            throw error;
-        }
-    }
-
     async deleteBooking(bookingId) {
         try {
             const deletedBooking = await Booking.findByIdAndDelete(bookingId);

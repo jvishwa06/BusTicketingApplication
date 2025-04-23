@@ -43,6 +43,22 @@ class AuthMiddleware {
             next();
         };
     }
+
+    static verifiedOperatorOnly(req, res, next) {
+        if (req.user.role !== 'operator') {
+            return next();
+        }
+        if (!req.user.isVerified) {
+            appLogger.warn(`Unverified operator ${req.user.email} attempted to access restricted resource`);
+            return res.status(403).json({ 
+                success: false,
+                message: 'Your operator account is pending verification. Please wait for admin approval.',
+                data: null
+            });
+        }
+        appLogger.info(`Verified operator access: ${req.user.email}`);
+        next();
+    }
 }
 
 export default AuthMiddleware;

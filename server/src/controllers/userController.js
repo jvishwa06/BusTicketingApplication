@@ -13,7 +13,26 @@ class UserController {
             });
         } catch (error) {
             appLogger.error(`Registration failed: ${error.message}`);
-            next(error); 
+            
+            if (error.message.includes('already exists')) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Registration failed',
+                    error: error.message
+                });
+            } else if (error.message.includes('Invalid role')) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Registration failed',
+                    error: error.message
+                });
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: 'Registration failed',
+                error: 'An unexpected error occurred. Please try again later.'
+            });
         }
     }
 
@@ -71,18 +90,24 @@ class UserController {
         try {
             const user = await UserService.getProfile(req.user.id);
             appLogger.info(`Profile retrieved: ${user.email}`);
+            
+            const responseData = {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                role: user.role
+            };
+            
+            if (user.role === 'operator') {
+                responseData.companyName = user.companyName;
+                responseData.companyAddress = user.companyAddress;
+            }
+            
             res.status(200).json({
                 success: true,
                 message: 'Profile retrieved successfully',
-                data: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone,
-                    role: user.role,
-                    companyName: user.companyName,
-                    companyAddress: user.companyAddress
-                }
+                data: responseData
             });
         } catch (error) {
             appLogger.error(`Profile retrieval failed for user ID ${req.user.id}: ${error.message}`);
@@ -98,18 +123,24 @@ class UserController {
         try {
             const updatedUser = await UserService.updateProfile(req.user.id, req.body);
             appLogger.info(`Profile updated: ${updatedUser.email}`);
+            
+            const responseData = {
+                id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                role: updatedUser.role
+            };
+            
+            if (updatedUser.role === 'operator') {
+                responseData.companyName = updatedUser.companyName;
+                responseData.companyAddress = updatedUser.companyAddress;
+            }
+            
             res.status(200).json({
                 success: true,
                 message: 'Profile updated successfully',
-                data: {
-                    id: updatedUser._id,
-                    name: updatedUser.name,
-                    email: updatedUser.email,
-                    phone: updatedUser.phone,
-                    role: updatedUser.role,
-                    companyName: updatedUser.companyName,
-                    companyAddress: updatedUser.companyAddress
-                }
+                data: responseData
             });
         } catch (error) {
             appLogger.error(`Profile update failed for user ID ${req.user.id}: ${error.message}`);

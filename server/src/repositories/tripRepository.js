@@ -26,9 +26,9 @@ class TripRepository {
         return await Trip.findById(tripId).populate('busId').exec();
     }
 
-    async getTripsByOperator(operatorId) {
+    async getTrip(operatorId) {
         appLogger.info(`Fetching trips from DB for operator ID: ${operatorId}`);
-        return await Trip.find({ operatorId });
+        return await Trip.find({ operatorId }).populate('busId').exec();
     }
 
     async getTripsByBusIds(busIds) {

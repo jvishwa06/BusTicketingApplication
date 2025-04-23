@@ -6,11 +6,9 @@ const router = express.Router();
 router.use(authMiddleware.authenticate);
 
 router.post('/bookings/:bookingId', authMiddleware.authorizeRoles('user'), RatingController.submitRating);
-router.put('/:ratingId', authMiddleware.authorizeRoles('user'), RatingController.updateRating);
 router.get('/', authMiddleware.authorizeRoles('user'), RatingController.getUserRatings);
+router.get('/trips/:tripId', RatingController.getTripRatings);
+router.put('/:ratingId', authMiddleware.authorizeRoles('user'), RatingController.updateRating);
 router.delete('/:ratingId', authMiddleware.authorizeRoles('user'), RatingController.deleteRating);
-
-router.get('/buses/:busId', authMiddleware.authorizeRoles('operator','admin'), RatingController.getBusRatings);
-router.get('/bookings/:bookingId', authMiddleware.authorizeRoles('operator','admin'), RatingController.getBookingRating);
 
 export default router;

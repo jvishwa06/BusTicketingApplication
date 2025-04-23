@@ -36,8 +36,9 @@ class AdminService {
 
     async getAllUsers(filters = {}) {
         try {
-            appLogger.info('Admin retrieving all users with filters', filters);
-            const users = await AdminRepository.getAllUsers(filters);
+            const userFilters = { ...filters, role: 'user' };
+            appLogger.info('Admin retrieving users with filters', userFilters);
+            const users = await AdminRepository.getAllUsers(userFilters);
             return users;
         } catch (error) {
             appLogger.error(`Error fetching users: ${error.message}`);
@@ -105,10 +106,22 @@ class AdminService {
                 appLogger.warn(`Trip with ID ${tripId} not found`);
                 throw new Error(`Trip with ID ${tripId} not found`);
             }
+            appLogger.info(`Trip ${tripId} cancelled successfully`);
             return result;
         } catch (error) {
             appLogger.error(`Error cancelling trip: ${error.message}`);
             throw new Error(error.message || 'Error cancelling trip');
+        }
+    }
+    async getAllOperators(filters = {}) {
+        try {
+            appLogger.info('Getting all operators with filters:', filters);
+            const operators = await AdminRepository.getAllOperators(filters);
+            appLogger.info(`Retrieved ${operators.length} operators`);
+            return operators;
+        } catch (error) {
+            appLogger.error(`Error retrieving operators: ${error.message}`);
+            throw new Error('Failed to retrieve operators');
         }
     }
 }

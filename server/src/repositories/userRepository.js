@@ -33,6 +33,17 @@ class UserRepository {
             throw error;
         }
     }
+    
+    async getUserByPhone(phone) {
+        try {
+            const user = await User.findOne({ phone });
+            if (!user) appLogger.warn(`User not found in database (Phone: ${phone})`);
+            return user;
+        } catch (error) {
+            appLogger.error(`Error fetching user by phone: ${error.message}`);
+            throw error;
+        }
+    }
 
     async getAllUsers() {
         try {
