@@ -13,7 +13,6 @@ class BusService {
             if (error.code === 11000 && error.message.includes('registrationNumber')) {
                 throw new Error(`A bus with registration number "${busData.registrationNumber}" already exists. Please use a different registration number.`);
             }
-            
             throw error;
         }
     }

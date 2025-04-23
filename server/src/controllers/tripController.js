@@ -6,14 +6,9 @@ class TripController {
         try {
             appLogger.info("Received request to create a new trip");
             const trip = await TripService.createTrip(req.body);
-            res.status(201).json({ 
-                success: true, 
-                message: "Trip created successfully", 
-                data: trip 
-            });
+            res.status(201).json({ success: true, message: "Trip created successfully", data: trip });
         } catch (error) {
             appLogger.error(`Trip creation failed: ${error.message}`);
-            
             if (error.name === 'ValidationError') {
                 const validationErrors = {};
                 
@@ -23,18 +18,10 @@ class TripController {
                     });
                 }
                 
-                return res.status(400).json({
-                    success: false,
-                    message: "Trip validation failed. Please check your input.",
-                    errors: validationErrors
-                });
+                return res.status(400).json({success: false,message: "Trip validation failed. Please check your input.",errors: validationErrors});
             }
             
-            res.status(500).json({
-                success: false,
-                message: "Failed to create trip. Please try again.",
-                error: error.message
-            });
+            res.status(500).json({success: false,message: "Failed to create trip. Please try again.",error: error.message});
         }
     }
 
@@ -45,11 +32,7 @@ class TripController {
             const operatorId = req.user._id;
             const trips = await TripService.getTrip(operatorId);
             
-            res.status(200).json({ 
-                success: true, 
-                message: "Operator trips fetched successfully", 
-                data: trips 
-            });
+            res.status(200).json({ success: true, message: "Operator trips fetched successfully", data: trips });
         } catch (error) {
             appLogger.error(`Failed to fetch operator trips: ${error.message}`);
             next(error); 
@@ -65,18 +48,10 @@ class TripController {
 
             if (trips.length === 0) {
                 appLogger.warn("No trips found for the given filters");
-                return res.status(404).json({ 
-                    success: false, 
-                    message: "No trips found for the given filters.", 
-                    data: [] 
-                });
+                return res.status(404).json({ success: false, message: "No trips found for the given filters.", data: {}});
             }
 
-            res.status(200).json({ 
-                success: true, 
-                message: "Trips fetched successfully", 
-                data: trips 
-            });
+            res.status(200).json({ success: true, message: "Trips fetched successfully", data: trips });
         } catch (error) {
             appLogger.error(`Failed to fetch filtered trips: ${error.message}`);
             next(error); 
@@ -91,32 +66,19 @@ class TripController {
             const updatedTrip = await TripService.updateTrip(tripId, req.body, operatorId);
             
             if (!updatedTrip) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: "Trip not found" 
-                });
+                return res.status(404).json({ success: false, message: "Trip not found" ,data: {}});
             }
             
             appLogger.info("Trip updated successfully");
-            res.status(200).json({ 
-                success: true, 
-                message: "Trip updated successfully", 
-                data: updatedTrip 
-            });
+            res.status(200).json({ success: true, message: "Trip updated successfully", data: updatedTrip });
         } catch (error) {
             appLogger.error(`Failed to update trip: ${error.message}`);
             
             if (error.message.includes('not authorized')) {
-                return res.status(403).json({ 
-                    success: false, 
-                    message: error.message 
-                });
+                return res.status(403).json({ success: false, message: "UnAuthorized" ,error: error.message});
             }
             
-            res.status(500).json({ 
-                success: false, 
-                message: error.message 
-            });
+            res.status(500).json({ success: false, message: "Internal Server Error",error: error.message});
         }
     }
 
@@ -128,31 +90,19 @@ class TripController {
             const deletedTrip = await TripService.deleteTrip(tripId, operatorId);
             
             if (!deletedTrip) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: "Trip not found" 
-                });
+                return res.status(404).json({ success: false, message: "Trip not found",data: {}});
             }
             
             appLogger.info("Trip deleted successfully");
-            res.status(200).json({ 
-                success: true, 
-                message: "Trip deleted successfully" 
-            });
+            res.status(200).json({ success: true, message: "Trip deleted successfully",data: {}});
         } catch (error) {
             appLogger.error(`Failed to delete trip: ${error.message}`);
             
             if (error.message.includes('not authorized')) {
-                return res.status(403).json({ 
-                    success: false, 
-                    message: error.message 
-                });
+                return res.status(403).json({ success: false, message: "UnAuthorized",error: error.message});
             }
             
-            res.status(500).json({ 
-                success: false, 
-                message: error.message 
-            });
+            res.status(500).json({ success: false, message: "Internal Server Error",error: error.message});
         }
     }
 }

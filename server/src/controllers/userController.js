@@ -6,33 +6,17 @@ class UserController {
         try {
             const user = await UserService.register(req.body);
             appLogger.info(`New user registered: ${user.email}`);
-            res.status(201).json({
-                success: true,
-                message: 'User registered successfully',
-                data: {}
-            });
+            res.status(201).json({success: true, message: 'User registered successfully',data: {}});
         } catch (error) {
             appLogger.error(`Registration failed: ${error.message}`);
             
             if (error.message.includes('already exists')) {
-                return res.status(409).json({
-                    success: false,
-                    message: 'Registration failed',
-                    error: error.message
-                });
+                return res.status(409).json({success: false,message: 'Registration failed',error: error.message});
             } else if (error.message.includes('Invalid role')) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Registration failed',
-                    error: error.message
-                });
+                return res.status(400).json({success: false,message: 'Registration failed',error: error.message});
             }
             
-            res.status(500).json({
-                success: false,
-                message: 'Registration failed',
-                error: 'An unexpected error occurred. Please try again later.'
-            });
+            res.status(500).json({success: false,message: 'Registration failed',error: 'An unexpected error occurred. Please try again later.'});
         }
     }
 
@@ -48,18 +32,10 @@ class UserController {
             });
 
             appLogger.info(`User login request processed successfully: ${user.email}`);
-            res.status(200).json({
-                success: true,
-                message: 'Login successful',
-                data: {token: token}
-            });
+            res.status(200).json({success: true,message: 'Login successful',data: {token: token}});
         } catch (error) {
             appLogger.error(`Login failed for ${req.body.email}: ${error.message}`);
-            res.status(401).json({
-                success: false,
-                message: 'Login failed',
-                error: error.message
-            });
+            res.status(401).json({success: false,message: 'Login failed',error: error.message});
         }
     }
 
@@ -72,17 +48,10 @@ class UserController {
             });
 
             appLogger.info(`User logged out: ${req.user?.email || 'Unknown user'}`);
-            res.status(200).json({
-                success: true,
-                message: 'Logout successful'
-            });
+            res.status(200).json({success: true,message: 'Logout successful', data: {}});
         } catch (error) {
             appLogger.error(`Logout failed: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: 'Logout failed',
-                error: error.message
-            });
+            res.status(500).json({success: false,message: 'Logout failed', error: error.message});
         }
     }
 
@@ -104,18 +73,10 @@ class UserController {
                 responseData.companyAddress = user.companyAddress;
             }
             
-            res.status(200).json({
-                success: true,
-                message: 'Profile retrieved successfully',
-                data: responseData
-            });
+            res.status(200).json({success: true,message: 'Profile retrieved successfully',data: responseData});
         } catch (error) {
             appLogger.error(`Profile retrieval failed for user ID ${req.user.id}: ${error.message}`);
-            res.status(404).json({
-                success: false,
-                message: 'Profile retrieval failed',
-                error: error.message
-            });
+            res.status(404).json({success: false,message: 'Profile retrieval failed', error: error.message});
         }
     }
 
@@ -136,19 +97,11 @@ class UserController {
                 responseData.companyName = updatedUser.companyName;
                 responseData.companyAddress = updatedUser.companyAddress;
             }
-            
-            res.status(200).json({
-                success: true,
-                message: 'Profile updated successfully',
-                data: responseData
-            });
+
+            res.status(200).json({success: true,message: 'Profile updated successfully',data: responseData});
         } catch (error) {
             appLogger.error(`Profile update failed for user ID ${req.user.id}: ${error.message}`);
-            res.status(404).json({
-                success: false,
-                message: 'Profile update failed',
-                error: error.message
-            });
+            res.status(404).json({success: false,message: 'Profile update failed', error: error.message});
         }
     }
 }

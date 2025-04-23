@@ -93,7 +93,6 @@ class BookingService {
 
     async deleteBooking(bookingId) {
         try {
-            // Very simple implementation to match test expectations
             const result = await BookingRepository.deleteBooking(bookingId);
             return result;
         } catch (error) {

@@ -6,18 +6,10 @@ class BusController {
         try {
             const bus = await BusService.createBus(req.user.id, req.body);
             appLogger.info(`Bus created by user ${req.user.id}`);
-            res.status(201).json({
-                success: true,
-                message: 'Bus created successfully',
-                data: bus
-            });
+            res.status(201).json({success: true,message: 'Bus created successfully',data: bus});
         } catch (error) {
             appLogger.error(`Error creating bus by user ${req.user.id}: ${error.message}`);
-            res.status(400).json({
-                success: false,
-                message: error.message,
-                data: null
-            });
+            res.status(400).json({success: false,message: "Error creating bus",error: error.message});
         }
     }
 
@@ -33,11 +25,7 @@ class BusController {
             });
         } catch (error) {
             appLogger.error(`Error fetching buses for operator ${req.user.id}: ${error.message}`);
-            res.status(400).json({
-                success: false,
-                message: error.message,
-                data: null
-            });
+            res.status(400).json({success: false,message: "Error fetching bus",error: error.message});
         }
     }
 
@@ -53,14 +41,14 @@ class BusController {
             appLogger.error(`Error updating bus: ${error.message}`);
             
             if (error.message.includes('Unauthorized')) {
-                return res.status(403).json({ success: false, message: error.message });
+                return res.status(403).json({ success: false, message: "UnAuthorized", error: error.message});
             }
             
             if (error.message.includes('not found')) {
-                return res.status(404).json({ success: false, message: error.message });
+                return res.status(404).json({ success: false, message: "Not Found", error: error.message });
             }
             
-            res.status(500).json({ success: false, message: error.message });
+            res.status(500).json({ success: false, message: "Internal Server Error", error: error.message});
         }
     }
 
@@ -71,19 +59,19 @@ class BusController {
             
             await BusService.deleteBus(busId, operatorId);
             appLogger.info(`Bus deleted successfully by operator ${operatorId}`);
-            res.status(200).json({ success: true, message: 'Bus deleted successfully' });
+            res.status(200).json({ success: true, message: 'Bus deleted successfully',data: {} });
         } catch (error) {
             appLogger.error(`Error deleting bus: ${error.message}`);
             
             if (error.message.includes('Unauthorized')) {
-                return res.status(403).json({ success: false, message: error.message });
+                return res.status(403).json({ success: false, message: "UnAuthorized", error: error.message});
             }
             
             if (error.message.includes('not found')) {
-                return res.status(404).json({ success: false, message: error.message });
+                return res.status(404).json({ success: false, message: "Not Found", error: error.message });
             }
             
-            res.status(500).json({ success: false, message: error.message });
+            res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
         }
     }
 }

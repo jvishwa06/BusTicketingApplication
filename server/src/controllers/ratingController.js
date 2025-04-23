@@ -11,11 +11,7 @@ class RatingController {
             const rating = await ratingService.submitRating(userId, bookingId, ratingData);
 
             appLogger.info(`Rating submitted for booking ${bookingId} by user ${userId}`);
-            res.status(201).json({
-                success: true,
-                message: 'Rating submitted successfully',
-                data: rating
-            });
+            res.status(201).json({success: true,message: 'Rating submitted successfully',data: rating});
         } catch (error) {
             appLogger.error(`Rating submission failed: ${error.message}`);
             
@@ -29,11 +25,7 @@ class RatingController {
                 statusCode = 400;
             }
             
-            return res.status(statusCode).json({
-                success: false,
-                message: error.message || 'Rating submission failed',
-                data: null
-            });
+            return res.status(statusCode).json({success: false,message: error.message || 'Rating submission failed',data: {}});
         }
     }
 
@@ -42,13 +34,9 @@ class RatingController {
             const userId = req.user.id;
 
             const ratings = await ratingService.getRatingsByUserId(userId);
-
+            
             appLogger.info(`Ratings retrieved for user ${userId}`);
-            res.status(200).json({
-                success: true,
-                message: 'User ratings retrieved successfully',
-                data: ratings
-            });
+            res.status(200).json({success: true,message: 'User ratings retrieved successfully',data: ratings});
         } catch (error) {
             appLogger.error(`Retrieving user ratings failed: ${error.message}`);
             next(error);
@@ -87,11 +75,7 @@ class RatingController {
             const updatedRating = await ratingService.updateRating(userId, ratingId, updateData);
 
             appLogger.info(`Rating ${ratingId} updated by user ${userId}`);
-            res.status(200).json({
-                success: true,
-                message: 'Rating updated successfully',
-                data: updatedRating
-            });
+            res.status(200).json({success: true,message: 'Rating updated successfully',data: updatedRating});
         } catch (error) {
             appLogger.error(`Rating update failed: ${error.message}`);
             next(error);
@@ -106,10 +90,7 @@ class RatingController {
             await ratingService.deleteRating(userId, ratingId);
 
             appLogger.info(`Rating ${ratingId} deleted by user ${userId}`);
-            res.status(200).json({
-                success: true,
-                message: 'Rating deleted successfully'
-            });
+            res.status(200).json({success: true,message: 'Rating deleted successfully',data: {}});
         } catch (error) {
             appLogger.error(`Rating deletion failed: ${error.message}`);
             next(error);

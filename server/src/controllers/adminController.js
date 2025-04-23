@@ -5,27 +5,15 @@ class AdminController {
     static async blockUser(req, res) {
         try {
             const { userId } = req.params;
-            
             if (userId === req.user._id.toString()) {
                 appLogger.warn(`Admin ${req.user.email} attempted to block themselves`);
-                return res.status(400).json({
-                    success: false,
-                    message: 'Administrators cannot block themselves',
-                    data: null
-                });
+                return res.status(400).json({success: false,message: 'Administrators cannot block themselves',data: {}});
             }
-            
             const user = await AdminService.blockUser(userId);
-
             if (!user) {
                 appLogger.warn(`Attempted to block non-existent user ID: ${userId}`);
-                return res.status(404).json({
-                    success: false,
-                    message: 'User not found',
-                    data: null
-                });
+                return res.status(404).json({success: false,message: 'User not found',data: {}});
             }
-
             appLogger.info(`User blocked successfully: ${userId}`);
             res.status(200).json({
                 success: true,
@@ -40,11 +28,7 @@ class AdminController {
             });
         } catch (error) {
             appLogger.error(`Error blocking user ${req.params.userId}: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: 'Internal Server Error',
-                data: null
-            });
+            res.status(500).json({success: false,message: 'Internal Server Error',error: error.message });
         }
     }
 
@@ -55,11 +39,7 @@ class AdminController {
 
             if (!user) {
                 appLogger.warn(`Attempted to unblock non-existent user ID: ${userId}`);
-                return res.status(404).json({
-                    success: false,
-                    message: 'User not found',
-                    data: null
-                });
+                return res.status(404).json({success: false,message: 'User not found',data: {}});
             }
 
             appLogger.info(`User unblocked successfully: ${userId}`);
@@ -76,11 +56,7 @@ class AdminController {
             });
         } catch (error) {
             appLogger.error(`Error unblocking user ${req.params.userId}: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: 'Internal Server Error',
-                data: null
-            });
+            res.status(500).json({success: false,message: 'Internal Server Error',error: error.message});
         }
     }
 
@@ -90,18 +66,10 @@ class AdminController {
             const users = await AdminService.getAllUsers(filters);
             
             appLogger.info(`Admin retrieved ${users.length} users`);
-            res.status(200).json({
-                success: true,
-                message: 'Users retrieved successfully',
-                data: users
-            });
+            res.status(200).json({success: true,message: 'Users retrieved successfully',data: users});
         } catch (error) {
             appLogger.error(`Error retrieving users: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: 'Internal Server Error',
-                data: null
-            });
+            res.status(500).json({success: false,message: 'Internal Server Error', error: error.message});
         }
     }
 
@@ -113,26 +81,14 @@ class AdminController {
             
             if (!operator) {
                 appLogger.warn(`Operator with ID ${userId} not found`);
-                return res.status(404).json({
-                    success: false,
-                    message: 'Operator not found',
-                    data: null
-                });
+                return res.status(404).json({success: false,message: 'Operator not found',data: {}});
             }
             
             appLogger.info(`Operator ${userId} has been verified successfully`);
-            res.status(200).json({
-                success: true,
-                message: 'Operator verified successfully',
-                data: operator
-            });
+            res.status(200).json({success: true,message: 'Operator verified successfully',data: operator});
         } catch (error) {
             appLogger.error(`Error verifying operator ${req.params.userId}: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: 'Internal Server Error',
-                data: null
-            });
+            res.status(500).json({success: false,message: 'Internal Server Error',error: error.message});
         }
     }
 
@@ -149,11 +105,7 @@ class AdminController {
             });
         } catch (error) {
             appLogger.error(`Error retrieving trips: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: 'Internal Server Error',
-                data: null
-            });
+            res.status(500).json({success: false,message: 'Internal Server Error',error: error.message});
         }
     }
 
@@ -163,18 +115,10 @@ class AdminController {
             const bookings = await AdminService.getAllBookings(filters);
             
             appLogger.info(`Admin retrieved ${bookings.length} bookings`);
-            res.status(200).json({
-                success: true,
-                message: 'Bookings retrieved successfully',
-                data: bookings
-            });
+            res.status(200).json({success: true,message: 'Bookings retrieved successfully',data: bookings});
         } catch (error) {
             appLogger.error(`Error retrieving bookings: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: 'Internal Server Error',
-                data: null
-            });
+            res.status(500).json({success: false,message: 'Internal Server Error',error: error.message});
         }
     }
 
@@ -187,26 +131,14 @@ class AdminController {
             
             if (!trip) {
                 appLogger.warn(`Trip with ID ${tripId} not found`);
-                return res.status(404).json({
-                    success: false,
-                    message: 'Trip not found',
-                    data: null
-                });
+                return res.status(404).json({success: false,message: 'Trip not found',data: {}});
             }
             
             appLogger.info(`Trip ${tripId} modified successfully by admin`);
-            res.status(200).json({
-                success: true,
-                message: 'Trip modified successfully',
-                data: trip
-            });
+            res.status(200).json({success: true,message: 'Trip modified successfully',data: trip});
         } catch (error) {
             appLogger.error(`Error modifying trip ${req.params.tripId}: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: 'Internal Server Error',
-                data: null
-            });
+            res.status(500).json({success: false,message: 'Internal Server Error',error: error.message});
         }
     }
 
@@ -219,7 +151,7 @@ class AdminController {
                 return res.status(400).json({
                     success: false,
                     message: 'Cancellation reason is required',
-                    data: null
+                    data: {}
                 });
             }
             
@@ -227,26 +159,14 @@ class AdminController {
             
             if (!trip) {
                 appLogger.warn(`Trip with ID ${tripId} not found`);
-                return res.status(404).json({
-                    success: false,
-                    message: 'Trip not found',
-                    data: null
-                });
+                return res.status(404).json({success: false,message: 'Trip not found',data: {}});
             }
             
             appLogger.info(`Trip ${tripId} cancelled by admin for reason: ${reason}`);
-            res.status(200).json({
-                success: true,
-                message: 'Trip cancelled successfully',
-                data: trip
-            });
+            res.status(200).json({success: true,message: 'Trip cancelled successfully',data: trip});
         } catch (error) {
             appLogger.error(`Error cancelling trip ${req.params.tripId}: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: 'Internal Server Error',
-                data: null
-            });
+            res.status(500).json({success: false,message: 'Internal Server Error',error: error.message});
         }
     }
 
@@ -258,19 +178,10 @@ class AdminController {
             const operators = await AdminService.getAllOperators(filters);
             
             appLogger.info(`Successfully retrieved ${operators.length} operators`);
-            res.status(200).json({
-                success: true,
-                message: 'Operators retrieved successfully',
-                count: operators.length,
-                data: operators
-            });
+            res.status(200).json({success: true,message: 'Operators retrieved successfully',count: operators.length,data: operators});
         } catch (error) {
             appLogger.error(`Error in getAllOperators: ${error.message}`);
-            res.status(500).json({
-                success: false,
-                message: error.message || 'Failed to retrieve operators',
-                data: null
-            });
+            res.status(500).json({success: false,message: 'Failed to retrieve operators',error: error.message});
         }
     }
 }

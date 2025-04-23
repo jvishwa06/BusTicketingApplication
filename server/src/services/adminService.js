@@ -60,6 +60,18 @@ class AdminService {
             throw new Error(error.message || 'Error verifying operator');
         }
     }
+    
+    async getAllOperators(filters = {}) {
+        try {
+            appLogger.info('Getting all operators with filters:', filters);
+            const operators = await AdminRepository.getAllOperators(filters);
+            appLogger.info(`Retrieved ${operators.length} operators`);
+            return operators;
+        } catch (error) {
+            appLogger.error(`Error retrieving operators: ${error.message}`);
+            throw new Error('Failed to retrieve operators');
+        }
+    }
 
     async getAllTrips(filters = {}) {
         try {
@@ -111,17 +123,6 @@ class AdminService {
         } catch (error) {
             appLogger.error(`Error cancelling trip: ${error.message}`);
             throw new Error(error.message || 'Error cancelling trip');
-        }
-    }
-    async getAllOperators(filters = {}) {
-        try {
-            appLogger.info('Getting all operators with filters:', filters);
-            const operators = await AdminRepository.getAllOperators(filters);
-            appLogger.info(`Retrieved ${operators.length} operators`);
-            return operators;
-        } catch (error) {
-            appLogger.error(`Error retrieving operators: ${error.message}`);
-            throw new Error('Failed to retrieve operators');
         }
     }
 }
