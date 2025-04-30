@@ -1,9 +1,9 @@
-import BusService from '../services/busService.js';
-import BusRepository from '../repositories/busRepository.js';
-import { appLogger } from '../utils/logger.js';
+import BusService from '../../services/busService.js';
+import BusRepository from '../../repositories/busRepository.js';
+import { appLogger } from '../../utils/logger.js';
 
-jest.mock('../repositories/busRepository.js');
-jest.mock('../utils/logger.js');
+jest.mock('../../repositories/busRepository.js');
+jest.mock('../../utils/logger.js');
 
 describe('BusService', () => {
     afterEach(() => {

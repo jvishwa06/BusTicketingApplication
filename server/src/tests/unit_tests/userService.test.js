@@ -1,13 +1,13 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import UserService from '../services/userService.js';
-import userRepository from '../repositories/userRepository.js';
-import { appLogger } from '../utils/logger.js';
+import UserService from '../../services/userService.js';
+import userRepository from '../../repositories/userRepository.js';
+import { appLogger } from '../../utils/logger.js';
 
 jest.mock('bcryptjs');
 jest.mock('jsonwebtoken');
-jest.mock('../repositories/userRepository.js');
-jest.mock('../utils/logger.js');
+jest.mock('../../repositories/userRepository.js');
+jest.mock('../../utils/logger.js');
 
 describe('UserService', () => {
   beforeEach(() => {

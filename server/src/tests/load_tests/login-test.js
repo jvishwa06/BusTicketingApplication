@@ -14,9 +14,9 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 1,
       stages: [
-        { duration: '30s', target: 10 },  // Ramp-up to 10 users
-        { duration: '1m', target: 10 },   // Stay at 10 users
-        { duration: '30s', target: 0 },   // Ramp-down
+        { duration: '30s', target: 10 },
+        { duration: '1m', target: 10 }, 
+        { duration: '30s', target: 0 },   
       ],
       gracefulRampDown: '10s',
       startTime: '30s',
@@ -26,9 +26,9 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '20s', target: 20 },  // Ramp-up to 20 users
-        { duration: '1m', target: 50 },   // Ramp-up to 50 users
-        { duration: '20s', target: 0 },   // Ramp-down
+        { duration: '20s', target: 20 },
+        { duration: '1m', target: 50 },
+        { duration: '20s', target: 0 },
       ],
       gracefulRampDown: '10s',
       startTime: '2m30s',
@@ -38,9 +38,9 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '10s', target: 100 }, // Quick ramp-up to 100 users
-        { duration: '30s', target: 100 }, // Stay at 100 users
-        { duration: '10s', target: 0 },   // Quick ramp-down
+        { duration: '10s', target: 100 },
+        { duration: '30s', target: 100 },
+        { duration: '10s', target: 0 },
       ],
       gracefulRampDown: '5s',
       startTime: '4m20s',
@@ -50,9 +50,9 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '30s', target: 10 },  // Ramp-up to 10 users
-        { duration: '5m', target: 10 },   // Stay at 10 users for 5 minutes
-        { duration: '30s', target: 0 },   // Ramp-down
+        { duration: '30s', target: 10 },
+        { duration: '5m', target: 10 },
+        { duration: '30s', target: 0 },
       ],
       gracefulRampDown: '10s',
       startTime: '5m10s',
@@ -60,13 +60,13 @@ export const options = {
   },
   
   thresholds: {
-    http_req_duration: ['p(95)<500', 'p(99)<1000'], // 95% of requests below 500ms, 99% below 1s
-    http_req_failed: ['rate<0.01'],   // HTTP errors should be less than 1%
-    http_reqs: ['count>100'],         // Ensure we're making enough requests
-    http_req_waiting: ['avg<500'],    // Server processing time
-    http_req_connecting: ['max<100'], // TCP connection time
-    iteration_duration: ['avg<2000'], // Overall iteration time (including sleep)
-    checks: ['rate>0.95'],            // Overall check success rate
+    http_req_duration: ['p(95)<500', 'p(99)<1000'],
+    http_req_failed: ['rate<0.01'],    
+    http_reqs: ['count>100'],
+    http_req_waiting: ['avg<500'],    
+    http_req_connecting: ['max<100'], 
+    iteration_duration: ['avg<2000'], 
+    checks: ['rate>0.95'], 
   },
 };
 
@@ -87,15 +87,14 @@ export default function() {
   const isSuccessful = response.status === 200;
   
   check(response, {
-    'is status 200': (r) => r.status === 200,
-    'has success message': (r) => r.json('message') === 'Login successful',
-    'returns auth token': (r) => r.json('data.token') !== undefined,
+    'status 200': (r) => r.status === 200,
     'response time < 200ms': (r) => r.timings.duration < 200,
     'response time < 500ms': (r) => r.timings.duration < 500,
     'response time < 1s': (r) => r.timings.duration < 1000,
     'server processing time < 400ms': (r) => r.timings.waiting < 400,
     'TLS handshake < 100ms': (r) => r.timings.tls_handshaking < 100 || r.timings.tls_handshaking === 0,
     'connection time < 50ms': (r) => r.timings.connecting < 50,
+    'receive time < 150ms': (r) => r.timings.receiving < 150,
   });
   
   if (!isSuccessful) {

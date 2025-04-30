@@ -1,10 +1,10 @@
-import BookingService from '../services/bookingService.js';
-import BookingRepository from '../repositories/bookingRepository.js';
-import TripRepository from '../repositories/tripRepository.js';
+import BookingService from '../../services/bookingService.js';
+import BookingRepository from '../../repositories/bookingRepository.js';
+import TripRepository from '../../repositories/tripRepository.js';
 
-jest.mock('../repositories/bookingRepository.js');
-jest.mock('../repositories/tripRepository.js');
-jest.mock('../utils/logger.js');
+jest.mock('../../repositories/bookingRepository.js');
+jest.mock('../../repositories/tripRepository.js');
+jest.mock('../../utils/logger.js');
 
 describe('BookingService', () => {
     afterEach(() => {

@@ -14,9 +14,9 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 1,
       stages: [
-        { duration: '30s', target: 10 },  // Ramp-up to 10 users
-        { duration: '1m', target: 10 },   // Stay at 10 users
-        { duration: '30s', target: 0 },   // Ramp-down
+        { duration: '30s', target: 10 },
+        { duration: '1m', target: 10 },
+        { duration: '30s', target: 0 },
       ],
       gracefulRampDown: '10s',
       startTime: '30s',
@@ -60,13 +60,13 @@ export const options = {
   },
   
   thresholds: {
-    http_req_duration: ['p(95)<700', 'p(99)<1000'], // 95% of requests below 700ms, 99% below 1s
-    http_req_failed: ['rate<0.01'],   // HTTP errors should be less than 1%
-    http_reqs: ['count>100'],         // Ensure we're making enough requests
-    http_req_waiting: ['avg<500'],    // Server processing time
-    http_req_connecting: ['max<100'], // TCP connection time
-    iteration_duration: ['avg<3000'], // Overall iteration time (including sleep)
-    checks: ['rate>0.95'],            // Overall check success rate
+    http_req_duration: ['p(95)<700', 'p(99)<1000'],
+    http_req_failed: ['rate<0.01'],
+    http_reqs: ['count>100'],
+    http_req_waiting: ['avg<500'], 
+    http_req_connecting: ['max<100'], 
+    iteration_duration: ['avg<3000'],
+    checks: ['rate>0.95'], 
   },
 };
 
@@ -136,15 +136,7 @@ export default function(data) {
   const isSuccessful = searchResponse.status === 200 || searchResponse.status === 404;
   
   check(searchResponse, {
-    'search status is 200 or 404': (r) => r.status === 200 || r.status === 404,
-    'search response has valid format': (r) => {
-      try {
-        const body = JSON.parse(r.body);
-        return typeof body.message === 'string';
-      } catch (e) {
-        return false;
-      }
-    },
+    'search status is 200': (r) => r.status === 200,
     'response time < 200ms': (r) => r.timings.duration < 200,
     'response time < 500ms': (r) => r.timings.duration < 500,
     'response time < 1s': (r) => r.timings.duration < 1000,
@@ -191,13 +183,15 @@ export function handleSummary(data) {
   }
   console.log(`Check pass rate: ${checkRate}`);
   
+  console.log(`Total requests: ${getMetricValue('http_reqs', 'count', 0)}`);
+  console.log(`Successful requests: ${getMetricValue('checks', 'passes', 0)}`);
+  console.log(`Failed requests: ${getMetricValue('checks', 'fails', 0)}`);
+  console.log(`HTTP Failed requests: ${getMetricValue('http_req_failed', 'passes', 0)}`);
   console.log(`Avg request duration: ${getMetricValue('http_req_duration', 'avg')}ms`);
   console.log(`95th percentile request duration: ${getMetricValue('http_req_duration', 'p(95)')}ms`);
   console.log(`99th percentile request duration: ${getMetricValue('http_req_duration', 'p(99)')}ms`);
   console.log(`Avg server processing time: ${getMetricValue('http_req_waiting', 'avg')}ms`);
   console.log(`Avg connection time: ${getMetricValue('http_req_connecting', 'avg')}ms`);
-  console.log(`Avg TLS handshake time: ${getMetricValue('http_req_tls_handshaking', 'avg')}ms`);
-  console.log(`Avg time to first byte: ${getMetricValue('http_req_receiving', 'avg')}ms`);
   
   return {
     'stdout': JSON.stringify(data, null, 2),

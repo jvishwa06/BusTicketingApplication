@@ -1,13 +1,13 @@
-import ratingService from '../services/ratingService.js';
-import ratingRepository from '../repositories/ratingRepository.js';
-import bookingRepository from '../repositories/bookingRepository.js';
-import tripRepository from '../repositories/tripRepository.js';
-import { appLogger } from '../utils/logger.js';
+import ratingService from '../../services/ratingService.js';
+import ratingRepository from '../../repositories/ratingRepository.js';
+import bookingRepository from '../../repositories/bookingRepository.js';
+import tripRepository from '../../repositories/tripRepository.js';
+import { appLogger } from '../../utils/logger.js';
 
-jest.mock('../repositories/ratingRepository.js');
-jest.mock('../repositories/bookingRepository.js');
-jest.mock('../repositories/tripRepository.js');
-jest.mock('../utils/logger.js');
+jest.mock('../../repositories/ratingRepository.js');
+jest.mock('../../repositories/bookingRepository.js');
+jest.mock('../../repositories/tripRepository.js');
+jest.mock('../../utils/logger.js');
 
 describe('RatingService', () => {
   beforeEach(() => {

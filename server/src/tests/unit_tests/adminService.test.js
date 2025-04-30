@@ -1,9 +1,9 @@
-import AdminService from '../services/adminService.js';
-import AdminRepository from '../repositories/adminRepository.js';
-import { appLogger } from '../utils/logger.js';
+import AdminService from '../../services/adminService.js';
+import AdminRepository from '../../repositories/adminRepository.js';
+import { appLogger } from '../../utils/logger.js';
 
-jest.mock('../repositories/adminRepository.js');
-jest.mock('../utils/logger.js');
+jest.mock('../../repositories/adminRepository.js');
+jest.mock('../../utils/logger.js');
 
 describe('AdminService', () => {
   afterEach(() => {
