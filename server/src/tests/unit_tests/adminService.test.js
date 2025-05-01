@@ -266,55 +266,6 @@ describe('AdminService', () => {
     });
   });
 
-  describe('modifyTrip', () => {
-    it('should modify a trip successfully', async () => {
-      const mockTripId = '12345';
-      const mockTripData = { 
-        departureTime: new Date('2025-05-01T10:00:00Z'),
-        fare: 50 
-      };
-      const mockTrip = { 
-        _id: mockTripId, 
-        from: 'New York', 
-        to: 'Boston',
-        departureTime: new Date('2025-05-01T10:00:00Z'),
-        fare: 50,
-        status: 'active'
-      };
-
-      AdminRepository.modifyTrip.mockResolvedValue(mockTrip);
-
-      const result = await AdminService.modifyTrip(mockTripId, mockTripData);
-      
-      expect(AdminRepository.modifyTrip).toHaveBeenCalledWith(mockTripId, mockTripData);
-      expect(appLogger.info).toHaveBeenCalled();
-      expect(result).toEqual(mockTrip);
-    });
-
-    it('should throw an error if trip not found', async () => {
-      const mockTripId = '12345';
-      const mockTripData = { departureTime: new Date('2025-05-01T10:00:00Z') };
-      
-      AdminRepository.modifyTrip.mockResolvedValue(null);
-      
-      await expect(AdminService.modifyTrip(mockTripId, mockTripData))
-        .rejects.toThrow(`Trip with ID ${mockTripId} not found`);
-      expect(appLogger.warn).toHaveBeenCalled();
-    });
-
-    it('should handle repository errors when modifying trip', async () => {
-      const mockTripId = '12345';
-      const mockTripData = { departureTime: new Date('2025-05-01T10:00:00Z') };
-      const mockError = new Error('Database error');
-      
-      AdminRepository.modifyTrip.mockRejectedValue(mockError);
-      
-      await expect(AdminService.modifyTrip(mockTripId, mockTripData))
-        .rejects.toThrow('Database error');
-      expect(appLogger.error).toHaveBeenCalled();
-    });
-  });
-
   describe('cancelTrip', () => {
     it('should cancel a trip successfully', async () => {
       const mockTripId = '12345';
@@ -395,15 +346,6 @@ describe('AdminService', () => {
       AdminRepository.getAllBookings.mockRejectedValue(mockError);
       
       await expect(AdminService.getAllBookings()).rejects.toThrow('Error fetching bookings');
-      expect(appLogger.error).toHaveBeenCalled();
-    });
-
-    it('should use default message for modifyTrip when error has no message', async () => {
-      const mockError = new Error();
-      mockError.message = undefined;
-      AdminRepository.modifyTrip.mockRejectedValue(mockError);
-      
-      await expect(AdminService.modifyTrip('123', {})).rejects.toThrow('Error modifying trip');
       expect(appLogger.error).toHaveBeenCalled();
     });
 

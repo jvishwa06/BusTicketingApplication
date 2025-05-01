@@ -42,10 +42,45 @@ class TripRepository {
     }
 
     async updateTrip(tripId, updateData) {
-        appLogger.info(`Updating trip in DB with ID: ${tripId}`);
-        return await Trip.findByIdAndUpdate(tripId, updateData, { new: true });
+        try {
+            const allowedUpdates = ['departureTime', 'arrivalTime', 'price', 'status', 'availableSeats', 'source', 'destination', 'distance'];
+            const updates = {};
+            
+            Object.keys(updateData).forEach(key => {
+                if (allowedUpdates.includes(key)) {
+                    updates[key] = updateData[key];
+                }
+            });
+            
+            if (updateData.fare && !updates.price) {
+                updates.price = updateData.fare;
+            }
+            
+            if (updates.departureTime) {
+                updates.departureTime = new Date(updates.departureTime);
+            }
+            if (updates.arrivalTime) {
+                updates.arrivalTime = new Date(updates.arrivalTime);
+            }
+            
+            appLogger.info(`Modifying trip ${tripId} with data:`, updates);
+            const trip = await Trip.findByIdAndUpdate(
+                tripId, 
+                updates, 
+                { new: true, runValidators: true }
+            );
+            
+            if (!trip) {
+                appLogger.warn(`Trip with ID ${tripId} not found`);
+                return null;
+            }
+            
+            return trip;
+        } catch (error) {
+            appLogger.error(`Error modifying trip: ${error.message}`);
+            throw error;
+        }
     }
-
     async deleteTrip(tripId) {
         appLogger.info(`Deleting trip from DB with ID: ${tripId}`);
         return await Trip.findByIdAndDelete(tripId);

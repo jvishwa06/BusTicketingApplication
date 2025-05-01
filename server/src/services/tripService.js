@@ -59,45 +59,71 @@ class TripService {
         }
     }
 
-    async updateTrip(tripId, updateData, userId) {
+    async updateTrip(tripId, updateData, userId = null) {
         try {
             appLogger.info(`Updating trip with ID: ${tripId}`);
             
             if (userId) {
                 const trip = await TripRepository.getTripById(tripId);
+                
                 if (!trip) {
+                    appLogger.warn(`Trip with ID ${tripId} not found`);
                     throw new Error(`Trip with ID ${tripId} not found`);
                 }
                 
-                if (trip.operatorId.toString() !== userId.toString()) {
+                if (userId.role === 'admin') {
+                    appLogger.info(`Admin user ${userId} is updating trip ${tripId}`);
+                } else if (!trip.operatorId) {
+                    appLogger.warn(`Unauthorized attempt to update trip ${tripId} by user ${userId}`);
+                    throw new Error('You are not authorized to update this trip');
+                } else if (trip.operatorId.toString() !== userId.toString()) {
                     appLogger.warn(`Unauthorized attempt to update trip ${tripId} by user ${userId}`);
                     throw new Error('You are not authorized to update this trip');
                 }
             }
             
-            return await TripRepository.updateTrip(tripId, updateData);
+            const updatedTrip = await TripRepository.updateTrip(tripId, updateData);
+            
+            if (!updatedTrip) {
+                appLogger.warn(`Trip with ID ${tripId} not found during update`);
+                throw new Error(`Trip with ID ${tripId} not found`);
+            }
+            
+            appLogger.info(`Trip with ID ${tripId} updated successfully`);
+            return updatedTrip;
         } catch (error) {
             appLogger.error(`Error updating trip with ID ${tripId}: ${error.message}`);
             throw error;
         }
     }
 
-    async deleteTrip(tripId, userId) {
+    async deleteTrip(tripId, userId = null) {
         try {
-            appLogger.info(`Deleting trip with ID: ${tripId}`);            
             if (userId) {
                 const trip = await TripRepository.getTripById(tripId);
+                
                 if (!trip) {
+                    appLogger.warn(`Trip with ID ${tripId} not found`);
                     throw new Error(`Trip with ID ${tripId} not found`);
                 }
                 
-                if (trip.operatorId.toString() !== userId.toString()) {
+                if (userId.role === 'admin') {
+                    appLogger.info(`Admin user ${userId._id} is deleting trip ${tripId}`);
+                } else if (trip.operatorId.toString() !== userId.toString()) {
                     appLogger.warn(`Unauthorized attempt to delete trip ${tripId} by user ${userId}`);
                     throw new Error('You are not authorized to delete this trip');
                 }
             }
             
-            return await TripRepository.deleteTrip(tripId);
+            const deletedTrip = await TripRepository.deleteTrip(tripId);
+            
+            if (!deletedTrip) {
+                appLogger.warn(`Trip with ID ${tripId} not found during deletion`);
+                throw new Error(`Trip with ID ${tripId} not found`);
+            }
+            
+            appLogger.info(`Trip with ID ${tripId} deleted successfully`);
+            return deletedTrip;
         } catch (error) {
             appLogger.error(`Error deleting trip with ID ${tripId}: ${error.message}`);
             throw error;

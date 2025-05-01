@@ -95,21 +95,6 @@ class AdminService {
         }
     }
 
-    async modifyTrip(tripId, tripData) {
-        try {
-            appLogger.info(`Admin modifying trip ${tripId} with data:`, tripData);
-            const result = await AdminRepository.modifyTrip(tripId, tripData);
-            if (!result) {
-                appLogger.warn(`Trip with ID ${tripId} not found`);
-                throw new Error(`Trip with ID ${tripId} not found`);
-            }
-            return result;
-        } catch (error) {
-            appLogger.error(`Error modifying trip: ${error.message}`);
-            throw new Error(error.message || 'Error modifying trip');
-        }
-    }
-
     async cancelTrip(tripId, reason) {
         try {
             appLogger.info(`Admin cancelling trip ${tripId} due to: ${reason}`);

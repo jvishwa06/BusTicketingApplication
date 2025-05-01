@@ -114,47 +114,6 @@ class AdminRepository {
             throw error;
         }
     }
-    
-    async modifyTrip(tripId, tripData) {
-        try {
-            const allowedUpdates = ['departureTime', 'arrivalTime', 'price', 'status', 'availableSeats', 'source', 'destination', 'distance'];
-            const updates = {};
-            
-            Object.keys(tripData).forEach(key => {
-                if (allowedUpdates.includes(key)) {
-                    updates[key] = tripData[key];
-                }
-            });
-            
-            if (tripData.fare && !updates.price) {
-                updates.price = tripData.fare;
-            }
-            
-            if (updates.departureTime) {
-                updates.departureTime = new Date(updates.departureTime);
-            }
-            if (updates.arrivalTime) {
-                updates.arrivalTime = new Date(updates.arrivalTime);
-            }
-            
-            appLogger.info(`Modifying trip ${tripId} with data:`, updates);
-            const trip = await Trip.findByIdAndUpdate(
-                tripId, 
-                updates, 
-                { new: true, runValidators: true }
-            );
-            
-            if (!trip) {
-                appLogger.warn(`Trip with ID ${tripId} not found`);
-                return null;
-            }
-            
-            return trip;
-        } catch (error) {
-            appLogger.error(`Error modifying trip: ${error.message}`);
-            throw error;
-        }
-    }
 
     async cancelTrip(tripId, reason) {
         try {

@@ -218,6 +218,65 @@ describe('TripService', () => {
             expect(appLogger.warn).toHaveBeenCalledWith(`Unauthorized attempt to update trip ${mockTripId} by user ${mockUserId}`);
         });
 
+        it('should allow admin to update any trip', async () => {
+            const mockTripId = 'trip1';
+            const mockAdminUser = { _id: 'admin1', role: 'admin' };
+            const mockDifferentOperatorId = 'operator2';
+            const mockUpdateData = { price: 100 };
+            const mockTrip = { 
+                id: mockTripId, 
+                operatorId: mockDifferentOperatorId,
+                source: 'City A', 
+                destination: 'City B',
+                toObject: jest.fn().mockReturnValue({ id: mockTripId, operatorId: mockDifferentOperatorId })
+            };
+            const mockUpdatedTrip = { id: mockTripId, ...mockUpdateData, operatorId: mockDifferentOperatorId };
+            
+            TripRepository.getTripById.mockResolvedValue(mockTrip);
+            TripRepository.updateTrip.mockResolvedValue(mockUpdatedTrip);
+
+            const result = await TripService.updateTrip(mockTripId, mockUpdateData, mockAdminUser);
+
+            expect(TripRepository.getTripById).toHaveBeenCalledWith(mockTripId);
+            expect(TripRepository.updateTrip).toHaveBeenCalledWith(mockTripId, mockUpdateData);
+            expect(appLogger.info).toHaveBeenCalledWith(`Admin user ${mockAdminUser} is updating trip ${mockTripId}`);
+            expect(result).toEqual(mockUpdatedTrip);
+        });
+
+        it('should throw error when updating trip with missing operatorId', async () => {
+            const mockTripId = 'trip1';
+            const mockUserId = 'operator1';
+            const mockUpdateData = { price: 100 };
+            const mockTrip = { 
+                id: mockTripId,
+                source: 'City A', 
+                destination: 'City B',
+                toObject: jest.fn().mockReturnValue({ id: mockTripId })
+            };
+            
+            TripRepository.getTripById.mockResolvedValue(mockTrip);
+            
+            await expect(TripService.updateTrip(mockTripId, mockUpdateData, mockUserId))
+                .rejects.toThrow('You are not authorized to update this trip');
+            
+            expect(TripRepository.getTripById).toHaveBeenCalledWith(mockTripId);
+            expect(TripRepository.updateTrip).not.toHaveBeenCalled();
+            expect(appLogger.warn).toHaveBeenCalledWith(`Unauthorized attempt to update trip ${mockTripId} by user ${mockUserId}`);
+        });
+
+        it('should throw error when trip is not found during update operation', async () => {
+            const mockTripId = 'trip1';
+            const mockUpdateData = { price: 100 };
+            
+            TripRepository.updateTrip.mockResolvedValue(null);
+            
+            await expect(TripService.updateTrip(mockTripId, mockUpdateData))
+                .rejects.toThrow(`Trip with ID ${mockTripId} not found`);
+            
+            expect(TripRepository.updateTrip).toHaveBeenCalledWith(mockTripId, mockUpdateData);
+            expect(appLogger.warn).toHaveBeenCalledWith(`Trip with ID ${mockTripId} not found during update`);
+        });
+
         it('should throw error when trip is not found during ownership check for update', async () => {
             const mockTripId = 'nonexistent';
             const mockUserId = 'operator1';
@@ -280,6 +339,42 @@ describe('TripService', () => {
             expect(TripRepository.getTripById).toHaveBeenCalledWith(mockTripId);
             expect(TripRepository.deleteTrip).toHaveBeenCalledWith(mockTripId);
             expect(result).toEqual(mockDeletedTrip);
+        });
+
+        it('should allow admin to delete any trip', async () => {
+            const mockTripId = 'trip1';
+            const mockAdminUser = { _id: 'admin1', role: 'admin' };
+            const mockDifferentOperatorId = 'operator2';
+            const mockTrip = { 
+                id: mockTripId, 
+                operatorId: mockDifferentOperatorId,
+                source: 'City A', 
+                destination: 'City B',
+                toObject: jest.fn().mockReturnValue({ id: mockTripId, operatorId: mockDifferentOperatorId })
+            };
+            const mockDeletedTrip = { id: mockTripId };
+            
+            TripRepository.getTripById.mockResolvedValue(mockTrip);
+            TripRepository.deleteTrip.mockResolvedValue(mockDeletedTrip);
+
+            const result = await TripService.deleteTrip(mockTripId, mockAdminUser);
+
+            expect(TripRepository.getTripById).toHaveBeenCalledWith(mockTripId);
+            expect(TripRepository.deleteTrip).toHaveBeenCalledWith(mockTripId);
+            expect(appLogger.info).toHaveBeenCalledWith(`Admin user ${mockAdminUser._id} is deleting trip ${mockTripId}`);
+            expect(result).toEqual(mockDeletedTrip);
+        });
+
+        it('should throw error when trip is not found during delete operation', async () => {
+            const mockTripId = 'trip1';
+            
+            TripRepository.deleteTrip.mockResolvedValue(null);
+            
+            await expect(TripService.deleteTrip(mockTripId))
+                .rejects.toThrow(`Trip with ID ${mockTripId} not found`);
+            
+            expect(TripRepository.deleteTrip).toHaveBeenCalledWith(mockTripId);
+            expect(appLogger.warn).toHaveBeenCalledWith(`Trip with ID ${mockTripId} not found during deletion`);
         });
 
         it('should throw error when trip does not belong to the operator', async () => {

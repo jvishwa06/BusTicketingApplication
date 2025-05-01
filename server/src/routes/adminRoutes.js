@@ -12,7 +12,6 @@ router.put('/unblock/:userId', authMiddleware.authorizeRoles('admin'), AdminCont
 router.put('/verify-operator/:userId', authMiddleware.authorizeRoles('admin'), AdminController.verifyOperator);
 router.get('/trips', authMiddleware.authorizeRoles('admin'), AdminController.getAllTrips);
 router.get('/bookings', authMiddleware.authorizeRoles('admin'), AdminController.getAllBookings);
-router.put('/trips/:tripId', authMiddleware.authorizeRoles('admin'), AdminController.modifyTrip);
 router.put('/trips/:tripId/cancel', authMiddleware.authorizeRoles('admin','operator'), AdminController.cancelTrip);
 
 export default router;

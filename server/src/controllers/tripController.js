@@ -60,49 +60,79 @@ class TripController {
 
     static async updateTrip(req, res) {
         try {
-            const tripId = req.params.tripId;
-            const operatorId = req.user._id;
+            const { tripId } = req.params;
             
-            const updatedTrip = await TripService.updateTrip(tripId, req.body, operatorId);
+            const updatedTrip = await TripService.updateTrip(tripId, req.body, req.user);
             
-            if (!updatedTrip) {
-                return res.status(404).json({ success: false, message: "Trip not found" ,data: {}});
-            }
-            
-            appLogger.info("Trip updated successfully");
-            res.status(200).json({ success: true, message: "Trip updated successfully", data: updatedTrip });
+            appLogger.info(`Trip updated successfully: ${tripId}`);
+            res.status(200).json({
+                success: true,
+                message: 'Trip updated successfully',
+                data: updatedTrip
+            });
         } catch (error) {
             appLogger.error(`Failed to update trip: ${error.message}`);
             
             if (error.message.includes('not authorized')) {
-                return res.status(403).json({ success: false, message: "UnAuthorized" ,error: error.message});
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized',
+                    error: error.message
+                });
             }
             
-            res.status(500).json({ success: false, message: "Internal Server Error",error: error.message});
+            if (error.message.includes('not found')) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Trip not found',
+                    error: error.message
+                });
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: 'Failed to update trip',
+                error: error.message
+            });
         }
     }
 
     static async deleteTrip(req, res) {
         try {
-            const tripId = req.params.tripId;
-            const operatorId = req.user._id;
+            const { tripId } = req.params;
             
-            const deletedTrip = await TripService.deleteTrip(tripId, operatorId);
+            const deletedTrip = await TripService.deleteTrip(tripId, req.user);
             
-            if (!deletedTrip) {
-                return res.status(404).json({ success: false, message: "Trip not found",data: {}});
-            }
-            
-            appLogger.info("Trip deleted successfully");
-            res.status(200).json({ success: true, message: "Trip deleted successfully",data: {}});
+            appLogger.info(`Trip deleted successfully: ${tripId}`);
+            res.status(200).json({
+                success: true,
+                message: 'Trip deleted successfully',
+                data: deletedTrip
+            });
         } catch (error) {
             appLogger.error(`Failed to delete trip: ${error.message}`);
             
             if (error.message.includes('not authorized')) {
-                return res.status(403).json({ success: false, message: "UnAuthorized",error: error.message});
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized',
+                    error: error.message
+                });
             }
             
-            res.status(500).json({ success: false, message: "Internal Server Error",error: error.message});
+            if (error.message.includes('not found')) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Trip not found',
+                    error: error.message
+                });
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: 'Failed to delete trip',
+                error: error.message
+            });
         }
     }
 }
