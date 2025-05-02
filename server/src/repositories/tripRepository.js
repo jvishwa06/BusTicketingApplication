@@ -16,11 +16,6 @@ class TripRepository {
         }).populate('busId');
     }
 
-    async getAllTrips(query = {}) {
-        appLogger.info("Fetching all trips from DB");
-        return await Trip.find(query);
-    }
-
     async getTripById(tripId) {
         appLogger.info(`Fetching trip from DB with ID: ${tripId}`);
         return await Trip.findById(tripId).populate('busId').exec();
@@ -29,16 +24,6 @@ class TripRepository {
     async getTrip(operatorId) {
         appLogger.info(`Fetching trips from DB for operator ID: ${operatorId}`);
         return await Trip.find({ operatorId }).populate('busId').exec();
-    }
-
-    async getTripsByBusIds(busIds) {
-        try {
-            appLogger.info(`Fetching trips from DB for bus IDs: ${busIds}`);
-            return await Trip.find({ busId: { $in: busIds } }).populate('busId');
-        } catch (error) {
-            appLogger.error(`Error fetching trips for bus IDs: ${error.message}`);
-            throw error;
-        }
     }
 
     async updateTrip(tripId, updateData) {
@@ -81,6 +66,7 @@ class TripRepository {
             throw error;
         }
     }
+    
     async deleteTrip(tripId) {
         appLogger.info(`Deleting trip from DB with ID: ${tripId}`);
         return await Trip.findByIdAndDelete(tripId);

@@ -7,6 +7,9 @@ const bookingSchema = new mongoose.Schema(
     seats: { type: [Number], required: true },
     totalPrice: { type: Number, required: true },
     paymentStatus: {type: String,enum: ['success', 'failed', 'pending'],default: 'pending'},
+    status: {type: String, enum: ['active', 'cancelled'], default: 'active'},
+    cancellationDate: {type: Date, default: null},
+    cancellationReason: {type: String, default: null},
   },
   { timestamps: true }
 );

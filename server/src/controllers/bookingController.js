@@ -7,7 +7,11 @@ class BookingController {
             const userId = req.user.id;
             const booking = await BookingService.createBooking(userId, req.body);
             appLogger.info(`Booking created successfully by user ${userId}`);
-            res.status(201).json({success: true,message: 'Booking created successfully',data: booking});
+            res.status(201).json({
+                success: true,
+                message: 'Booking created successfully. Please complete payment within 5 minutes to confirm.',
+                data: booking
+            });
         } catch (error) {
             appLogger.error(`Error creating booking by user ${req.user.id}: ${error.message}`);
             res.status(400).json({success: false,message: error.message,data: {}});
@@ -19,10 +23,10 @@ class BookingController {
             const userId = req.user.id;
             const bookings = await BookingService.getUserBookings(userId);
             if (!bookings.length) {
-                appLogger.warn(`No bookings found for user ${userId}`);
-                return res.status(404).json({success: false,message: "No bookings found for this user.",data: {}});
+                appLogger.warn(`No confirmed bookings found for user ${userId}`);
+                return res.status(404).json({success: false,message: "No confirmed bookings found for this user.",data: {}});
             }
-            appLogger.info(`Bookings retrieved for user ${userId}`);
+            appLogger.info(`Confirmed bookings retrieved for user ${userId}`);
             res.status(200).json({success: true,message: "Bookings retrieved successfully",data: bookings});
         } catch (error) {
             appLogger.error(`Error retrieving bookings for user ${req.user.id}: ${error.message}`);
@@ -34,7 +38,7 @@ class BookingController {
         try {
             const operatorId = req.user.id;
             const bookings = await BookingService.getOperatorBookings(operatorId);
-            appLogger.info(`Bookings retrieved for operator ${operatorId}`);
+            appLogger.info(`Confirmed bookings retrieved for operator ${operatorId}`);
             res.status(200).json({success: true,message: "Operator bookings retrieved successfully",data: bookings});
         } catch (error) {
             appLogger.error(`Error fetching operator bookings for ${req.user.id}: ${error.message}`);
@@ -42,18 +46,35 @@ class BookingController {
         }
     }
 
-    static async deleteBooking(req, res) {
+    static async cancelBooking(req, res) {
         try {
-            const deletedBooking = await BookingService.deleteBooking(req.params.id);
-            if (!deletedBooking) {
-                appLogger.warn(`Booking not found for deletion: ${req.params.id}`);
-                return res.status(404).json({success: false,message: "Booking not found",data: {}});
-            }
-            appLogger.info(`Booking deleted with ID: ${req.params.id}`);
-            res.status(200).json({success: true,message: "Booking deleted successfully",data: {}});
+            const userId = req.user.id;
+            const bookingId = req.params.id;
+            
+            const cancelledBooking = await BookingService.cancelBooking(bookingId, userId);
+            
+            appLogger.info(`Booking ${bookingId} cancelled successfully by user ${userId}`);
+            res.status(200).json({
+                success: true,
+                message: 'Booking cancelled successfully',
+                data: cancelledBooking
+            });
         } catch (error) {
-            appLogger.error(`Error deleting booking ${req.params.id}: ${error.message}`);
-            res.status(500).json({success: false,message: "Internal Server Error", error: error.message});
+            appLogger.error(`Error cancelling booking ${req.params.id}: ${error.message}`);
+            
+            let statusCode = 500;
+            if (error.message.includes('not found') || error.message.includes('doesn\'t belong')) {
+                statusCode = 404;
+            } else if (error.message.includes('already cancelled') || 
+                      error.message.includes('after trip departure')) {
+                statusCode = 400;
+            }
+            
+            res.status(statusCode).json({
+                success: false,
+                message: error.message,
+                data: {}
+            });
         }
     }
 }

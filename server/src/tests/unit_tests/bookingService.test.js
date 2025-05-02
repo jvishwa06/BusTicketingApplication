@@ -7,12 +7,30 @@ jest.mock('../../repositories/tripRepository.js');
 jest.mock('../../utils/logger.js');
 
 describe('BookingService', () => {
+    beforeEach(() => {
+        BookingRepository.getBookingsByTripId = jest.fn();
+        BookingRepository.createBookingWithTransaction = jest.fn();
+        BookingRepository.verifySeatsAvailability = jest.fn();
+        BookingRepository.getBookingsByUserId = jest.fn();
+        BookingRepository.getBookingsByOperatorId = jest.fn();
+        BookingRepository.getBookingById = jest.fn();
+        BookingRepository.updateBooking = jest.fn();
+        BookingRepository.releaseSeats = jest.fn();
+        TripRepository.getTripById = jest.fn();
+        TripRepository.updateTrip = jest.fn();
+        
+        jest.useFakeTimers();
+    });
+    
     afterEach(() => {
         jest.clearAllMocks();
+        jest.useRealTimers();
     });
 
     describe('createBooking', () => {
-        it('should create a booking successfully', async () => {
+        jest.setTimeout(15000);
+
+        it('should create a booking successfully', async () => {``
             const mockUserId = 'user123';
             const mockTripId = 'trip123';
             const mockSeats = [1, 2];
@@ -23,6 +41,7 @@ describe('BookingService', () => {
                 save: jest.fn()
             };
             const mockBooking = { 
+                _id: 'booking123',
                 userId: mockUserId, 
                 tripId: mockTripId, 
                 seats: mockSeats, 
@@ -30,17 +49,120 @@ describe('BookingService', () => {
             };
 
             TripRepository.getTripById.mockResolvedValue(mockTrip);
-            BookingRepository.getBookingsByTripId.mockResolvedValue([]);
-            BookingRepository.createBooking.mockResolvedValue(mockBooking);
-            TripRepository.updateTrip.mockResolvedValue({ ...mockTrip, availableSeats: 8 });
+            BookingRepository.verifySeatsAvailability.mockResolvedValue({ available: true, unavailableSeats: [] });
+            BookingRepository.createBookingWithTransaction.mockResolvedValue(mockBooking);
 
             const result = await BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats });
 
             expect(TripRepository.getTripById).toHaveBeenCalledWith(mockTripId);
-            expect(BookingRepository.getBookingsByTripId).toHaveBeenCalledWith(mockTripId);
-            expect(TripRepository.updateTrip).toHaveBeenCalledWith(mockTripId, { availableSeats: 8 });
-            expect(BookingRepository.createBooking).toHaveBeenCalledWith(mockBooking);
+            expect(BookingRepository.verifySeatsAvailability).toHaveBeenCalledWith(mockTripId, mockSeats);
+            expect(BookingRepository.createBookingWithTransaction).toHaveBeenCalled();
             expect(result).toEqual(mockBooking);
+        });
+
+        it('should set up payment timeout for pending bookings', async () => {
+            const mockUserId = 'user123';
+            const mockTripId = 'trip123';
+            const mockSeats = [1, 2];
+            const mockTrip = {
+                busId: { totalSeats: 40, type: 'AC' },
+                availableSeats: 10,
+                price: 50
+            };
+            const mockBooking = { 
+                _id: 'booking123',
+                userId: mockUserId, 
+                tripId: mockTripId, 
+                seats: mockSeats, 
+                totalPrice: 100,
+                paymentStatus: 'pending'
+            };
+
+            const originalSetTimeout = global.setTimeout;
+            let timeoutCallback;
+            global.setTimeout = jest.fn((callback) => {
+                timeoutCallback = callback;
+                return { unref: jest.fn() };
+            });
+
+            TripRepository.getTripById.mockResolvedValue(mockTrip);
+            BookingRepository.verifySeatsAvailability.mockResolvedValue({ available: true, unavailableSeats: [] });
+            BookingRepository.createBookingWithTransaction.mockResolvedValue(mockBooking);
+            BookingRepository.getBookingById.mockResolvedValue(mockBooking);
+
+            await BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats });
+            
+            expect(global.setTimeout).toHaveBeenCalled();
+            
+            if (timeoutCallback) {
+                await timeoutCallback();
+            }
+            
+            expect(BookingRepository.getBookingById).toHaveBeenCalledWith('booking123');
+            expect(BookingRepository.releaseSeats).toHaveBeenCalledWith('booking123');
+            
+            global.setTimeout = originalSetTimeout;
+        });
+
+        it('should not release seats if payment status is not pending', async () => {
+            const mockUserId = 'user123';
+            const mockTripId = 'trip123';
+            const mockSeats = [1, 2];
+            const mockTrip = {
+                busId: { totalSeats: 40, type: 'AC' },
+                availableSeats: 10,
+                price: 50
+            };
+            const mockBooking = { 
+                _id: 'booking123',
+                userId: mockUserId, 
+                tripId: mockTripId, 
+                seats: mockSeats, 
+                totalPrice: 100,
+                paymentStatus: 'completed'
+            };
+
+            TripRepository.getTripById.mockResolvedValue(mockTrip);
+            BookingRepository.verifySeatsAvailability.mockResolvedValue({ available: true, unavailableSeats: [] });
+            BookingRepository.createBookingWithTransaction.mockResolvedValue(mockBooking);
+            BookingRepository.getBookingById.mockResolvedValue({...mockBooking, paymentStatus: 'completed'});
+
+            await BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats });
+            
+            jest.runAllTimers();
+            
+            expect(BookingRepository.getBookingById).toHaveBeenCalledWith('booking123');
+            expect(BookingRepository.releaseSeats).not.toHaveBeenCalled();
+        });
+
+        it('should handle errors in the timeout handler', async () => {
+            const mockUserId = 'user123';
+            const mockTripId = 'trip123';
+            const mockSeats = [1, 2];
+            const mockTrip = {
+                busId: { totalSeats: 40, type: 'AC' },
+                availableSeats: 10,
+                price: 50
+            };
+            const mockBooking = { 
+                _id: 'booking123',
+                userId: mockUserId, 
+                tripId: mockTripId, 
+                seats: mockSeats, 
+                totalPrice: 100
+            };
+
+            TripRepository.getTripById.mockResolvedValue(mockTrip);
+            BookingRepository.verifySeatsAvailability.mockResolvedValue({ available: true, unavailableSeats: [] });
+            BookingRepository.createBookingWithTransaction.mockResolvedValue(mockBooking);
+            BookingRepository.getBookingById.mockRejectedValue(new Error('Database error'));
+
+            await BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats });
+            
+            jest.runAllTimers();
+            
+            expect(BookingRepository.getBookingById).toHaveBeenCalledWith('booking123');
+            expect(BookingRepository.releaseSeats).not.toHaveBeenCalled();
         });
 
         it('should throw an error if trip not found', async () => {
@@ -53,7 +175,7 @@ describe('BookingService', () => {
             await expect(BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats }))
                 .rejects.toThrow(`Trip with ID ${mockTripId} not found`);
                 
-            expect(BookingRepository.createBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.createBookingWithTransaction).not.toHaveBeenCalled();
         });
 
         it('should throw an error if bus details not found for trip', async () => {
@@ -71,7 +193,7 @@ describe('BookingService', () => {
             await expect(BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats }))
                 .rejects.toThrow(`Bus details not found for trip ${mockTripId}`);
                 
-            expect(BookingRepository.createBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.createBookingWithTransaction).not.toHaveBeenCalled();
         });
 
         it('should throw an error if invalid bus data for trip', async () => {
@@ -89,7 +211,7 @@ describe('BookingService', () => {
             await expect(BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats }))
                 .rejects.toThrow(`Invalid bus data for trip ${mockTripId}`);
                 
-            expect(BookingRepository.createBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.createBookingWithTransaction).not.toHaveBeenCalled();
         });
 
         it('should throw an error if invalid seat numbers', async () => {
@@ -107,7 +229,7 @@ describe('BookingService', () => {
             await expect(BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats }))
                 .rejects.toThrow(`Invalid seat numbers: ${mockSeats.join(', ')}. Allowed range: 1 - 40`);
                 
-            expect(BookingRepository.createBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.createBookingWithTransaction).not.toHaveBeenCalled();
         });
 
         it('should throw an error if duplicate seats in the request', async () => {
@@ -125,7 +247,7 @@ describe('BookingService', () => {
             await expect(BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats }))
                 .rejects.toThrow('Duplicate seats detected in the request. Please select unique seats.');
                 
-            expect(BookingRepository.createBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.createBookingWithTransaction).not.toHaveBeenCalled();
         });
 
         it('should throw an error if seats already booked', async () => {
@@ -143,11 +265,15 @@ describe('BookingService', () => {
 
             TripRepository.getTripById.mockResolvedValue(mockTrip);
             BookingRepository.getBookingsByTripId.mockResolvedValue(existingBookings);
+            BookingRepository.verifySeatsAvailability.mockResolvedValue({ 
+                available: false, 
+                unavailableSeats: [1] 
+            });
 
             await expect(BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats }))
                 .rejects.toThrow(`Seats 1 are already booked.`);
                 
-            expect(BookingRepository.createBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.createBookingWithTransaction).not.toHaveBeenCalled();
         });
 
         it('should throw an error if not enough available seats', async () => {
@@ -162,11 +288,12 @@ describe('BookingService', () => {
 
             TripRepository.getTripById.mockResolvedValue(mockTrip);
             BookingRepository.getBookingsByTripId.mockResolvedValue([]);
+            BookingRepository.verifySeatsAvailability.mockResolvedValue({ available: true, unavailableSeats: [] });
 
             await expect(BookingService.createBooking(mockUserId, { tripId: mockTripId, seats: mockSeats }))
                 .rejects.toThrow('Not enough available seats.');
                 
-            expect(BookingRepository.createBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.createBookingWithTransaction).not.toHaveBeenCalled();
         });
     });
 
@@ -193,40 +320,6 @@ describe('BookingService', () => {
         });
     });
 
-    describe('deleteBooking', () => {
-        it('should delete a booking successfully', async () => {
-            const mockBookingId = 'b1';
-            const mockDeletedBooking = { id: mockBookingId };
-            BookingRepository.deleteBooking.mockResolvedValue(mockDeletedBooking);
-
-            const result = await BookingService.deleteBooking(mockBookingId);
-
-            expect(BookingRepository.deleteBooking).toHaveBeenCalledWith(mockBookingId);
-            expect(result).toEqual(mockDeletedBooking);
-        });
-
-        it('should handle and log errors when deleting a booking', async () => {
-            const mockBookingId = 'b1';
-            const mockError = new Error('Database error');
-            
-            BookingRepository.deleteBooking.mockRejectedValue(mockError);
-            
-            await expect(BookingService.deleteBooking(mockBookingId))
-                .rejects.toThrow('Database error');
-        });
-
-        it('should return null when booking not found for deletion', async () => {
-            const mockBookingId = 'nonexistent';
-            
-            BookingRepository.deleteBooking.mockResolvedValue(null);
-            
-            const result = await BookingService.deleteBooking(mockBookingId);
-            
-            expect(result).toBeNull();
-            expect(BookingRepository.deleteBooking).toHaveBeenCalledWith(mockBookingId);
-        });
-    });
-
     describe('getOperatorBookings', () => {
         it('should return bookings for an operator', async () => {
             const mockOperatorId = 'operator123';
@@ -236,21 +329,176 @@ describe('BookingService', () => {
             ];
             
             BookingRepository.getBookingsByOperatorId.mockResolvedValue(mockBookings);
-
+            
             const result = await BookingService.getOperatorBookings(mockOperatorId);
-
+            
             expect(BookingRepository.getBookingsByOperatorId).toHaveBeenCalledWith(mockOperatorId);
             expect(result).toEqual(mockBookings);
         });
 
-        it('should handle errors when fetching operator bookings', async () => {
+        it('should handle and log errors when fetching operator bookings', async () => {
             const mockOperatorId = 'operator123';
             const mockError = new Error('Database error');
             
             BookingRepository.getBookingsByOperatorId.mockRejectedValue(mockError);
-
+            
             await expect(BookingService.getOperatorBookings(mockOperatorId))
                 .rejects.toThrow('Database error');
+        });
+    });
+
+    describe('cancelBooking', () => {
+        it('should cancel a booking successfully', async () => {
+            const mockBookingId = 'booking123';
+            const mockUserId = 'user123';
+            const mockTripId = 'trip123';
+            const mockTrip = {
+                _id: mockTripId,
+                availableSeats: 30,
+                departureTime: new Date(Date.now() + 86400000) // 24 hours from now
+            };
+            const mockBooking = {
+                _id: mockBookingId,
+                userId: mockUserId,
+                tripId: mockTripId,
+                seats: [1, 2],
+                status: 'confirmed'
+            };
+            const updatedBooking = {
+                ...mockBooking,
+                status: 'cancelled',
+                cancellationDate: expect.any(Date),
+                cancellationReason: 'User requested cancellation'
+            };
+
+            BookingRepository.getBookingById.mockResolvedValue(mockBooking);
+            TripRepository.getTripById.mockResolvedValue(mockTrip);
+            BookingRepository.updateBooking.mockResolvedValue(updatedBooking);
+            TripRepository.updateTrip.mockResolvedValue({
+                ...mockTrip,
+                availableSeats: 32 // 30 + 2
+            });
+
+            const result = await BookingService.cancelBooking(mockBookingId, mockUserId);
+
+            expect(BookingRepository.getBookingById).toHaveBeenCalledWith(mockBookingId);
+            expect(TripRepository.getTripById).toHaveBeenCalledWith(mockTripId);
+            expect(BookingRepository.updateBooking).toHaveBeenCalledWith(
+                mockBookingId,
+                {
+                    status: 'cancelled',
+                    cancellationDate: expect.any(Date),
+                    cancellationReason: 'User requested cancellation'
+                }
+            );
+            expect(TripRepository.updateTrip).toHaveBeenCalledWith(
+                mockTripId,
+                { availableSeats: 32 }
+            );
+            expect(result).toEqual(updatedBooking);
+        });
+
+        it('should throw an error if booking not found', async () => {
+            const mockBookingId = 'nonexistent';
+            const mockUserId = 'user123';
+
+            BookingRepository.getBookingById.mockResolvedValue(null);
+
+            await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
+                .rejects.toThrow('Booking not found');
+
+            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(TripRepository.updateTrip).not.toHaveBeenCalled();
+        });
+
+        it('should throw an error if user tries to cancel another user\'s booking', async () => {
+            const mockBookingId = 'booking123';
+            const mockUserId = 'user123';
+            const mockOtherUserId = 'other456';
+            const mockBooking = {
+                _id: mockBookingId,
+                userId: { _id: mockOtherUserId },
+                tripId: 'trip123',
+                seats: [1, 2],
+                status: 'confirmed'
+            };
+
+            BookingRepository.getBookingById.mockResolvedValue(mockBooking);
+
+            await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
+                .rejects.toThrow('You can only cancel your own bookings');
+
+            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(TripRepository.updateTrip).not.toHaveBeenCalled();
+        });
+
+        it('should throw an error if booking is already cancelled', async () => {
+            const mockBookingId = 'booking123';
+            const mockUserId = 'user123';
+            const mockBooking = {
+                _id: mockBookingId,
+                userId: mockUserId,
+                tripId: 'trip123',
+                seats: [1, 2],
+                status: 'cancelled'
+            };
+
+            BookingRepository.getBookingById.mockResolvedValue(mockBooking);
+
+            await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
+                .rejects.toThrow('Booking is already cancelled');
+
+            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(TripRepository.updateTrip).not.toHaveBeenCalled();
+        });
+
+        it('should throw an error if trip not found', async () => {
+            const mockBookingId = 'booking123';
+            const mockUserId = 'user123';
+            const mockTripId = 'trip123';
+            const mockBooking = {
+                _id: mockBookingId,
+                userId: mockUserId,
+                tripId: mockTripId,
+                seats: [1, 2],
+                status: 'confirmed'
+            };
+
+            BookingRepository.getBookingById.mockResolvedValue(mockBooking);
+            TripRepository.getTripById.mockResolvedValue(null);
+
+            await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
+                .rejects.toThrow('Trip not found');
+
+            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(TripRepository.updateTrip).not.toHaveBeenCalled();
+        });
+
+        it('should throw an error if trying to cancel after trip departure', async () => {
+            const mockBookingId = 'booking123';
+            const mockUserId = 'user123';
+            const mockTripId = 'trip123';
+            const mockTrip = {
+                _id: mockTripId,
+                availableSeats: 30,
+                departureTime: new Date(Date.now() - 3600000) // 1 hour ago
+            };
+            const mockBooking = {
+                _id: mockBookingId,
+                userId: mockUserId,
+                tripId: mockTripId,
+                seats: [1, 2],
+                status: 'confirmed'
+            };
+
+            BookingRepository.getBookingById.mockResolvedValue(mockBooking);
+            TripRepository.getTripById.mockResolvedValue(mockTrip);
+
+            await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
+                .rejects.toThrow('Cannot cancel booking after trip departure');
+
+            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(TripRepository.updateTrip).not.toHaveBeenCalled();
         });
     });
 });

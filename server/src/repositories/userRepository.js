@@ -45,17 +45,6 @@ class UserRepository {
         }
     }
 
-    async getAllUsers() {
-        try {
-            const users = await User.find().select('-password');
-            appLogger.info(`Retrieved all users from database (Count: ${users.length})`);
-            return users;
-        } catch (error) {
-            appLogger.error(`Error fetching all users: ${error.message}`);
-            throw error;
-        }
-    }
-
     async updateUserProfile(userId, updateData) {
         try {
             const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select('-password');

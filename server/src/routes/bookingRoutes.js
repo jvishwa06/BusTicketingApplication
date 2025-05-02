@@ -7,7 +7,7 @@ router.use(authMiddleware.authenticate);
 
 router.post('/', authMiddleware.authorizeRoles('user'), BookingController.createBooking);
 router.get('/', authMiddleware.authorizeRoles('user'), BookingController.getUserBookings);
-router.get('/operator', authMiddleware.authorizeRoles('operator'), BookingController.getOperatorBookings);
-router.delete('/:id', authMiddleware.authorizeRoles('user'), BookingController.deleteBooking);
+router.get('/', authMiddleware.authorizeRoles('operator'), BookingController.getOperatorBookings);
+router.post('/:id/cancel', authMiddleware.authorizeRoles('user'), BookingController.cancelBooking);
 
 export default router;

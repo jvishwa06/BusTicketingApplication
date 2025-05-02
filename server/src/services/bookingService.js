@@ -23,8 +23,8 @@ class BookingService {
                 throw new Error(`Invalid bus data for trip ${tripId}`);
             }
 
-            appLogger.info(`Trip found: ${JSON.stringify(trip, null, 2)}`);
-            appLogger.info(`Bus found: ${JSON.stringify(trip.busId, null, 2)}`);
+            appLogger.info(`Trip found: ${JSON.stringify(trip)}`);
+            appLogger.info(`Bus found: ${JSON.stringify(trip.busId)}`);
 
             const invalidSeats = seats.filter(seat => seat < 1 || seat > totalSeats);
             if (invalidSeats.length > 0) {
@@ -37,12 +37,9 @@ class BookingService {
                 throw new Error(`Duplicate seats detected in the request. Please select unique seats.`);
             }
 
-            const existingBookings = await BookingRepository.getBookingsByTripId(tripId);
-            const bookedSeats = new Set(existingBookings.flatMap(booking => booking.seats));
-            const alreadyBookedSeats = seats.filter(seat => bookedSeats.has(seat));
-
-            if (alreadyBookedSeats.length > 0) {
-                throw new Error(`Seats ${alreadyBookedSeats.join(', ')} are already booked.`);
+            const seatAvailability = await BookingRepository.verifySeatsAvailability(tripId, seats);
+            if (!seatAvailability.available) {
+                throw new Error(`Seats ${seatAvailability.unavailableSeats.join(', ')} are already booked.`);
             }
 
             if (seats.length > trip.availableSeats) {
@@ -50,19 +47,34 @@ class BookingService {
             }
 
             let totalPrice = seats.length * trip.price;
-            
-            await TripRepository.updateTrip(tripId, { 
-                availableSeats: trip.availableSeats - seats.length 
-            });
 
             const bookingToCreate = { 
                 userId, 
                 tripId, 
                 seats, 
-                totalPrice
+                totalPrice,
+                paymentStatus: 'pending'
             };
             
-            return await BookingRepository.createBooking(bookingToCreate);
+            const booking = await BookingRepository.createBookingWithTransaction(
+                bookingToCreate, 
+                tripId, 
+                seats.length
+            );
+            
+            setTimeout(async () => {
+                try {
+                    const currentBooking = await BookingRepository.getBookingById(booking._id);
+                    if (currentBooking && currentBooking.paymentStatus === 'pending') {
+                        await BookingRepository.releaseSeats(booking._id);
+                        appLogger.info(`Released seats for expired booking ${booking._id}`);
+                    }
+                } catch (error) {
+                    appLogger.error(`Error in payment timeout handler: ${error.message}`);
+                }
+            }, 1 * 60 * 1000); // 1 minutes timeout
+            
+            return booking;
         } catch (error) {
             appLogger.error(`Error creating booking: ${error.message}`);
             throw error;
@@ -91,13 +103,56 @@ class BookingService {
         }
     }
 
-    async deleteBooking(bookingId) {
+    async cancelBooking(bookingId, userId) {
         try {
-            const result = await BookingRepository.deleteBooking(bookingId);
-            return result;
+            const booking = await BookingRepository.getBookingById(bookingId);
+            
+            if (!booking) {
+                appLogger.warn(`Booking with ID ${bookingId} not found for cancellation`);
+                throw new Error('Booking not found');
+            }
+            
+            const bookingUserId = booking.userId._id ? booking.userId._id.toString() : booking.userId.toString();
+            if (userId && bookingUserId !== userId.toString()) {
+                appLogger.warn(`User ${userId} attempted to cancel booking ${bookingId} that doesn't belong to them`);
+                throw new Error('You can only cancel your own bookings');
+            }
+            
+            if (booking.status === 'cancelled') {
+                appLogger.warn(`Booking ${bookingId} is already cancelled`);
+                throw new Error('Booking is already cancelled');
+            }
+            
+            const trip = await TripRepository.getTripById(booking.tripId);
+            if (!trip) {
+                appLogger.warn(`Trip not found for booking ${bookingId}`);
+                throw new Error('Trip not found');
+            }
+            
+            const now = new Date();
+            if (new Date(trip.departureTime) < now) {
+                appLogger.warn(`Booking ${bookingId} cannot be cancelled after trip departure`);
+                throw new Error('Cannot cancel booking after trip departure');
+            }
+            
+            const cancellationData = {
+                status: 'cancelled',
+                cancellationDate: new Date(),
+                cancellationReason: 'User requested cancellation'
+            };
+            
+            const cancelledBooking = await BookingRepository.updateBooking(bookingId, cancellationData);
+            
+            await TripRepository.updateTrip(trip._id, {
+                availableSeats: trip.availableSeats + booking.seats.length
+            });
+            
+            appLogger.info(`Booking ${bookingId} cancelled successfully`);
+            
+            return cancelledBooking;
         } catch (error) {
-            appLogger.error(`Error deleting booking ${bookingId}: ${error.message}`);
-            throw new Error('Database error');
+            appLogger.error(`Error cancelling booking ${bookingId}: ${error.message}`);
+            throw error;
         }
     }
 }
