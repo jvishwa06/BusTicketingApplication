@@ -212,6 +212,35 @@ describe('AdminService', () => {
         .rejects.toThrow('Database error');
       expect(appLogger.error).toHaveBeenCalled();
     });
+
+    it('should throw default error message when error has no message property', async () => {
+      const mockUserId = '12345';
+      const mockVerificationStatus = true;
+      // Create an error object without a message property
+      const mockError = {
+        // Explicitly setting message to undefined to ensure the fallback is triggered
+        message: undefined
+      };
+      
+      AdminRepository.verifyOperator.mockRejectedValue(mockError);
+      
+      await expect(AdminService.verifyOperator(mockUserId, mockVerificationStatus))
+        .rejects.toThrow('Error verifying operator');
+      expect(appLogger.error).toHaveBeenCalledWith('Error verifying operator: undefined');
+    });
+
+    it('should throw default error message when error message is empty string', async () => {
+      const mockUserId = '12345';
+      const mockVerificationStatus = true;
+      // Create an error with an empty string message
+      const mockError = new Error('');
+      
+      AdminRepository.verifyOperator.mockRejectedValue(mockError);
+      
+      await expect(AdminService.verifyOperator(mockUserId, mockVerificationStatus))
+        .rejects.toThrow('Error verifying operator');
+      expect(appLogger.error).toHaveBeenCalledWith('Error verifying operator: ');
+    });
   });
 
   describe('getAllTrips', () => {
