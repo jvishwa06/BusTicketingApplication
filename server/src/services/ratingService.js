@@ -77,24 +77,6 @@ class RatingService {
             throw error;
         }
     }
-
-    async getBusAverageRating(busId) {
-        try {
-            return await ratingRepository.getAverageRatingForBus(busId);
-        } catch (error) {
-            appLogger.error(`Error getting average rating for bus ${busId}: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getTripAverageRating(tripId) {
-        try {
-            return await ratingRepository.getAverageRatingForTrip(tripId);
-        } catch (error) {
-            appLogger.error(`Error getting average rating for trip ${tripId}: ${error.message}`);
-            throw error;
-        }
-    }
     
     async updateRating(userId, ratingId, updateData) {
         try {

@@ -2,8 +2,8 @@ import rateLimit from 'express-rate-limit';
 import { appLogger } from '../utils/logger.js';
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500000,
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: 'Too many requests, please try again later.',

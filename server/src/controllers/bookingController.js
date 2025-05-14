@@ -70,11 +70,7 @@ class BookingController {
                 statusCode = 400;
             }
             
-            res.status(statusCode).json({
-                success: false,
-                message: error.message,
-                data: {}
-            });
+            res.status(statusCode).json({success: false,message: error.message,data: {}});
         }
     }
 }

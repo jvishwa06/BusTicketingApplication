@@ -122,9 +122,7 @@ class AdminRepository {
                 tripId, 
                 { 
                     status: 'cancelled',
-                    cancellationReason: reason,
-                    adminCancelled: true
-                },
+                    cancellationReason: reason                },
                 { new: true }
             );
             

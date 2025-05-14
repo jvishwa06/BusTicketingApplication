@@ -97,54 +97,29 @@ class UserService {
                 appLogger.warn(`Attempt to change role for user ID: ${userId} prevented`);
                 throw new Error('Role modification is not allowed through profile update');
             }
-            
-            const allowedFields = ['name', 'email', 'phone'];
+    
+            const allowedFields = ['name', 'email', 'phone', 'password'];
             const filteredUpdateData = {};
-            
-            const nonAllowedFields = Object.keys(updateData).filter(key => 
-                !allowedFields.includes(key) && 
-                key !== 'currentPassword' && 
-                key !== 'newPassword'
+    
+            const nonAllowedFields = Object.keys(updateData).filter(
+                key => !allowedFields.includes(key)
             );
-            
+    
             if (nonAllowedFields.length > 0) {
                 appLogger.warn(`Attempt to update non-allowed fields for user ID: ${userId}: ${nonAllowedFields.join(', ')}`);
-                throw new Error(`Only name, email, and phone can be updated. Cannot update: ${nonAllowedFields.join(', ')}`);
+                throw new Error(`Only name, email, phone, and password can be updated. Cannot update: ${nonAllowedFields.join(', ')}`);
             }
-            
-            Object.keys(updateData).forEach(key => {
-                if (allowedFields.includes(key)) {
+    
+            for (const key of allowedFields) {
+                if (key in updateData) {
                     filteredUpdateData[key] = updateData[key];
                 }
-            });
-            
-            if (updateData.currentPassword && updateData.newPassword) {
-                const currentUser = await userRepository.getUserByEmail(
-                    (await userRepository.getUserById(userId)).email
-                );
-                
-                if (!currentUser) {
-                    appLogger.warn(`User not found: ${userId}`);
-                    throw new Error('User not found');
-                }
-                
-                if (!currentUser.password) {
-                    appLogger.warn(`Password field missing for user ID: ${userId}`);
-                    throw new Error('Password reset required. Please use forgot password feature.');
-                }
-                
-                const isPasswordValid = await bcrypt.compare(updateData.currentPassword, currentUser.password);
-                if (!isPasswordValid) {
-                    appLogger.warn(`Invalid current password for user ID: ${userId}`);
-                    throw new Error('Current password is incorrect');
-                }
-                
-                filteredUpdateData.password = await bcrypt.hash(updateData.newPassword, 10);
             }
-            
-            delete updateData.currentPassword;
-            delete updateData.newPassword;
-            
+    
+            if (filteredUpdateData.password) {
+                filteredUpdateData.password = await bcrypt.hash(filteredUpdateData.password, 10);
+            }
+    
             const user = await userRepository.updateUserProfile(userId, filteredUpdateData);
             if (!user) {
                 appLogger.warn(`Profile update failed, user not found: ${userId}`);
@@ -157,6 +132,6 @@ class UserService {
             throw error;
         }
     }
-}
+}    
 
 export default new UserService();

@@ -305,7 +305,6 @@ describe('AdminService', () => {
         to: 'Boston',
         status: 'cancelled',
         cancellationReason: 'Weather conditions',
-        adminCancelled: true
       };
 
       AdminRepository.cancelTrip.mockResolvedValue(mockTrip);

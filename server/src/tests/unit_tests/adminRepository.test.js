@@ -353,7 +353,6 @@ describe('AdminRepository', () => {
         _id: tripId,
         status: 'cancelled',
         cancellationReason: reason,
-        adminCancelled: true
       };
       
       Trip.findByIdAndUpdate.mockResolvedValue(updatedTrip);
@@ -366,7 +365,6 @@ describe('AdminRepository', () => {
         {
           status: 'cancelled',
           cancellationReason: reason,
-          adminCancelled: true
         },
         { new: true }
       );
@@ -391,7 +389,6 @@ describe('AdminRepository', () => {
         {
           status: 'cancelled',
           cancellationReason: reason,
-          adminCancelled: true
         },
         { new: true }
       );

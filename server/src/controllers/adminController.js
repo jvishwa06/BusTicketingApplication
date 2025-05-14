@@ -18,13 +18,7 @@ class AdminController {
             res.status(200).json({
                 success: true,
                 message: 'User blocked successfully',
-                data: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone,
-                    isBlocked: user.isBlocked
-                }
+                data: {id: user._id,name: user.name,email: user.email,phone: user.phone,isBlocked: user.isBlocked}
             });
         } catch (error) {
             appLogger.error(`Error blocking user ${req.params.userId}: ${error.message}`);
@@ -46,13 +40,7 @@ class AdminController {
             res.status(200).json({
                 success: true,
                 message: 'User unblocked successfully',
-                data: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone,
-                    isBlocked: user.isBlocked
-                }
+                data: {id: user._id,name: user.name,email: user.email,phone: user.phone,isBlocked: user.isBlocked}
             });
         } catch (error) {
             appLogger.error(`Error unblocking user ${req.params.userId}: ${error.message}`);
