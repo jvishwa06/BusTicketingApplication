@@ -98,16 +98,13 @@ class BookingRepository {
 
     async getBookingsByUserId(userId) {
         try {
-            const bookings = await Booking.find({ userId })
-                .populate({
+            const bookings = await Booking.find({ userId }).populate({
                     path: 'tripId',
                     populate: {
                         path: 'busId',
                         select: 'name type operatorId registrationNumber totalSeats amenities'
                     }
-                })
-                .populate('userId', 'name email phone')
-                .sort({ createdAt: -1 });
+                }).populate('userId', 'name email phone').sort({ createdAt: -1 });
             appLogger.info(`Fetched bookings with complete details for user ${userId}`);
             return bookings;
         } catch (error) {

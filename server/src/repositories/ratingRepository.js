@@ -23,32 +23,6 @@ class RatingRepository {
         }
     }
 
-    async getAverageRatingForBus(busId) {
-        try {
-            const result = await Rating.aggregate([
-                { $match: { busId: new mongoose.Types.ObjectId(busId) } },
-                { $group: { _id: '$busId', averageRating: { $avg: '$rating' }, count: { $sum: 1 } } }
-            ]);
-            return result.length > 0 ? result[0] : { _id: busId, averageRating: 0, count: 0 };
-        } catch (error) {
-            appLogger.error(`Error calculating average rating for bus ${busId}: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getAverageRatingForTrip(tripId) {
-        try {
-            const result = await Rating.aggregate([
-                { $match: { tripId: new mongoose.Types.ObjectId(tripId) } },
-                { $group: { _id: '$tripId', averageRating: { $avg: '$rating' }, count: { $sum: 1 } } }
-            ]);
-            return result.length > 0 ? result[0] : { _id: tripId, averageRating: 0, count: 0 };
-        } catch (error) {
-            appLogger.error(`Error calculating average rating for trip ${tripId}: ${error.message}`);
-            throw error;
-        }
-    }
-
     async getRatingsByTripId(tripId) {
         try {
             return await Rating.find({ tripId })

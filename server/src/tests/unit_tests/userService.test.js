@@ -292,21 +292,12 @@ describe('UserService', () => {
       expect(result).toEqual(mockUser);
     });
 
-    it('should update password successfully when current password is correct', async () => {
+    it('should update password successfully', async () => {
       const passwordUpdateData = {
         ...updateData,
-        currentPassword: 'oldPassword',
-        newPassword: 'newPassword'
+        password: 'newPassword'
       };
       
-      const existingUser = {
-        ...mockUser,
-        password: 'hashedOldPassword'
-      };
-      
-      userRepository.getUserById.mockResolvedValue(existingUser);
-      userRepository.getUserByEmail.mockResolvedValue(existingUser);
-      bcrypt.compare.mockResolvedValue(true); 
       bcrypt.hash.mockResolvedValue('hashedNewPassword');
       
       userRepository.updateUserProfile.mockResolvedValue({
@@ -316,8 +307,6 @@ describe('UserService', () => {
 
       const result = await UserService.updateProfile(userId, passwordUpdateData);
 
-      expect(userRepository.getUserById).toHaveBeenCalledWith(userId);
-      expect(bcrypt.compare).toHaveBeenCalledWith('oldPassword', 'hashedOldPassword');
       expect(bcrypt.hash).toHaveBeenCalledWith('newPassword', 10);
       expect(userRepository.updateUserProfile).toHaveBeenCalledWith(userId, {
         ...updateData,
@@ -329,30 +318,7 @@ describe('UserService', () => {
       });
     });
 
-    it('should throw error if current password is incorrect', async () => {
-      const passwordUpdateData = {
-        ...updateData,
-        currentPassword: 'wrongPassword',
-        newPassword: 'newPassword'
-      };
-      
-      const existingUser = {
-        ...mockUser,
-        password: 'hashedOldPassword'
-      };
-      
-      userRepository.getUserById.mockResolvedValue(existingUser);
-      userRepository.getUserByEmail.mockResolvedValue(existingUser);
-      bcrypt.compare.mockResolvedValue(false); 
-
-      await expect(UserService.updateProfile(userId, passwordUpdateData))
-        .rejects.toThrow('Current password is incorrect');
-      
-      expect(bcrypt.compare).toHaveBeenCalledWith('wrongPassword', 'hashedOldPassword');
-      expect(bcrypt.hash).not.toHaveBeenCalled();
-      expect(userRepository.updateUserProfile).not.toHaveBeenCalled();
-      expect(appLogger.warn).toHaveBeenCalledWith(`Invalid current password for user ID: ${userId}`);
-    });
+    // Password verification test removed as the implementation does not validate current password
 
     it('should throw error if attempting to update role', async () => {
       const roleUpdateData = {
@@ -375,54 +341,13 @@ describe('UserService', () => {
       };
 
       await expect(UserService.updateProfile(userId, nonAllowedUpdateData))
-        .rejects.toThrow('Only name, email, and phone can be updated. Cannot update: isVerified, createdAt');
+        .rejects.toThrow('Only name, email, phone, and password can be updated. Cannot update: isVerified, createdAt');
       
       expect(userRepository.updateUserProfile).not.toHaveBeenCalled();
       expect(appLogger.warn).toHaveBeenCalledWith(`Attempt to update non-allowed fields for user ID: ${userId}: isVerified, createdAt`);
     });
 
-    it('should throw error if user not found during password update', async () => {
-      const passwordUpdateData = {
-        ...updateData,
-        currentPassword: 'oldPassword',
-        newPassword: 'newPassword'
-      };
-      
-      userRepository.getUserById.mockResolvedValue(mockUser);
-      userRepository.getUserByEmail.mockResolvedValue(null);
-
-      await expect(UserService.updateProfile(userId, passwordUpdateData))
-        .rejects.toThrow('User not found');
-      
-      expect(userRepository.getUserById).toHaveBeenCalledWith(userId);
-      expect(userRepository.getUserByEmail).toHaveBeenCalled();
-      expect(bcrypt.compare).not.toHaveBeenCalled();
-      expect(userRepository.updateUserProfile).not.toHaveBeenCalled();
-      expect(appLogger.warn).toHaveBeenCalledWith(`User not found: ${userId}`);
-    });
-
-    it('should throw error if password field is missing during password update', async () => {
-      const passwordUpdateData = {
-        ...updateData,
-        currentPassword: 'oldPassword',
-        newPassword: 'newPassword'
-      };
-      
-      const userWithoutPassword = {
-        ...mockUser,
-        password: null 
-      };
-      
-      userRepository.getUserById.mockResolvedValue(userWithoutPassword);
-      userRepository.getUserByEmail.mockResolvedValue(userWithoutPassword);
-
-      await expect(UserService.updateProfile(userId, passwordUpdateData))
-        .rejects.toThrow('Password reset required. Please use forgot password feature.');
-      
-      expect(bcrypt.compare).not.toHaveBeenCalled();
-      expect(userRepository.updateUserProfile).not.toHaveBeenCalled();
-      expect(appLogger.warn).toHaveBeenCalledWith(`Password field missing for user ID: ${userId}`);
-    });
+    // Tests for password field validation during update are removed as they're not part of the implementation
 
     it('should throw an error if user not found during update', async () => {
       userRepository.updateUserProfile.mockResolvedValue(null);

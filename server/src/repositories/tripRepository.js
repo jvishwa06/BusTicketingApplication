@@ -37,10 +37,6 @@ class TripRepository {
                 }
             });
             
-            if (updateData.fare && !updates.price) {
-                updates.price = updateData.fare;
-            }
-            
             if (updates.departureTime) {
                 updates.departureTime = new Date(updates.departureTime);
             }

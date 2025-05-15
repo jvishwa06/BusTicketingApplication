@@ -57,15 +57,8 @@ jest.mock('morgan', () => {
 });
 
 describe('Logger', () => {
-  const originalEnv = process.env.NODE_ENV;
-  
   beforeEach(() => {
     jest.clearAllMocks();
-    delete process.env.NODE_ENV;
-  });
-  
-  afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
   });
   
   test('creates logs directory if it does not exist', () => {
@@ -90,9 +83,7 @@ describe('Logger', () => {
     expect(fs.mkdirSync).not.toHaveBeenCalled();
   });
   
-  test('creates winston logger with Console transport in non-production', () => {
-    delete process.env.NODE_ENV;
-    
+  test('creates winston logger with Console transport', () => {
     const winston = require('winston');
     
     jest.isolateModules(() => {
@@ -104,22 +95,6 @@ describe('Logger', () => {
       filename: 'logs/application.log'
     });
     expect(winston.transports.Console).toHaveBeenCalled();
-  });
-  
-  test('creates winston logger without Console transport in production', () => {
-    process.env.NODE_ENV = 'production';
-    
-    const winston = require('winston');
-    
-    jest.isolateModules(() => {
-      require('../../../src/utils/logger');
-    });
-    
-    expect(winston.createLogger).toHaveBeenCalled();
-    expect(winston.transports.File).toHaveBeenCalledWith({
-      filename: 'logs/application.log'
-    });
-    expect(winston.transports.Console).not.toHaveBeenCalled();
   });
   
   test('creates morgan request logger with timestamp token', () => {

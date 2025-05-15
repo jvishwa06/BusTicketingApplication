@@ -179,31 +179,6 @@ describe('TripRepository', () => {
       expect(result).toEqual(updatedTrip);
     });
 
-    it('should update price when fare is provided', async () => {
-      const tripId = 'mockTripId';
-      const updateData = {
-        fare: 900
-      };
-      
-      const updatedTrip = {
-        _id: tripId,
-        price: updateData.fare
-      };
-      
-      Trip.findByIdAndUpdate.mockResolvedValue(updatedTrip);
-      
-      const result = await tripRepository.updateTrip(tripId, updateData);
-      
-      expect(Trip.findByIdAndUpdate).toHaveBeenCalledWith(
-        tripId,
-        expect.objectContaining({
-          price: updateData.fare
-        }),
-        { new: true, runValidators: true }
-      );
-      expect(result).toEqual(updatedTrip);
-    });
-
     it('should return null when trip is not found for update', async () => {
       const tripId = 'nonExistentTripId';
       const updateData = { price: 900 };

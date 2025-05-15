@@ -18,7 +18,7 @@ const appLogger = winston.createLogger({
   format,
   transports: [
     new winston.transports.File({ filename: path.join(logDir, 'application.log') }),
-    ...(!process.env.NODE_ENV || process.env.NODE_ENV !== 'production' ? [new winston.transports.Console()] : [])
+    new winston.transports.Console()
   ]
 });
 

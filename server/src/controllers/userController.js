@@ -26,7 +26,7 @@ class UserController {
             
             res.cookie('token', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: true, // Always use secure cookies
                 sameSite: 'Strict',
                 maxAge: 24 * 60 * 60 * 1000, // 1 day
             });
@@ -43,7 +43,7 @@ class UserController {
         try {
             res.clearCookie('token', {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: true, // Always use secure cookies
                 sameSite: 'Strict',
             });
 
