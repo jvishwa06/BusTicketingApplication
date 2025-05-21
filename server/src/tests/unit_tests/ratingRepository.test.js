@@ -194,7 +194,7 @@ describe('RatingRepository', () => {
       const result = await RatingRepository.getRatingsByUserId(mockUserId);
 
       expect(Rating.find).toHaveBeenCalledWith({ userId: mockUserId });
-      expect(populateBusMock).toHaveBeenCalledWith('busId', 'busNumber name');
+      expect(populateBusMock).toHaveBeenCalledWith('busId', 'registrationNumber name');
       expect(populateTripMock).toHaveBeenCalledWith('tripId', 'source destination departureTime');
       expect(sortMock).toHaveBeenCalledWith({ createdAt: -1 });
       expect(result).toEqual(mockRatings);

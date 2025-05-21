@@ -38,26 +38,6 @@ describe('BusService', () => {
             expect(BusRepository.createBus).toHaveBeenCalledWith({ ...mockBusData, operatorId: mockOperatorId });
             expect(appLogger.error).toHaveBeenCalledWith(`Error creating bus for operator ${mockOperatorId}: ${mockError.message}`);
         });
-
-        it('should throw a specific error for duplicate registration number', async () => {
-            const mockOperatorId = 'operator123';
-            const mockBusData = { 
-                name: 'Luxury Bus', 
-                totalSeats: 50, 
-                registrationNumber: 'ABC123' 
-            };
-            const mockError = new Error('E11000 duplicate key error');
-            mockError.code = 11000;
-            mockError.message = 'E11000 duplicate key error collection: test.buses index: registrationNumber_1 dup key';
-            
-            BusRepository.createBus.mockRejectedValue(mockError);
-            
-            await expect(BusService.createBus(mockOperatorId, mockBusData))
-                .rejects.toThrow(`A bus with registration number "${mockBusData.registrationNumber}" already exists. Please use a different registration number.`);
-            
-            expect(BusRepository.createBus).toHaveBeenCalledWith({ ...mockBusData, operatorId: mockOperatorId });
-            expect(appLogger.error).toHaveBeenCalled();
-        });
     });
 
     describe('getBus', () => {

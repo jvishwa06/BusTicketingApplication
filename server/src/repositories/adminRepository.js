@@ -8,7 +8,7 @@ class AdminRepository {
         try {
             const query = {};
             if (filters.role) query.role = filters.role;
-            if (filters.isBlocked !== undefined) query.isBlocked = filters.isBlocked === 'true';
+            if (filters.isBlocked) query.isBlocked = filters.isBlocked === 'true';
             
             appLogger.info('Fetching users with query:', query);
             const users = await User.find(query).select('-password');
@@ -22,8 +22,8 @@ class AdminRepository {
     async getAllOperators(filters = {}) {
         try {
             const query = { role: 'operator' };
-            if (filters.isVerified !== undefined) query.isVerified = filters.isVerified === 'true';
-            if (filters.isBlocked !== undefined) query.isBlocked = filters.isBlocked === 'true';
+            if (filters.isVerified) query.isVerified = filters.isVerified === 'true';
+            if (filters.isBlocked) query.isBlocked = filters.isBlocked === 'true';
             if (filters.companyName) query.companyName = new RegExp(filters.companyName, 'i');
             
             appLogger.info('Fetching operators with query:', query);

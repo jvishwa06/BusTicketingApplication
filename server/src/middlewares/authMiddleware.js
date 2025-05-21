@@ -53,11 +53,7 @@ class AuthMiddleware {
     
         if (!isVerified) {
             appLogger.warn(`Unverified operator ${email} attempted to access restricted resource`);
-            return res.status(403).json({
-                success: false,
-                message: 'Your operator account is pending verification. Please wait for admin approval.',
-                data: null
-            });
+            return res.status(403).json({message: 'Your operator account is pending verification. Please wait for admin approval.'});
         }
     
         appLogger.info(`Verified operator access: ${email}`);

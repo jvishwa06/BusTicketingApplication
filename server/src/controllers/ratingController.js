@@ -2,7 +2,7 @@ import ratingService from '../services/ratingService.js';
 import { appLogger } from '../utils/logger.js';
 
 class RatingController {
-    static async submitRating(req, res, next) {
+    static async submitRating(req, res) {
         try {
             const { bookingId } = req.params;
             const userId = req.user.id;
@@ -14,22 +14,11 @@ class RatingController {
             res.status(201).json({success: true,message: 'Rating submitted successfully',data: rating});
         } catch (error) {
             appLogger.error(`Rating submission failed: ${error.message}`);
-            
-            let statusCode = 500;
-            if (error.message.includes('booking not found') || error.message.includes('Trip not found')) {
-                statusCode = 404;
-            } else if (error.message.includes('You can only rate completed bookings') || 
-                      error.message.includes('already rated') ||
-                      error.message.includes('Invalid rating') ||
-                      error.message.includes('successful payment')) {
-                statusCode = 400;
-            }
-            
-            return res.status(statusCode).json({success: false,message: error.message || 'Rating submission failed',data: {}});
+            return res.status(500).json({success: false,message: 'Rating submission failed',error: error.message});
         }
     }
 
-    static async getUserRatings(req, res, next) {
+    static async getUserRatings(req, res) {
         try {
             const userId = req.user.id;
 
@@ -39,34 +28,25 @@ class RatingController {
             res.status(200).json({success: true,message: 'User ratings retrieved successfully',data: ratings});
         } catch (error) {
             appLogger.error(`Retrieving user ratings failed: ${error.message}`);
-            next(error);
+            return res.status(500).json({success: false, message: 'Failed to retrieve user ratings', error: error.message});
         }
     }
 
-    static async getTripRatings(req, res, next) {
+    static async getTripRatings(req, res) {
         try {
             const { tripId } = req.params;
 
             const ratings = await ratingService.getRatingsByTripId(tripId);
-            const averageRating = await ratingService.getTripAverageRating(tripId);
 
             appLogger.info(`Ratings retrieved for trip ${tripId}`);
-            res.status(200).json({
-                success: true,
-                message: 'Trip ratings retrieved successfully',
-                data: {
-                    ratings,
-                    averageRating: averageRating.averageRating,
-                    totalRatings: averageRating.count
-                }
-            });
+            res.status(200).json({success: true,message: 'Trip ratings retrieved successfully',data: {ratings,totalRatings: averageRating.count}});
         } catch (error) {
             appLogger.error(`Retrieving trip ratings failed: ${error.message}`);
-            next(error);
+            return res.status(500).json({success: false, message: 'Failed to retrieve trip ratings', error: error.message});
         }
     }
 
-    static async updateRating(req, res, next) {
+    static async updateRating(req, res) {
         try {
             const { ratingId } = req.params;
             const userId = req.user.id;
@@ -78,11 +58,11 @@ class RatingController {
             res.status(200).json({success: true,message: 'Rating updated successfully',data: updatedRating});
         } catch (error) {
             appLogger.error(`Rating update failed: ${error.message}`);
-            next(error);
+            return res.status(500).json({success: false, message: 'Failed to update rating', error: error.message});
         }
     }
 
-    static async deleteRating(req, res, next) {
+    static async deleteRating(req, res) {
         try {
             const { ratingId } = req.params;
             const userId = req.user.id;
@@ -93,7 +73,7 @@ class RatingController {
             res.status(200).json({success: true,message: 'Rating deleted successfully',data: {}});
         } catch (error) {
             appLogger.error(`Rating deletion failed: ${error.message}`);
-            next(error);
+            return res.status(500).json({success: false, message: 'Failed to delete rating', error: error.message});
         }
     }
 }

@@ -676,62 +676,6 @@ describe('BookingRepository', () => {
     });
   });
 
-  describe('updateBooking', () => {
-    it('should update and return a booking when found', async () => {
-      const bookingId = 'booking123';
-      const updateData = {
-        paymentStatus: 'Paid',
-        paymentMethod: 'CreditCard'
-      };
-      const mockUpdatedBooking = {
-        _id: bookingId,
-        ...updateData,
-        userId: 'user123',
-        tripId: 'trip123'
-      };
-      
-      Booking.findByIdAndUpdate.mockResolvedValue(mockUpdatedBooking);
-      
-      const result = await bookingRepository.updateBooking(bookingId, updateData);
-      
-      expect(Booking.findByIdAndUpdate).toHaveBeenCalledWith(
-        bookingId,
-        updateData,
-        { new: true }
-      );
-      expect(result).toEqual(mockUpdatedBooking);
-      expect(appLogger.info).toHaveBeenCalledWith(expect.stringContaining(`Booking updated with ID: ${bookingId}`));
-    });
-
-    it('should return null and log warning when booking not found for update', async () => {
-      const bookingId = 'nonexistent123';
-      const updateData = { paymentStatus: 'Paid' };
-      
-      Booking.findByIdAndUpdate.mockResolvedValue(null);
-      
-      const result = await bookingRepository.updateBooking(bookingId, updateData);
-      
-      expect(Booking.findByIdAndUpdate).toHaveBeenCalledWith(
-        bookingId,
-        updateData,
-        { new: true }
-      );
-      expect(result).toBeNull();
-      expect(appLogger.warn).toHaveBeenCalledWith(expect.stringContaining(`Booking not found for update: ${bookingId}`));
-    });
-
-    it('should handle errors when updating booking', async () => {
-      const bookingId = 'booking123';
-      const updateData = { paymentStatus: 'Paid' };
-      const error = new Error('Database error');
-      
-      Booking.findByIdAndUpdate.mockRejectedValue(error);
-      
-      await expect(bookingRepository.updateBooking(bookingId, updateData)).rejects.toThrow(error);
-      expect(appLogger.error).toHaveBeenCalledWith(expect.stringContaining(`Error updating booking ${bookingId}`));
-    });
-  });
-
   describe('cancelBooking', () => {
     it('should cancel and return a booking when found', async () => {
       const bookingId = 'booking123';

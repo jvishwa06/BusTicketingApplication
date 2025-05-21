@@ -37,7 +37,7 @@ class RatingRepository {
     async getRatingsByUserId(userId) {
         try {
             return await Rating.find({ userId })
-                .populate('busId', 'busNumber name')
+                .populate('busId', 'registrationNumber name')
                 .populate('tripId', 'source destination departureTime')
                 .sort({ createdAt: -1 });
         } catch (error) {
@@ -48,8 +48,8 @@ class RatingRepository {
 
     async getRatingByBookingId(bookingId) {
         try {
-            return await Rating.findOne({ bookingId })
-                .populate('userId', 'name');
+            const rating = await Rating.findOne({ bookingId }).populate('userId', 'name');
+            return rating;
         } catch (error) {
             appLogger.error(`Error fetching rating for booking ${bookingId}: ${error.message}`);
             throw error;

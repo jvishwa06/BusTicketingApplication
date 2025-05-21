@@ -9,7 +9,7 @@ const bookingDuration = new Trend('booking_duration');
 const concurrentBookingConflicts = new Counter('concurrent_booking_conflicts');
 
 const BASE_URL = 'http://localhost:5001';
-const TRIP_ID = '6814fbc8c0d297cca10de6c2'; 
+const TRIP_ID = '682cdfca62dec00397deeab3'; 
 
 const users = [
   { email: 'user1@gmail.com', password: 'password123' },

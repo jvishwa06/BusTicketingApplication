@@ -106,47 +106,7 @@ describe('UserService', () => {
       expect(result).toEqual(createdAdmin);
     });
 
-    it('should handle duplicate email error from MongoDB', async () => {
-      userRepository.getUserByEmail.mockResolvedValue(null);
-      userRepository.getUserByPhone.mockResolvedValue(null);
-      bcrypt.hash.mockResolvedValue('hashedPassword');
-      
-      const duplicateEmailError = new Error('E11000 duplicate key error collection: test.users index: email_1 dup key');
-      duplicateEmailError.code = 11000;
-      
-      userRepository.createUser.mockRejectedValue(duplicateEmailError);
 
-      await expect(UserService.register({ ...validUserData })).rejects.toThrow('User with this email already exists');
-      expect(appLogger.warn).toHaveBeenCalledWith(`Duplicate email detected: ${validUserData.email}`);
-    });
-
-    it('should handle duplicate phone error from MongoDB', async () => {
-      userRepository.getUserByEmail.mockResolvedValue(null);
-      userRepository.getUserByPhone.mockResolvedValue(null);
-      bcrypt.hash.mockResolvedValue('hashedPassword');
-      
-      const duplicatePhoneError = new Error('E11000 duplicate key error collection: test.users index: phone_1 dup key');
-      duplicatePhoneError.code = 11000;
-      
-      userRepository.createUser.mockRejectedValue(duplicatePhoneError);
-
-      await expect(UserService.register({ ...validUserData })).rejects.toThrow('User with this phone number already exists');
-      expect(appLogger.warn).toHaveBeenCalledWith(`Duplicate phone number detected: ${validUserData.phone}`);
-    });
-
-    it('should handle duplicate key error without specific field identifier', async () => {
-      userRepository.getUserByEmail.mockResolvedValue(null);
-      userRepository.getUserByPhone.mockResolvedValue(null);
-      bcrypt.hash.mockResolvedValue('hashedPassword');
-      
-      const otherDuplicateError = new Error('E11000 duplicate key error collection: test.users dup key');
-      otherDuplicateError.code = 11000;
-      
-      userRepository.createUser.mockRejectedValue(otherDuplicateError);
-
-      await expect(UserService.register({ ...validUserData })).rejects.toEqual(otherDuplicateError);
-      expect(appLogger.error).toHaveBeenCalledWith(`Error registering user: ${otherDuplicateError.message}`);
-    });
 
     it('should handle and log repository errors', async () => {
       const error = new Error('Database error');

@@ -103,7 +103,7 @@ class BookingService {
         }
     }
 
-    async cancelBooking(bookingId, userId) {
+    async cancelBooking(bookingId, userId, cancellationReason = '') {
         try {
             const booking = await BookingRepository.getBookingById(bookingId);
             
@@ -135,19 +135,15 @@ class BookingService {
                 throw new Error('Cannot cancel booking after trip departure');
             }
             
-            const cancellationData = {
-                status: 'cancelled',
-                cancellationDate: new Date(),
-                cancellationReason: 'User requested cancellation'
-            };
+            const reason = cancellationReason || 'User requested cancellation';
             
-            const cancelledBooking = await BookingRepository.updateBooking(bookingId, cancellationData);
+            const cancelledBooking = await BookingRepository.cancelBooking(bookingId, reason);
             
             await TripRepository.updateTrip(trip._id, {
                 availableSeats: trip.availableSeats + booking.seats.length
             });
             
-            appLogger.info(`Booking ${bookingId} cancelled successfully`);
+            appLogger.info(`Booking ${bookingId} cancelled successfully with reason: ${reason}`);
             
             return cancelledBooking;
         } catch (error) {

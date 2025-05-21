@@ -9,7 +9,7 @@ class BusController {
             res.status(201).json({success: true,message: 'Bus created successfully',data: bus});
         } catch (error) {
             appLogger.error(`Error creating bus by user ${req.user.id}: ${error.message}`);
-            res.status(400).json({success: false,message: "Error creating bus",error: error.message});
+            res.status(500).json({success: false,message: "Failed to create bus",error: error.message});
         }
     }
 
@@ -18,14 +18,10 @@ class BusController {
             const operatorId = req.user.id;
             const buses = await BusService.getBus(operatorId);
             appLogger.info(`Fetched buses for operator ${operatorId}`);
-            res.status(200).json({
-                success: true,
-                message: 'Operator buses retrieved successfully',
-                data: buses
-            });
+            res.status(200).json({ success: true, message: 'Operator buses retrieved successfully', data: buses });
         } catch (error) {
             appLogger.error(`Error fetching buses for operator ${req.user.id}: ${error.message}`);
-            res.status(400).json({success: false,message: "Error fetching bus",error: error.message});
+            res.status(500).json({ success: false, message: "Failed to fetch bus", error: error.message });
         }
     }
 
@@ -39,16 +35,7 @@ class BusController {
             res.status(200).json({ success: true, message: 'Bus updated successfully', data: updatedBus });
         } catch (error) {
             appLogger.error(`Error updating bus: ${error.message}`);
-            
-            if (error.message.includes('Unauthorized')) {
-                return res.status(403).json({ success: false, message: "UnAuthorized", error: error.message});
-            }
-            
-            if (error.message.includes('not found')) {
-                return res.status(404).json({ success: false, message: "Not Found", error: error.message });
-            }
-            
-            res.status(500).json({ success: false, message: "Internal Server Error", error: error.message});
+            res.status(500).json({ success: false, message: "Failed to update bus", error: error.message });
         }
     }
 
@@ -62,16 +49,7 @@ class BusController {
             res.status(200).json({ success: true, message: 'Bus deleted successfully',data: {} });
         } catch (error) {
             appLogger.error(`Error deleting bus: ${error.message}`);
-            
-            if (error.message.includes('Unauthorized')) {
-                return res.status(403).json({ success: false, message: "UnAuthorized", error: error.message});
-            }
-            
-            if (error.message.includes('not found')) {
-                return res.status(404).json({ success: false, message: "Not Found", error: error.message });
-            }
-            
-            res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
+            res.status(500).json({ success: false, message: "Failed to delete bus", error: error.message });
         }
     }
 }

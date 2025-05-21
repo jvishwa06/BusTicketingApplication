@@ -9,10 +9,6 @@ class BusService {
             return bus;
         } catch (error) {
             appLogger.error(`Error creating bus for operator ${operatorId}: ${error.message}`);
-            
-            if (error.code === 11000 && error.message.includes('registrationNumber')) {
-                throw new Error(`A bus with registration number "${busData.registrationNumber}" already exists. Please use a different registration number.`);
-            }
             throw error;
         }
     }

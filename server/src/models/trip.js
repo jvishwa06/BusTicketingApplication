@@ -12,7 +12,8 @@ const tripSchema = new mongoose.Schema(
         availableSeats: { type: Number, required: true, min: [0, 'Available seats cannot be negative'] },
         distance: { type: Number, required:true },
         status: { type: String, required: true, enum: ['scheduled', 'in-progress', 'completed', 'cancelled'],default: 'scheduled'},
-        cancellationReason: { type: String }
+        cancellationDate : { type: Date },
+        cancellationReason: { type: String },
     }, 
     { timestamps: true }
 );

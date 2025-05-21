@@ -40,15 +40,6 @@ class UserService {
 
             return user;
         } catch (error) {
-            if (error.code === 11000) {
-                if (error.message.includes('phone_1')) {
-                    appLogger.warn(`Duplicate phone number detected: ${userData.phone}`);
-                    throw new Error('User with this phone number already exists');
-                } else if (error.message.includes('email_1')) {
-                    appLogger.warn(`Duplicate email detected: ${userData.email}`);
-                    throw new Error('User with this email already exists');
-                }
-            }
             appLogger.error(`Error registering user: ${error.message}`);
             throw error;
         }

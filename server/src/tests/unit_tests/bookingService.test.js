@@ -14,7 +14,7 @@ describe('BookingService', () => {
         BookingRepository.getBookingsByUserId = jest.fn();
         BookingRepository.getBookingsByOperatorId = jest.fn();
         BookingRepository.getBookingById = jest.fn();
-        BookingRepository.updateBooking = jest.fn();
+        BookingRepository.cancelBooking = jest.fn();  // Add mock for cancelBooking
         BookingRepository.releaseSeats = jest.fn();
         TripRepository.getTripById = jest.fn();
         TripRepository.updateTrip = jest.fn();
@@ -359,10 +359,10 @@ describe('BookingService', () => {
             };
             const mockBooking = {
                 _id: mockBookingId,
-                userId: mockUserId,
+                userId: { _id: mockUserId },
                 tripId: mockTripId,
                 seats: [1, 2],
-                status: 'confirmed'
+                status: 'active'
             };
             const updatedBooking = {
                 ...mockBooking,
@@ -373,7 +373,7 @@ describe('BookingService', () => {
 
             BookingRepository.getBookingById.mockResolvedValue(mockBooking);
             TripRepository.getTripById.mockResolvedValue(mockTrip);
-            BookingRepository.updateBooking.mockResolvedValue(updatedBooking);
+            BookingRepository.cancelBooking.mockResolvedValue(updatedBooking);
             TripRepository.updateTrip.mockResolvedValue({
                 ...mockTrip,
                 availableSeats: 32 // 30 + 2
@@ -383,13 +383,9 @@ describe('BookingService', () => {
 
             expect(BookingRepository.getBookingById).toHaveBeenCalledWith(mockBookingId);
             expect(TripRepository.getTripById).toHaveBeenCalledWith(mockTripId);
-            expect(BookingRepository.updateBooking).toHaveBeenCalledWith(
+            expect(BookingRepository.cancelBooking).toHaveBeenCalledWith(
                 mockBookingId,
-                {
-                    status: 'cancelled',
-                    cancellationDate: expect.any(Date),
-                    cancellationReason: 'User requested cancellation'
-                }
+                'User requested cancellation'
             );
             expect(TripRepository.updateTrip).toHaveBeenCalledWith(
                 mockTripId,
@@ -407,7 +403,7 @@ describe('BookingService', () => {
             await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
                 .rejects.toThrow('Booking not found');
 
-            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.cancelBooking).not.toHaveBeenCalled();
             expect(TripRepository.updateTrip).not.toHaveBeenCalled();
         });
 
@@ -420,7 +416,7 @@ describe('BookingService', () => {
                 userId: { _id: mockOtherUserId },
                 tripId: 'trip123',
                 seats: [1, 2],
-                status: 'confirmed'
+                status: 'active'
             };
 
             BookingRepository.getBookingById.mockResolvedValue(mockBooking);
@@ -428,7 +424,7 @@ describe('BookingService', () => {
             await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
                 .rejects.toThrow('You can only cancel your own bookings');
 
-            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.cancelBooking).not.toHaveBeenCalled();
             expect(TripRepository.updateTrip).not.toHaveBeenCalled();
         });
 
@@ -437,7 +433,7 @@ describe('BookingService', () => {
             const mockUserId = 'user123';
             const mockBooking = {
                 _id: mockBookingId,
-                userId: mockUserId,
+                userId: { _id: mockUserId },
                 tripId: 'trip123',
                 seats: [1, 2],
                 status: 'cancelled'
@@ -448,7 +444,7 @@ describe('BookingService', () => {
             await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
                 .rejects.toThrow('Booking is already cancelled');
 
-            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.cancelBooking).not.toHaveBeenCalled();
             expect(TripRepository.updateTrip).not.toHaveBeenCalled();
         });
 
@@ -458,10 +454,10 @@ describe('BookingService', () => {
             const mockTripId = 'trip123';
             const mockBooking = {
                 _id: mockBookingId,
-                userId: mockUserId,
+                userId: { _id: mockUserId },
                 tripId: mockTripId,
                 seats: [1, 2],
-                status: 'confirmed'
+                status: 'active'
             };
 
             BookingRepository.getBookingById.mockResolvedValue(mockBooking);
@@ -470,7 +466,7 @@ describe('BookingService', () => {
             await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
                 .rejects.toThrow('Trip not found');
 
-            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.cancelBooking).not.toHaveBeenCalled();
             expect(TripRepository.updateTrip).not.toHaveBeenCalled();
         });
 
@@ -485,10 +481,10 @@ describe('BookingService', () => {
             };
             const mockBooking = {
                 _id: mockBookingId,
-                userId: mockUserId,
+                userId: { _id: mockUserId },
                 tripId: mockTripId,
                 seats: [1, 2],
-                status: 'confirmed'
+                status: 'active'
             };
 
             BookingRepository.getBookingById.mockResolvedValue(mockBooking);
@@ -497,7 +493,7 @@ describe('BookingService', () => {
             await expect(BookingService.cancelBooking(mockBookingId, mockUserId))
                 .rejects.toThrow('Cannot cancel booking after trip departure');
 
-            expect(BookingRepository.updateBooking).not.toHaveBeenCalled();
+            expect(BookingRepository.cancelBooking).not.toHaveBeenCalled();
             expect(TripRepository.updateTrip).not.toHaveBeenCalled();
         });
     });
