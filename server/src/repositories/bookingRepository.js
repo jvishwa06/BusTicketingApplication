@@ -4,44 +4,14 @@ import mongoose from 'mongoose';
 import Trip from '../models/trip.js';
 
 class BookingRepository {
-    async createBookingWithTransaction(bookingData, tripId, seatsCount) {
+    async createBooking(bookingData, tripId, seats) {
         const session = await mongoose.startSession();
         let booking = null;
         
         try {
             session.startTransaction();
             
-            booking = await Booking.create([bookingData], { session });
-            
-            const trip = await Trip.findById(tripId).session(session);
-            
-            if (!trip) {
-                throw new Error(`Trip with ID ${tripId} not found during transaction`);
-            }
-            
-            if (trip.availableSeats < seatsCount) {
-                throw new Error('Not enough available seats');
-            }
-            
-            trip.availableSeats -= seatsCount;
-            await trip.save({ session });
-            
-            await session.commitTransaction();
-            appLogger.info(`Transaction successfully committed for booking: ${booking[0]._id}`);
-            
-            return booking[0];
-        } catch (error) {
-            await session.abortTransaction();
-            appLogger.error(`Transaction aborted for booking: ${error.message}`);
-            throw error;
-        } finally {
-            session.endSession();
-        }
-    }
-    
-    async verifySeatsAvailability(tripId, seats) {
-        try {
-            const existingBookings = await this.getBookingsByTripId(tripId);
+            const existingBookings = await Booking.find({ tripId }).session(session);
             
             const bookedSeats = new Set(
                 existingBookings.flatMap(booking => 
@@ -51,13 +21,37 @@ class BookingRepository {
             
             const unavailableSeats = seats.filter(seat => bookedSeats.has(seat));
             
-            return {
-                available: unavailableSeats.length === 0,
-                unavailableSeats
-            };
+            if (unavailableSeats.length > 0) {
+                throw new Error(`Seats already booked: ${unavailableSeats.join(', ')}`);
+            }
+            
+            const trip = await Trip.findById(tripId).session(session);
+            
+            if (!trip) {
+                throw new Error(`Trip with ID ${tripId} not found during transaction`);
+            }
+            
+            if (trip.availableSeats < seats.length) {
+                throw new Error('Not enough available seats');
+            }
+            
+            const bookingWithSeats = {...bookingData,seats,tripId};
+            
+            booking = await Booking.create([bookingWithSeats], { session });
+            
+            trip.availableSeats -= seats.length;
+            await trip.save({ session });
+            
+            await session.commitTransaction();
+            appLogger.info(`Booking created successfully: ${booking[0]._id}`);
+            
+            return booking[0];
         } catch (error) {
-            appLogger.error(`Error verifying seat availability: ${error.message}`);
+            await session.abortTransaction();
+            appLogger.error(`Error creating booking: ${error.message}`);
             throw error;
+        } finally {
+            session.endSession();
         }
     }
 

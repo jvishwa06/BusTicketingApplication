@@ -83,19 +83,17 @@ describe('BookingRepository', () => {
     jest.clearAllMocks();
   });
 
-  describe('createBookingWithTransaction', () => {
+  describe('createBooking', () => {
     it('should create a booking successfully with transaction', async () => {
       const bookingData = {
         userId: 'user123',
-        tripId: 'trip123',
-        passengers: [{ name: 'Test User', age: 30, gender: 'Male' }],
-        totalAmount: 1200,
-        paymentStatus: 'Paid'
+        totalPrice: 1200,
+        paymentStatus: 'pending'
       };
       const tripId = 'trip123';
-      const seatsCount = 1;
+      const seats = [1, 2];
 
-      const mockBooking = [{ _id: 'booking123', ...bookingData }];
+      const mockBooking = [{ _id: 'booking123', ...bookingData, seats, tripId }];
       const mockTrip = {
         _id: tripId,
         availableSeats: 10,
@@ -108,18 +106,24 @@ describe('BookingRepository', () => {
         abortTransaction: jest.fn(),
         endSession: jest.fn()
       };
+
+      // Mock existing bookings to check for seat availability
+      const mockExistingBookings = [];
       
       mongoose.startSession.mockResolvedValue(mockSession);
+      Booking.find.mockReturnValue({
+        session: jest.fn().mockResolvedValue(mockExistingBookings)
+      });
       Booking.create.mockResolvedValue(mockBooking);
       Trip.findById.mockReturnValue({
         session: jest.fn().mockReturnValue(mockTrip)
       });
 
-      const result = await bookingRepository.createBookingWithTransaction(bookingData, tripId, seatsCount);
+      const result = await bookingRepository.createBooking(bookingData, tripId, seats);
 
       expect(mongoose.startSession).toHaveBeenCalled();
       expect(mockSession.startTransaction).toHaveBeenCalled();
-      expect(Booking.create).toHaveBeenCalledWith([bookingData], { session: mockSession });
+      expect(Booking.create).toHaveBeenCalledWith([{ ...bookingData, seats, tripId }], { session: mockSession });
       expect(Trip.findById).toHaveBeenCalledWith(tripId);
       expect(mockTrip.save).toHaveBeenCalledWith({ session: mockSession });
       expect(mockSession.commitTransaction).toHaveBeenCalled();
@@ -127,12 +131,12 @@ describe('BookingRepository', () => {
       expect(result).toEqual(mockBooking[0]);
     });
 
-    it('should abort transaction and throw error when trip is not found', async () => {
-      const bookingData = { userId: 'user123', tripId: 'trip123' };
+    it('should abort transaction and throw error when seats are already booked', async () => {
+      const bookingData = { userId: 'user123', totalPrice: 1200, paymentStatus: 'pending' };
       const tripId = 'trip123';
-      const seatsCount = 1;
+      const seats = [1, 2];
 
-      const mockBooking = [{ _id: 'booking123', ...bookingData }];
+      const mockBooking = [{ _id: 'booking123', ...bookingData, seats, tripId }];
       
       const mockSession = {
         startTransaction: jest.fn(),
@@ -141,13 +145,64 @@ describe('BookingRepository', () => {
         endSession: jest.fn()
       };
       
+      // Mock existing bookings with conflicting seats
+      // One is with confirmed status (will block the seat)
+      // Other is with failed status (will NOT block the seat)
+      const mockExistingBookings = [
+        { 
+          _id: 'existingBooking1', 
+          tripId, 
+          seats: [1, 3], 
+          paymentStatus: 'confirmed' 
+        },
+        {
+          _id: 'existingBooking2',
+          tripId,
+          seats: [2, 4],
+          paymentStatus: 'failed' // This booking's seats should be ignored
+        }
+      ];
+      
       mongoose.startSession.mockResolvedValue(mockSession);
+      Booking.find.mockReturnValue({
+        session: jest.fn().mockResolvedValue(mockExistingBookings)
+      });
+      
+      await expect(bookingRepository.createBooking(bookingData, tripId, seats))
+        .rejects.toThrow('Seats already booked: 1');
+      
+      expect(mockSession.abortTransaction).toHaveBeenCalled();
+      expect(mockSession.endSession).toHaveBeenCalled();
+      expect(Booking.create).not.toHaveBeenCalled();
+  });
+  
+  it('should abort transaction and throw error when trip is not found', async () => {
+      const bookingData = { userId: 'user123', totalPrice: 1200, paymentStatus: 'pending' };
+      const tripId = 'trip123';
+      const seats = [1, 2];
+
+      const mockBooking = [{ _id: 'booking123', ...bookingData, seats, tripId }];
+      
+      const mockSession = {
+        startTransaction: jest.fn(),
+        commitTransaction: jest.fn(),
+        abortTransaction: jest.fn().mockResolvedValue(true),
+        endSession: jest.fn()
+      };
+      
+      // Mock existing bookings for seat availability check
+      const mockExistingBookings = [];
+      
+      mongoose.startSession.mockResolvedValue(mockSession);
+      Booking.find.mockReturnValue({
+        session: jest.fn().mockResolvedValue(mockExistingBookings)
+      });
       Booking.create.mockResolvedValue(mockBooking);
       Trip.findById.mockReturnValue({
         session: jest.fn().mockReturnValue(null)
       });
 
-      await expect(bookingRepository.createBookingWithTransaction(bookingData, tripId, seatsCount))
+      await expect(bookingRepository.createBooking(bookingData, tripId, seats))
         .rejects.toThrow(`Trip with ID ${tripId} not found during transaction`);
       
       expect(mockSession.abortTransaction).toHaveBeenCalled();
@@ -155,11 +210,11 @@ describe('BookingRepository', () => {
     });
 
     it('should abort transaction and throw error when not enough seats available', async () => {
-      const bookingData = { userId: 'user123', tripId: 'trip123' };
+      const bookingData = { userId: 'user123', totalPrice: 1200, paymentStatus: 'pending' };
       const tripId = 'trip123';
-      const seatsCount = 5;
+      const seats = [1, 2, 3, 4, 5];
 
-      const mockBooking = [{ _id: 'booking123', ...bookingData }];
+      const mockBooking = [{ _id: 'booking123', ...bookingData, seats, tripId }];
       const mockTrip = {
         _id: tripId,
         availableSeats: 3, // Less than requested seats
@@ -173,13 +228,19 @@ describe('BookingRepository', () => {
         endSession: jest.fn()
       };
       
+      // Mock existing bookings for seat availability check
+      const mockExistingBookings = [];
+      
       mongoose.startSession.mockResolvedValue(mockSession);
+      Booking.find.mockReturnValue({
+        session: jest.fn().mockResolvedValue(mockExistingBookings)
+      });
       Booking.create.mockResolvedValue(mockBooking);
       Trip.findById.mockReturnValue({
         session: jest.fn().mockReturnValue(mockTrip)
       });
 
-      await expect(bookingRepository.createBookingWithTransaction(bookingData, tripId, seatsCount))
+      await expect(bookingRepository.createBooking(bookingData, tripId, seats))
         .rejects.toThrow('Not enough available seats');
       
       expect(mockSession.abortTransaction).toHaveBeenCalled();
@@ -187,9 +248,9 @@ describe('BookingRepository', () => {
     });
 
     it('should handle general errors during transaction', async () => {
-      const bookingData = { userId: 'user123', tripId: 'trip123' };
+      const bookingData = { userId: 'user123', totalPrice: 1200, paymentStatus: 'pending' };
       const tripId = 'trip123';
-      const seatsCount = 1;
+      const seats = [1, 2];
       const error = new Error('Database connection error');
 
       const mockSession = {
@@ -200,9 +261,14 @@ describe('BookingRepository', () => {
       };
       
       mongoose.startSession.mockResolvedValue(mockSession);
+      // Mock existing bookings for seat availability check
+      const mockExistingBookings = [];
+      Booking.find.mockReturnValue({
+        session: jest.fn().mockResolvedValue(mockExistingBookings)
+      });
       Booking.create.mockRejectedValue(error);
 
-      await expect(bookingRepository.createBookingWithTransaction(bookingData, tripId, seatsCount))
+      await expect(bookingRepository.createBooking(bookingData, tripId, seats))
         .rejects.toThrow(error);
       
       expect(mockSession.abortTransaction).toHaveBeenCalled();
@@ -210,87 +276,8 @@ describe('BookingRepository', () => {
     });
   });
 
-  describe('verifySeatsAvailability', () => {
-    let originalGetBookingsByTripId;
-    
-    beforeEach(() => {
-      originalGetBookingsByTripId = bookingRepository.getBookingsByTripId;
-    });
-    
-    afterEach(() => {
-      bookingRepository.getBookingsByTripId = originalGetBookingsByTripId;
-    });
-    
-    it('should return available=true when all seats are available', async () => {
-      const tripId = 'trip123';
-      const seats = ['A1', 'B2', 'C3'];
-      
-      const mockBookings = [
-        { _id: 'booking1', tripId, seats: ['D1', 'D2'], paymentStatus: 'confirmed' },
-        { _id: 'booking2', tripId, seats: ['E1', 'E2'], paymentStatus: 'confirmed' }
-      ];
-      
-      bookingRepository.getBookingsByTripId = jest.fn().mockResolvedValue(mockBookings);
-      
-      const result = await bookingRepository.verifySeatsAvailability(tripId, seats);
-      
-      expect(bookingRepository.getBookingsByTripId).toHaveBeenCalledWith(tripId);
-      expect(result).toEqual({
-        available: true,
-        unavailableSeats: []
-      });
-    });
-
-    it('should return available=false and list of unavailable seats when some seats are already booked', async () => {
-      const tripId = 'trip123';
-      const seats = ['A1', 'B2', 'C3'];
-      
-      const mockBookings = [
-        { _id: 'booking1', tripId, seats: ['A1', 'D2'], paymentStatus: 'confirmed' },
-        { _id: 'booking2', tripId, seats: ['B2', 'E2'], paymentStatus: 'confirmed' }
-      ];
-      
-      bookingRepository.getBookingsByTripId = jest.fn().mockResolvedValue(mockBookings);
-      
-      const result = await bookingRepository.verifySeatsAvailability(tripId, seats);
-      
-      expect(bookingRepository.getBookingsByTripId).toHaveBeenCalledWith(tripId);
-      expect(result).toEqual({
-        available: false,
-        unavailableSeats: ['A1', 'B2']
-      });
-    });
-
-    it('should ignore seats from bookings with failed payment status', async () => {
-      const tripId = 'trip123';
-      const seats = ['A1', 'B2', 'C3'];
-      
-      const mockBookings = [
-        { _id: 'booking1', tripId, seats: ['A1', 'D2'], paymentStatus: 'failed' },
-        { _id: 'booking2', tripId, seats: ['B2', 'E2'], paymentStatus: 'confirmed' }
-      ];
-      
-      bookingRepository.getBookingsByTripId = jest.fn().mockResolvedValue(mockBookings);
-      
-      const result = await bookingRepository.verifySeatsAvailability(tripId, seats);
-      
-      expect(result).toEqual({
-        available: false,
-        unavailableSeats: ['B2']
-      });
-    });
-
-    it('should handle errors when verifying seat availability', async () => {
-      const tripId = 'trip123';
-      const seats = ['A1', 'B2'];
-      const error = new Error('Database query failed');
-      
-      bookingRepository.getBookingsByTripId = jest.fn().mockRejectedValue(error);
-      
-      await expect(bookingRepository.verifySeatsAvailability(tripId, seats)).rejects.toThrow(error);
-      expect(appLogger.error).toHaveBeenCalledWith(expect.stringContaining('Error verifying seat availability'));
-    });
-  });
+  // The verifySeatsAvailability method has been removed and integrated into createBooking
+  // These tests are no longer needed as the functionality is tested in createBooking tests
 
   describe('releaseSeats', () => {
     it('should successfully release seats for a booking', async () => {
