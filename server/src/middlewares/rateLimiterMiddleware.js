@@ -3,7 +3,7 @@ import { appLogger } from '../utils/logger.js';
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 1000000000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: 'Too many requests, please try again later.',

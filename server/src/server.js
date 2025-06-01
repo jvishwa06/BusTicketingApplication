@@ -13,7 +13,7 @@ import { requestLogger } from './utils/logger.js';
 import rateLimiter from './middlewares/rateLimiterMiddleware.js';
 
 dotenv.config();
-connectDB();
+
 
 const app = express();
 
@@ -24,11 +24,7 @@ app.use(rateLimiter);
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(cors({ origin: ['https://hyperbus.local'],credentials: true}));
-
-app.get('/', (req, res) => {
-    res.status(200).json({ message: 'HyperBus Server is running!', status: 'online', version: '1.0.0' });
-});
+app.use(cors());
 
 app.use('/users', userRoutes);
 app.use('/admin', adminRoutes);
@@ -38,4 +34,12 @@ app.use('/bookings', bookingRoutes);
 app.use('/ratings', ratingRoutes);
 
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+connectDB().then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
+    .catch(error => {
+        console.error(`Failed to start server: ${error.message}`);
+        process.exit(1);
+    });
+
+app.get('/', (req, res) => {
+    res.status(200).json({ message: 'HyperBus Server is running!', status: 'online', version: '1.0.0' });
+});
